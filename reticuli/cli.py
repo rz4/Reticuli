@@ -199,6 +199,8 @@ def main(argv: list[str] | None = None) -> int:
     q.add_argument("record")
     q.add_argument("--producer", required=True)
     q.add_argument("--into", required=True)
+    q.add_argument("--recursive", action="store_true",
+                   help="DAG-aware: also rehydrate component dependencies, bottom-up")
     q = add("prove", help="the three-machine test: root equality across M1, M2, M3")
     q.add_argument("m1"); q.add_argument("m2"); q.add_argument("m3")
     q.add_argument("--freeze-dry", action="store_true", help="promote M1 to solid on success")
@@ -242,7 +244,8 @@ def main(argv: list[str] | None = None) -> int:
             emit(r, j, _r_verify)
             return 0 if r["ok"] else 1
         if args.cmd == "realize":
-            return emit(kernel.realize(args.record, args.producer, args.into), j, _r_realize)
+            fn = registry_mod.rehydrate if args.recursive else kernel.realize
+            return emit(fn(args.record, args.producer, args.into), j, _r_realize)
         if args.cmd == "prove":
             r = (kernel.freeze_dry if args.freeze_dry else kernel.three_machine)(args.m1, args.m2, args.m3)
             r.setdefault("minted", None)

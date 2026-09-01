@@ -119,18 +119,33 @@ The manifest is pure `{name, root}` (no free-output hashes), so a self-hosted
 record stays byte-stable under code edits and commits clean. Re-run `ret pack`
 when you add or remove files (it's a lockfile).
 
+### The layered self-host
+
+A record can depend on *other* records (its components). `ret realize --recursive`
+rehydrates the whole DAG **bottom-up**: it regrows each component from its own
+recipe, threads that fresh output up as the dependent's dry seed, then rehydrates
+the dependent. The claim reproduces from the *leaves*, not just one layer —
+
+```bash
+ret realize <record> --recursive --producer <model> --into M3
+```
+
+so a stack (`lib → app`, or `kernel → cli → whole`) rehydrates as one chain: the
+leaf regenerates, its output feeds the layer above, and the top lands on the same
+root. This is the difference between a flat self-host and a *layered* one.
+
 ## The verbs
 
 | phase | verb | |
 |---|---|---|
 | vapor | `init` · `run` · `status` | set up · record a command · where am I |
 | liquid | `condense` · `verify` · `show` · `pack` · `records` · `deps` · `pull` | seal · does it hold · print the recipe · self-record · the drawer · the DAG · depend on a record |
-| solid | `realize` · `prove` | an independent redo · the three-machine test |
+| solid | `realize` · `realize --recursive` · `prove` | an independent redo · redo the whole component DAG · the three-machine test |
 
 Records compose: a dry seed that matches a registry record's output links the
 two (content-addressed). `ret pull` brings a component in as seeds; `ret deps`
-draws the DAG. `solid` is a record's view of itself; `dry` is a dependent's view
-of the same record.
+draws the DAG; `ret realize --recursive` rehydrates it bottom-up. `solid` is a
+record's view of itself; `dry` is a dependent's view of the same record.
 
 ## Design notes
 

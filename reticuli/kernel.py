@@ -113,17 +113,26 @@ def verify(d: str) -> dict:
 # -- realize: an independent redo (M3) --------------------------------------
 
 
-def realize(d: str, producer: str, into: str) -> dict:
+def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
+            exist_ok: bool = False) -> dict:
     """Seed a clean room from the record's dry inputs, run each produce step
     with a fresh producer and each gate cold, then seal. A faithful redo lands
-    on the same root."""
+    on the same root.
+
+    seed_from maps a seed path to a *freshly rehydrated* source (from a
+    recursively-rehydrated component) instead of the carried bytes — this is how
+    DAG-aware rehydrate threads a dependency's output up to its dependent.
+    exist_ok tolerates a target already holding rehydrated deps (under
+    .reticuli/deps) but no record of its own.
+    """
+    seed_from = seed_from or {}
     recipe = load_recipe(d)
-    if os.path.exists(into):
+    if os.path.exists(os.path.join(into, RECIPE)) or (os.path.exists(into) and not exist_ok):
         raise ReticuliError(f"target exists: {into}")
-    os.makedirs(into)
+    os.makedirs(into, exist_ok=True)
     shutil.copyfile(os.path.join(d, RECIPE), os.path.join(into, RECIPE))
     for seed in _seeds(recipe):
-        _copy(os.path.join(d, seed), os.path.join(into, seed))
+        _copy(seed_from.get(seed) or os.path.join(d, seed), os.path.join(into, seed))
     for step in recipe.get("step", []):
         cmd = step["run"] if step["kind"] == "gate" else producer
         env = {**os.environ, "RETICULI_REQUEST": step.get("request", ""),

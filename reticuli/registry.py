@@ -88,6 +88,45 @@ def pull(component: str, into: str = ".") -> dict:
             "materialized": materialized}
 
 
+def _registry_of(record: str) -> str:
+    """The session whose .reticuli/{liquid,solid} holds this record: a record at
+    <ws>/.reticuli/<drawer>/<name> is three directories below <ws>."""
+    p = os.path.abspath(record)
+    ws = os.path.dirname(os.path.dirname(os.path.dirname(p)))
+    return ws if os.path.isdir(os.path.join(ws, kernel.STORE)) else os.path.dirname(p)
+
+
+def rehydrate(record: str, producer: str, into: str, ws: str | None = None) -> dict:
+    """DAG-aware rehydrate: recursively regenerate a record *and its component
+    dependencies*, bottom-up. Each component is rehydrated from its own recipe
+    and its output threaded up as this record's seed — so the whole chain
+    reproduces from the leaves, not just one layer. This is the layered
+    self-host: rehydrate the kernel, thread it into the CLI, and so on.
+    """
+    record = os.path.abspath(record)
+    into = os.path.abspath(into)
+    ws = os.path.abspath(ws) if ws else _registry_of(record)
+    manifest = kernel.read_manifest(record)
+    by_root = {r["root"]: os.path.join(ws, r["path"]) for r in records(ws)}
+
+    seed_from: dict[str, str] = {}
+    rehydrated = []
+    for link in manifest.get("components", []):
+        comp = by_root.get(link["root"])
+        if comp is None:
+            raise kernel.ReticuliError(
+                f"rehydrate: component {link['component']}@{link['root'][:12]}… not in registry")
+        comp_into = os.path.join(into, kernel.STORE, "deps", link["component"])
+        sub = rehydrate(comp, producer, comp_into, ws)           # recurse: leaf first
+        rehydrated.append({"component": link["component"], "root": sub["root"]})
+        seed_from[link["input"]] = os.path.join(comp_into, link["output"])
+
+    # deps now live under into/.reticuli/deps — seed the record from them and seal
+    result = kernel.realize(record, producer, into, seed_from=seed_from, exist_ok=True)
+    result["rehydrated_components"] = rehydrated
+    return result
+
+
 def deps(ws: str) -> dict:
     """The component DAG: each record's `components` provenance, with broken
     links (upstream no longer in the registry) flagged."""
