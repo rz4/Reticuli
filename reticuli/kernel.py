@@ -136,10 +136,13 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
     shutil.copyfile(os.path.join(d, RECIPE), os.path.join(into, RECIPE))
     for seed in _seeds(recipe):
         _copy(seed_from.get(seed) or os.path.join(d, seed), os.path.join(into, seed))
+    # component-supplied free code goes in first, so a producer can build on it
+    for step in recipe.get("step", []):
+        if step["kind"] == "produce" and _out(step) in produce_from:
+            _copy(produce_from[_out(step)], os.path.join(into, _out(step)))
     for step in recipe.get("step", []):
         out = _out(step)
         if step["kind"] == "produce" and out in produce_from:
-            _copy(produce_from[out], os.path.join(into, out))   # supplied by a component
             continue
         cmd = step["run"] if step["kind"] == "gate" else producer
         env = {**os.environ, "RETICULI_REQUEST": step.get("request", ""),
