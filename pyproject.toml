@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "reticuli"
+version = "0.1.0"
+description = "Sealed, reproducible records of model-assisted work. The invariant is the three-machine test."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "R. Zamora Resendiz" }]
+keywords = ["reproducibility", "provenance", "content-addressed", "llm", "records"]
+
+[project.scripts]
+ret = "reticuli.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/rz4/reticuli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["reticuli"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
