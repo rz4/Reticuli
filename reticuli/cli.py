@@ -11,6 +11,7 @@ import sys
 import time
 
 from . import condense as condense_mod
+from . import feedback as feedback_mod
 from . import kernel
 from . import pack as pack_mod
 from . import registry as registry_mod
@@ -141,24 +142,33 @@ def _r_pack(r: dict) -> None:
 
 
 def _r_status(r: dict) -> None:
-    if r["phase"] == "vapor":
-        toml(("session", {"phase": "vapor", "workspace": r["workspace"],
-                          "trace_events": r["trace_events"]}))
-    else:
+    if r["phase"] != "vapor":
         toml(("record", {"name": r["name"], "phase": r["phase"],
                          "freshness": "fresh" if r["ok"] else "broken",
                          "root": short(r["root"])}))
+        return
+    print(f"# session {os.path.basename(r['session']) or r['session']}"
+          f"  ~ vapor · {r['trace_events']} trace events")
+    table([{"role": f["role"], "kind": f["kind"], "covered": f["covered"], "path": f["path"]}
+           for f in r["files"]],
+          ("role", "role"), ("kind", "kind"), ("covered", "covered"), ("path", "path"))
+    print(f"# {r['nudge']}")
+
+
+def _r_tree(r: dict) -> None:
+    def gloss(f):
+        tag = f"{f['role']}/{f['kind']}"
+        return f"{f['path']}   {tag}" + ("" if f["covered"] else "  ✗ uncovered")
+    node = {"children": [{"label": gloss(f)} for f in r["files"]]}
+    ws = os.path.basename(r["session"].rstrip(os.sep)) or r["session"]
+    tree(f"session {ws}  ~ vapor · {r['trace_events']} events", node)
+    print(f"  {r['nudge']}")
 
 
 def status(workspace: str) -> dict:
     ws = os.path.abspath(workspace)
     if kernel.phase(ws) == "vapor":
-        trace = os.path.join(ws, condense_mod.TRACE)
-        n = 0
-        if os.path.isfile(trace):
-            with open(trace, encoding="utf-8") as f:
-                n = sum(1 for _ in f)
-        return {"phase": "vapor", "workspace": ws, "trace_events": n}
+        return feedback_mod.pilot(ws)
     return kernel.verify(ws)
 
 
@@ -211,9 +221,10 @@ def main(argv: list[str] | None = None) -> int:
     q = add("import", help="unpack a record from a tar and verify it")
     q.add_argument("tar")
     q.add_argument("into")
-    add("status", help="where you are: phase and freshness").add_argument("workspace", nargs="?", default=".")
+    add("status", help="where you are: phase and freshness (or a session's progress)").add_argument("workspace", nargs="?", default=".")
+    add("tree", help="the session through Reticuli's lens: dry/wet, covered/uncovered").add_argument("workspace", nargs="?", default=".")
     for name in ("verify", "realize", "prove", "condense", "pack", "records",
-                 "deps", "pull", "export", "import", "status"):
+                 "deps", "pull", "export", "import", "status", "tree"):
         sub.choices[name].add_argument("--json", action="store_true")
 
     args = p.parse_args(argv)
@@ -259,6 +270,8 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if r["ok"] else 1
         if args.cmd == "status":
             return emit(status(args.workspace), j, _r_status)
+        if args.cmd == "tree":
+            return emit(feedback_mod.pilot(os.path.abspath(args.workspace)), j, _r_tree)
     except kernel.ReticuliError as e:
         print(f"ret: {e}", file=sys.stderr)
         return 1

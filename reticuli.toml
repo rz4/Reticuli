@@ -28,6 +28,12 @@ request = "regenerate reticuli/condense.py to pass the gate"
 
 [[step]]
 kind = "produce"
+output = "reticuli/feedback.py"
+class = "free"
+request = "regenerate reticuli/feedback.py to pass the gate"
+
+[[step]]
+kind = "produce"
 output = "reticuli/kernel.py"
 class = "free"
 request = "regenerate reticuli/kernel.py to pass the gate"
