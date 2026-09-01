@@ -51,6 +51,12 @@ class = "free"
 request = "regenerate reticuli/render.py to pass the gate"
 
 [[step]]
+kind = "produce"
+output = "reticuli/transfer.py"
+class = "free"
+request = "regenerate reticuli/transfer.py to pass the gate"
+
+[[step]]
 kind = "gate"
 output = "VERIFIED"
 class = "validated"

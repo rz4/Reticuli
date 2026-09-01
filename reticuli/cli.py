@@ -14,6 +14,7 @@ from . import condense as condense_mod
 from . import kernel
 from . import pack as pack_mod
 from . import registry as registry_mod
+from . import transfer as transfer_mod
 from .render import emit, short, table, toml, tree
 
 # -- session setup (git-native) ---------------------------------------------
@@ -116,6 +117,14 @@ def _r_pull(r: dict) -> None:
                    "materialized": r["materialized"]}))
 
 
+def _r_export(r: dict) -> None:
+    toml(("export", {"tar": r["tar"], "members": r["members"]}))
+
+
+def _r_import(r: dict) -> None:
+    toml(("import", {"into": r["into"], "verdict": r["verdict"], "root": short(r["root"])}))
+
+
 def _r_prove(r: dict) -> None:
     toml(("prove", {"satisfied": r["satisfied"], "integrity": r["integrity"],
                     "reuse": r["reuse"], "equivalence": r["equivalence"],
@@ -196,8 +205,15 @@ def main(argv: list[str] | None = None) -> int:
     q = add("pull", help="bring a record in as a dependency (dry seeds)")
     q.add_argument("component")
     q.add_argument("-C", "--into", default=".")
+    q = add("export", help="pack a record into a deterministic tar")
+    q.add_argument("record")
+    q.add_argument("tar")
+    q = add("import", help="unpack a record from a tar and verify it")
+    q.add_argument("tar")
+    q.add_argument("into")
     add("status", help="where you are: phase and freshness").add_argument("workspace", nargs="?", default=".")
-    for name in ("verify", "realize", "prove", "condense", "pack", "records", "deps", "pull", "status"):
+    for name in ("verify", "realize", "prove", "condense", "pack", "records",
+                 "deps", "pull", "export", "import", "status"):
         sub.choices[name].add_argument("--json", action="store_true")
 
     args = p.parse_args(argv)
@@ -235,6 +251,12 @@ def main(argv: list[str] | None = None) -> int:
             return emit(registry_mod.deps(args.workspace), j, _r_deps)
         if args.cmd == "pull":
             return emit(registry_mod.pull(args.component, args.into), j, _r_pull)
+        if args.cmd == "export":
+            return emit(transfer_mod.export(args.record, args.tar), j, _r_export)
+        if args.cmd == "import":
+            r = transfer_mod.import_(args.tar, args.into)
+            emit(r, j, _r_import)
+            return 0 if r["ok"] else 1
         if args.cmd == "status":
             return emit(status(args.workspace), j, _r_status)
     except kernel.ReticuliError as e:
