@@ -39,6 +39,11 @@ def _out(step: dict) -> str:
     return step["output"]
 
 
+def _seeds(recipe: dict) -> list[str]:
+    """Dry seeds live under [record] (they are part of the record's identity)."""
+    return recipe.get("record", {}).get("inputs", [])
+
+
 def load_recipe(d: str) -> dict:
     with open(os.path.join(d, RECIPE), "rb") as f:
         return tomllib.load(f)
@@ -51,7 +56,7 @@ def claim(recipe: dict, d: str) -> str:
     """The root. Two realizations that pass the same checks hash to the same
     value; the free implementation never enters it."""
     parts: dict[str, str] = {"recipe": json.dumps(recipe, sort_keys=True)}
-    for seed in recipe.get("inputs", []):
+    for seed in _seeds(recipe):
         parts[f"seed:{seed}"] = _hf(os.path.join(d, seed))
     for step in recipe.get("step", []):
         if step.get("class", "exact") != "free":          # a pinned verdict
@@ -74,11 +79,10 @@ def seal(d: str, proof: dict | None = None) -> dict:
     """Freeze the realization in `d` into a record: hash its outputs, compute
     the root, write the manifest. Deterministic — commits like a lockfile."""
     recipe = load_recipe(d)
-    manifest = {
-        "name": recipe["record"]["name"],
-        "root": claim(recipe, d),
-        "outputs": {_out(s): _hf(os.path.join(d, _out(s))) for s in recipe.get("step", [])},
-    }
+    # The manifest is pure identity: name + root (+ proof). It carries no free-
+    # output hashes, so editing the implementation (free) never churns it — a
+    # self-hosted record stays byte-stable and git-clean under code changes.
+    manifest = {"name": recipe["record"]["name"], "root": claim(recipe, d)}
     if proof:
         manifest["proof"] = proof
     os.makedirs(os.path.join(d, STORE), exist_ok=True)
@@ -112,7 +116,7 @@ def realize(d: str, producer: str, into: str) -> dict:
         raise ReticuliError(f"target exists: {into}")
     os.makedirs(into)
     shutil.copyfile(os.path.join(d, RECIPE), os.path.join(into, RECIPE))
-    for seed in recipe.get("inputs", []):
+    for seed in _seeds(recipe):
         _copy(os.path.join(d, seed), os.path.join(into, seed))
     for step in recipe.get("step", []):
         cmd = step["run"] if step["kind"] == "gate" else producer
@@ -124,7 +128,7 @@ def realize(d: str, producer: str, into: str) -> dict:
         if r.returncode != 0 or not made:
             raise ReticuliError(
                 f"redo failed at {_out(step)}: {(r.stderr or r.stdout).strip()[:200]}")
-    return seal(into)
+    return {**seal(into), "into": into}
 
 
 # -- three_machine: THE INVARIANT -------------------------------------------

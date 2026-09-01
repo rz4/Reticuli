@@ -101,8 +101,9 @@ def emit(obj: dict, as_json: bool, render) -> int:
 
 def dump_recipe(recipe: dict) -> str:
     lines = ["[record]", f'name = "{recipe["record"]["name"]}"']
-    if recipe.get("inputs"):
-        lines.append("inputs = " + _scalar(recipe["inputs"]))
+    seeds = recipe["record"].get("inputs")
+    if seeds:
+        lines.append("inputs = " + _scalar(seeds))
     for step in recipe.get("step", []):
         lines += ["", "[[step]]"]
         for k in ("kind", "output", "class", "run", "request", "inputs"):

@@ -1,0 +1,51 @@
+[record]
+name = "reticuli"
+inputs = ["selfcheck.py"]
+
+[[step]]
+kind = "produce"
+output = "reticuli/__init__.py"
+class = "free"
+request = "regenerate reticuli/__init__.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/__main__.py"
+class = "free"
+request = "regenerate reticuli/__main__.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/cli.py"
+class = "free"
+request = "regenerate reticuli/cli.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/condense.py"
+class = "free"
+request = "regenerate reticuli/condense.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/kernel.py"
+class = "free"
+request = "regenerate reticuli/kernel.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/pack.py"
+class = "free"
+request = "regenerate reticuli/pack.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/render.py"
+class = "free"
+request = "regenerate reticuli/render.py to pass the gate"
+
+[[step]]
+kind = "gate"
+output = "VERIFIED"
+class = "validated"
+run = "python selfcheck.py"

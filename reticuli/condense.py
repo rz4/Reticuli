@@ -88,7 +88,7 @@ def draft(session: str, accepted: list[str], name: str) -> dict:
     seeds = [f for f in dict.fromkeys(reads + sorted(named))
              if f and f not in write_at and f not in accepted
              and os.path.isfile(os.path.join(session, f))]
-    return {"record": {"name": name}, "inputs": seeds, "step": steps}
+    return {"record": {"name": name, "inputs": seeds}, "step": steps}
 
 
 def condense(session: str, accepted: list[str], into: str, name: str | None = None) -> dict:
@@ -103,7 +103,7 @@ def condense(session: str, accepted: list[str], into: str, name: str | None = No
     os.makedirs(build)
     with open(os.path.join(build, kernel.RECIPE), "w", encoding="utf-8") as f:
         f.write(render.dump_recipe(recipe))
-    for seed in recipe["inputs"]:
+    for seed in kernel._seeds(recipe):
         kernel._copy(os.path.join(session, seed), os.path.join(build, seed))
     for step in recipe["step"]:
         if step["kind"] == "produce":
@@ -130,4 +130,4 @@ def condense(session: str, accepted: list[str], into: str, name: str | None = No
         shutil.rmtree(into)
     os.rename(build, into)
     return {"ok": True, "name": name, "root": manifest["root"], "into": into,
-            "steps": recipe["step"], "inputs": recipe["inputs"]}
+            "steps": recipe["step"], "inputs": kernel._seeds(recipe)}

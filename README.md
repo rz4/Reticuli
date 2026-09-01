@@ -92,12 +92,39 @@ A record's identity is byte-deterministic, so it commits like a lockfile:
 Every command prints exactly one of three shapes — a **TOML** fact sheet (one
 entity), a **table** (rows), or a **tree** (a DAG) — with `--json` underneath.
 
+## Self-hosting
+
+Reticuli is a **basin-compiler that compiles itself.** `ret pack` declares a
+project as a record — its code the *free* outputs, its check the *seed*, gated by
+running the check:
+
+```bash
+ret pack reticuli \
+  --produce 'reticuli/*.py' --seed selfcheck.py \
+  --gate 'python selfcheck.py' --output VERIFIED
+```
+
+Now the repo *is* a record: `ret verify .` holds, and `ret realize .` regenerates
+the whole implementation, runs [`selfcheck.py`](selfcheck.py) (the conformance
+gate — seal/verify/redo/three-machine on a fixture), and — because the code is
+free and the root is the claim — **lands on the same root.** The repo rehydrates
+to its own claim.
+
+Two properties, both tested:
+
+- **Editing the implementation keeps the root** — the code is free water.
+- **Editing the check changes the root** — the check *is* the claim.
+
+The manifest is pure `{name, root}` (no free-output hashes), so a self-hosted
+record stays byte-stable under code edits and commits clean. Re-run `ret pack`
+when you add or remove files (it's a lockfile).
+
 ## The verbs
 
 | phase | verb | |
 |---|---|---|
 | vapor | `init` · `run` · `status` | set up · record a command · where am I |
-| liquid | `condense` · `verify` · `show` | seal · does it hold · print the recipe |
+| liquid | `condense` · `verify` · `show` · `pack` | seal · does it hold · print the recipe · self-record |
 | solid | `realize` · `prove` | an independent redo · the three-machine test |
 
 ## Design notes

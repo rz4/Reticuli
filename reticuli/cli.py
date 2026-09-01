@@ -12,6 +12,7 @@ import time
 
 from . import condense as condense_mod
 from . import kernel
+from . import pack as pack_mod
 from .render import emit, short, table, toml
 
 # -- session setup (git-native) ---------------------------------------------
@@ -95,6 +96,12 @@ def _r_prove(r: dict) -> None:
           ("machine", "machine"), ("root", "root"))
 
 
+def _r_pack(r: dict) -> None:
+    toml(("pack", {"name": r["name"], "root": short(r["root"]),
+                   "produce": r["produce"], "seeds": r["seeds"]}))
+    print("# sealed as a record — `ret verify .` holds; `ret realize .` regrows it")
+
+
 def _r_status(r: dict) -> None:
     if r["phase"] == "vapor":
         toml(("session", {"phase": "vapor", "workspace": r["workspace"],
@@ -148,8 +155,15 @@ def main(argv: list[str] | None = None) -> int:
     q.add_argument("m1"); q.add_argument("m2"); q.add_argument("m3")
     q.add_argument("--freeze-dry", action="store_true", help="promote M1 to solid on success")
     add("show", help="print the record's recipe (TOML)").add_argument("record")
+    q = add("pack", help="declare a project as a self-record (code free, check gated)")
+    q.add_argument("name")
+    q.add_argument("--produce", nargs="+", required=True, metavar="GLOB")
+    q.add_argument("--seed", nargs="*", default=[], metavar="GLOB")
+    q.add_argument("--gate", required=True)
+    q.add_argument("--output", required=True)
+    q.add_argument("-C", "--root", default=".")
     add("status", help="where you are: phase and freshness").add_argument("workspace", nargs="?", default=".")
-    for name in ("verify", "realize", "prove", "condense", "status"):
+    for name in ("verify", "realize", "prove", "condense", "pack", "status"):
         sub.choices[name].add_argument("--json", action="store_true")
 
     args = p.parse_args(argv)
@@ -177,6 +191,9 @@ def main(argv: list[str] | None = None) -> int:
             from .render import dump_recipe
             print(dump_recipe(kernel.load_recipe(args.record)))
             return 0
+        if args.cmd == "pack":
+            r = pack_mod.pack(args.root, args.name, args.produce, args.seed, args.gate, args.output)
+            return emit(r, j, _r_pack)
         if args.cmd == "status":
             return emit(status(args.workspace), j, _r_status)
     except kernel.ReticuliError as e:
