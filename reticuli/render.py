@@ -106,7 +106,7 @@ def dump_recipe(recipe: dict) -> str:
         lines.append("inputs = " + _scalar(seeds))
     for step in recipe.get("step", []):
         lines += ["", "[[step]]"]
-        for k in ("kind", "output", "class", "run", "request", "inputs"):
+        for k in ("kind", "output", "class", "from", "run", "request", "inputs"):
             if k in step:
                 lines.append(f"{k} = {_scalar(step[k])}")
     return "\n".join(lines) + "\n"

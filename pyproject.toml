@@ -28,6 +28,8 @@ testpaths = ["tests"]
 line-length = 100
 
 [tool.ruff.lint.per-file-ignores]
-# the conformance gate imports the kernel-under-test after sys.path.insert;
-# the split import block is deliberate, not unsorted
-"selfcheck.py" = ["I001"]
+# conformance gates and the builder import the (re)generated package after
+# sys.path.insert; the split import block is deliberate, not unsorted
+"kernel_check.py" = ["I001"]
+"whole_check.py" = ["I001"]
+"scripts/selfrecord.py" = ["I001"]

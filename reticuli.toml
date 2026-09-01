@@ -1,12 +1,13 @@
 [record]
 name = "reticuli"
-inputs = ["selfcheck.py"]
+inputs = ["whole_check.py"]
 
 [[step]]
 kind = "produce"
 output = "reticuli/__init__.py"
 class = "free"
-request = "regenerate reticuli/__init__.py to pass the gate"
+from = "kernel-core"
+request = "supplied by the kernel-core component"
 
 [[step]]
 kind = "produce"
@@ -36,7 +37,8 @@ request = "regenerate reticuli/feedback.py to pass the gate"
 kind = "produce"
 output = "reticuli/kernel.py"
 class = "free"
-request = "regenerate reticuli/kernel.py to pass the gate"
+from = "kernel-core"
+request = "supplied by the kernel-core component"
 
 [[step]]
 kind = "produce"
@@ -66,4 +68,4 @@ request = "regenerate reticuli/transfer.py to pass the gate"
 kind = "gate"
 output = "VERIFIED"
 class = "validated"
-run = "python selfcheck.py"
+run = "python3 whole_check.py"

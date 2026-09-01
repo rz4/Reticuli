@@ -1,13 +1,15 @@
-"""Conformance gate — the fixed check that defines "a correct Reticuli".
+"""Kernel conformance gate — the fixed check that defines "a correct kernel".
 
-Imports the (re)generated `reticuli` kernel and confirms it implements the
-invariant: seal + verify hold, an independent redo lands on the *same root*
-(root = claim), and the three-machine test is satisfied. Writes VERIFIED iff it
-conforms. Stdlib only, so it runs in any clean room.
+This is the seed of the `kernel-core` component record. It imports the
+(re)generated kernel and confirms it implements the invariant: seal + verify
+hold, an independent redo lands on the *same root* (root = claim), and the
+three-machine test is satisfied. Writes KERNEL_OK iff it conforms. Stdlib only,
+so it runs in any clean room.
 
-This is a dry seed of the repo's self-record: `ret realize .` regenerates the
-kernel and runs this gate; any implementation that passes hashes to the same
-root. The basin of Reticulis that pass this check is what the repo *is*.
+Any kernel that passes this check hashes to the same kernel-core root — the
+basin of kernels is what the component *is*. The whole toolchain layers on top:
+its own gate ([`whole_check.py`](whole_check.py)) certifies the CLI, condense,
+registry, and render built over a conformant kernel.
 """
 import os
 import shutil
@@ -16,7 +18,7 @@ import sys
 import tempfile
 
 sys.path.insert(0, ".")
-from reticuli import kernel   # the implementation under test
+from reticuli import kernel   # the kernel under test
 
 FIXTURE = '''[record]
 name = "fixture"
@@ -62,6 +64,6 @@ def battery() -> None:
 
 if __name__ == "__main__":
     battery()
-    with open("VERIFIED", "w") as f:
-        f.write("conformant\n")
-    print("conformant")
+    with open("KERNEL_OK", "w") as f:
+        f.write("kernel-ok\n")
+    print("kernel-ok")

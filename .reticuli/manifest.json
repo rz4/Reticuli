@@ -1,4 +1,18 @@
 {
+  "components": [
+    {
+      "component": "kernel-core",
+      "input": "reticuli/__init__.py",
+      "output": "reticuli/__init__.py",
+      "root": "a1fc505a43a4e8bf36818bbcf90e59701c427e68aa7f40db3141e833441f89a6"
+    },
+    {
+      "component": "kernel-core",
+      "input": "reticuli/kernel.py",
+      "output": "reticuli/kernel.py",
+      "root": "a1fc505a43a4e8bf36818bbcf90e59701c427e68aa7f40db3141e833441f89a6"
+    }
+  ],
   "name": "reticuli",
-  "root": "03d1c183dedd9f9ae32c70d374e3d373f05d3a0d3debb9b03a27980f0e95859d"
+  "root": "30968ae8a0cd153c7fdfce728f977d916a8f786b937daef7a72233f87ee28e2b"
 }

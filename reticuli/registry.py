@@ -89,9 +89,14 @@ def pull(component: str, into: str = ".") -> dict:
 
 
 def _registry_of(record: str) -> str:
-    """The session whose .reticuli/{liquid,solid} holds this record: a record at
-    <ws>/.reticuli/<drawer>/<name> is three directories below <ws>."""
+    """The session whose drawers hold this record's components. A self-record
+    hosts them in its *own* store (repo root: .reticuli/liquid/<component>); a
+    record sitting in a drawer (<ws>/.reticuli/<drawer>/<name>) finds them three
+    directories up."""
     p = os.path.abspath(record)
+    for drawer in ("liquid", "solid"):
+        if os.path.isdir(os.path.join(p, kernel.STORE, drawer)):
+            return p
     ws = os.path.dirname(os.path.dirname(os.path.dirname(p)))
     return ws if os.path.isdir(os.path.join(ws, kernel.STORE)) else os.path.dirname(p)
 
@@ -107,35 +112,52 @@ def rehydrate(record: str, producer: str, into: str, ws: str | None = None) -> d
     into = os.path.abspath(into)
     ws = os.path.abspath(ws) if ws else _registry_of(record)
     manifest = kernel.read_manifest(record)
+    seeds = set(kernel._seeds(kernel.load_recipe(record)))
     by_root = {r["root"]: os.path.join(ws, r["path"]) for r in records(ws)}
 
     seed_from: dict[str, str] = {}
+    produce_from: dict[str, str] = {}
     rehydrated = []
+    # group links by component — one component may supply several outputs, but is
+    # rehydrated exactly once (into deps/<name>) and its outputs threaded up
+    groups: dict[tuple, list] = {}
     for link in manifest.get("components", []):
-        comp = by_root.get(link["root"])
+        groups.setdefault((link["component"], link["root"]), []).append(link)
+    for (name, root), links in groups.items():
+        comp = by_root.get(root)
         if comp is None:
             raise kernel.ReticuliError(
-                f"rehydrate: component {link['component']}@{link['root'][:12]}… not in registry")
-        comp_into = os.path.join(into, kernel.STORE, "deps", link["component"])
+                f"rehydrate: component {name}@{root[:12]}… not in registry")
+        comp_into = os.path.join(into, kernel.STORE, "deps", name)
         sub = rehydrate(comp, producer, comp_into, ws)           # recurse: leaf first
-        rehydrated.append({"component": link["component"], "root": sub["root"]})
-        seed_from[link["input"]] = os.path.join(comp_into, link["output"])
+        rehydrated.append({"component": name, "root": sub["root"]})
+        for link in links:
+            src = os.path.join(comp_into, link["output"])
+            # a link into a seed is pinned data; into a produce step it's free code
+            (seed_from if link["input"] in seeds else produce_from)[link["input"]] = src
 
-    # deps now live under into/.reticuli/deps — seed the record from them and seal
-    result = kernel.realize(record, producer, into, seed_from=seed_from, exist_ok=True)
+    # deps now live under into/.reticuli/deps — thread them into the record and seal
+    result = kernel.realize(record, producer, into, seed_from=seed_from,
+                            produce_from=produce_from, exist_ok=True)
     result["rehydrated_components"] = rehydrated
     return result
 
 
 def deps(ws: str) -> dict:
     """The component DAG: each record's `components` provenance, with broken
-    links (upstream no longer in the registry) flagged."""
+    links (upstream no longer in the registry) flagged. Includes the workspace's
+    own top-level record — a self-record layers on its drawer, but isn't in it."""
     ws = os.path.abspath(ws)
     recs = records(ws)
+    if kernel.phase(ws) != "vapor":
+        m = kernel.read_manifest(ws)
+        if m["root"] not in {r["root"] for r in recs}:
+            recs = [{"name": m["name"], "root": m["root"], "drawer": ".", "path": ".",
+                     "phase": "solid" if m.get("proof") else "liquid"}] + recs
     roots = {r["root"] for r in recs}
     nodes = []
     for r in recs:
-        m = kernel.read_manifest(os.path.join(ws, r["path"]))
+        m = kernel.read_manifest(ws if r["path"] == "." else os.path.join(ws, r["path"]))
         edges = [{"input": link["input"], "component": link["component"],
                   "root": link["root"], "status": "ok" if link["root"] in roots else "missing"}
                  for link in m.get("components", [])]
