@@ -125,9 +125,12 @@ def condense(session: str, accepted: list[str], into: str, name: str | None = No
             shutil.rmtree(build)
             raise kernel.ReticuliError(f"cold result does not match accepted (nondeterministic '{a}')")
 
-    manifest = kernel.seal(build)
+    from . import registry
+    links = registry.detect_components(session, kernel._seeds(recipe))
+    manifest = kernel.seal(build, components=links or None)
     if os.path.exists(into):
         shutil.rmtree(into)
     os.rename(build, into)
     return {"ok": True, "name": name, "root": manifest["root"], "into": into,
-            "steps": recipe["step"], "inputs": kernel._seeds(recipe)}
+            "steps": recipe["step"], "inputs": kernel._seeds(recipe),
+            "components": links}

@@ -75,19 +75,25 @@ def phase(d: str) -> str:
 # -- seal / verify: identity ------------------------------------------------
 
 
-def seal(d: str, proof: dict | None = None) -> dict:
-    """Freeze the realization in `d` into a record: hash its outputs, compute
-    the root, write the manifest. Deterministic — commits like a lockfile."""
+def seal(d: str, proof: dict | None = None, components: list | None = None) -> dict:
+    """Freeze the realization in `d` into a record: compute the root, write the
+    manifest. Deterministic — commits like a lockfile."""
     recipe = load_recipe(d)
-    # The manifest is pure identity: name + root (+ proof). It carries no free-
-    # output hashes, so editing the implementation (free) never churns it — a
-    # self-hosted record stays byte-stable and git-clean under code changes.
+    # The manifest is pure identity: name + root (+ proof, + component links).
+    # It carries no free-output hashes, so editing the implementation (free)
+    # never churns it — a self-hosted record stays byte-stable and git-clean.
     manifest = {"name": recipe["record"]["name"], "root": claim(recipe, d)}
     if proof:
         manifest["proof"] = proof
+    if components:
+        manifest["components"] = components
     os.makedirs(os.path.join(d, STORE), exist_ok=True)
     _write(os.path.join(d, STORE, "manifest.json"), manifest)
     return manifest
+
+
+def read_manifest(d: str) -> dict:
+    return _read(os.path.join(d, STORE, "manifest.json"))
 
 
 def verify(d: str) -> dict:

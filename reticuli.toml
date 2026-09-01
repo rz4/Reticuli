@@ -40,6 +40,12 @@ request = "regenerate reticuli/pack.py to pass the gate"
 
 [[step]]
 kind = "produce"
+output = "reticuli/registry.py"
+class = "free"
+request = "regenerate reticuli/registry.py to pass the gate"
+
+[[step]]
+kind = "produce"
 output = "reticuli/render.py"
 class = "free"
 request = "regenerate reticuli/render.py to pass the gate"

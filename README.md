@@ -124,8 +124,13 @@ when you add or remove files (it's a lockfile).
 | phase | verb | |
 |---|---|---|
 | vapor | `init` · `run` · `status` | set up · record a command · where am I |
-| liquid | `condense` · `verify` · `show` · `pack` | seal · does it hold · print the recipe · self-record |
+| liquid | `condense` · `verify` · `show` · `pack` · `records` · `deps` · `pull` | seal · does it hold · print the recipe · self-record · the drawer · the DAG · depend on a record |
 | solid | `realize` · `prove` | an independent redo · the three-machine test |
+
+Records compose: a dry seed that matches a registry record's output links the
+two (content-addressed). `ret pull` brings a component in as seeds; `ret deps`
+draws the DAG. `solid` is a record's view of itself; `dry` is a dependent's view
+of the same record.
 
 ## Design notes
 

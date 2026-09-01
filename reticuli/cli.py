@@ -13,7 +13,8 @@ import time
 from . import condense as condense_mod
 from . import kernel
 from . import pack as pack_mod
-from .render import emit, short, table, toml
+from . import registry as registry_mod
+from .render import emit, short, table, toml, tree
 
 # -- session setup (git-native) ---------------------------------------------
 
@@ -83,8 +84,36 @@ def _r_realize(r: dict) -> None:
 
 def _r_condense(r: dict) -> None:
     toml(("condense", {"verdict": "condensed", "name": r["name"],
-                       "root": short(r["root"]), "into": r["into"]}))
+                       "root": short(r["root"]), "into": r["into"]}),
+         *[("[[depends_on]]", {"component": c["component"], "root": short(c["root"]),
+                               "via": c["input"]}) for c in r.get("components", [])])
     print("# git add this record to share it — identity is deterministic")
+
+
+def _r_records(r: dict) -> None:
+    print(f"# records in {os.path.basename(r['workspace']) or r['workspace']}")
+    table([{"name": x["name"], "phase": x["phase"], "drawer": x["drawer"],
+            "root": short(x["root"]), "path": x["path"]} for x in r["records"]],
+          ("name", "name"), ("phase", "phase"), ("drawer", "drawer"),
+          ("root", "root"), ("path", "path"))
+
+
+def _r_deps(r: dict) -> None:
+    total = sum(len(n["depends_on"]) for n in r["records"])
+    node = {"children": [
+        {"label": f"{n['phase']:<7} {n['name']}  {short(n['root'])}",
+         "children": [{"label": f"{e['input']}  ⇐  {e['component']}@{short(e['root'])}"
+                       + ("" if e["status"] == "ok" else "  (missing)")}
+                      for e in n["depends_on"]]}
+        for n in r["records"]]}
+    ws = os.path.basename(r["workspace"].rstrip(os.sep)) or r["workspace"]
+    tree(f"deps  {ws}  ·  {len(r['records'])} record(s), {total} link(s)", node)
+
+
+def _r_pull(r: dict) -> None:
+    toml(("pull", {"component": r["component"], "root": short(r["root"]),
+                   "drawer": r["drawer"], "registered": r["registered"],
+                   "materialized": r["materialized"]}))
 
 
 def _r_prove(r: dict) -> None:
@@ -162,8 +191,13 @@ def main(argv: list[str] | None = None) -> int:
     q.add_argument("--gate", required=True)
     q.add_argument("--output", required=True)
     q.add_argument("-C", "--root", default=".")
+    add("records", help="the session's record drawer").add_argument("workspace", nargs="?", default=".")
+    add("deps", help="the component DAG: which records depend on which").add_argument("workspace", nargs="?", default=".")
+    q = add("pull", help="bring a record in as a dependency (dry seeds)")
+    q.add_argument("component")
+    q.add_argument("-C", "--into", default=".")
     add("status", help="where you are: phase and freshness").add_argument("workspace", nargs="?", default=".")
-    for name in ("verify", "realize", "prove", "condense", "pack", "status"):
+    for name in ("verify", "realize", "prove", "condense", "pack", "records", "deps", "pull", "status"):
         sub.choices[name].add_argument("--json", action="store_true")
 
     args = p.parse_args(argv)
@@ -194,6 +228,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "pack":
             r = pack_mod.pack(args.root, args.name, args.produce, args.seed, args.gate, args.output)
             return emit(r, j, _r_pack)
+        if args.cmd == "records":
+            ws = os.path.abspath(args.workspace)
+            return emit({"workspace": ws, "records": registry_mod.records(ws)}, j, _r_records)
+        if args.cmd == "deps":
+            return emit(registry_mod.deps(args.workspace), j, _r_deps)
+        if args.cmd == "pull":
+            return emit(registry_mod.pull(args.component, args.into), j, _r_pull)
         if args.cmd == "status":
             return emit(status(args.workspace), j, _r_status)
     except kernel.ReticuliError as e:
