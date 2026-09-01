@@ -30,9 +30,11 @@ GATE = "grep -qi hello greeting.txt && printf verified > VERIFIED"
 
 def _mk(d: str, greeting: str) -> str:
     os.makedirs(d)
-    open(os.path.join(d, "reticuli.toml"), "w").write(RECIPE)
-    open(os.path.join(d, "greeting.txt"), "w").write(greeting)
-    subprocess.run(GATE, shell=True, cwd=d)      # warm run -> VERIFIED
+    with open(os.path.join(d, "reticuli.toml"), "w") as f:
+        f.write(RECIPE)
+    with open(os.path.join(d, "greeting.txt"), "w") as f:
+        f.write(greeting)
+    subprocess.run(GATE, shell=True, cwd=d, check=True)      # warm run -> VERIFIED
     return d
 
 
@@ -78,7 +80,8 @@ def test_freeze_dry_promotes_to_solid(tmp_path):
 def test_verify_detects_a_tampered_verdict(tmp_path):
     m1 = _mk(str(tmp_path / "m1"), "hello\n")
     kernel.seal(m1)
-    open(os.path.join(m1, "VERIFIED"), "w").write("tampered")   # pinned output changed
+    with open(os.path.join(m1, "VERIFIED"), "w") as f:
+        f.write("tampered")                                     # pinned output changed
     assert not kernel.verify(m1)["ok"]
 
 

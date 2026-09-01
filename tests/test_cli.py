@@ -12,9 +12,11 @@ RECIPE = ('[record]\nname = "g"\n\n[[step]]\nkind = "produce"\noutput = "g.txt"\
 
 def _rec(d: str, greeting: str) -> str:
     os.makedirs(d)
-    open(os.path.join(d, "reticuli.toml"), "w").write(RECIPE)
-    open(os.path.join(d, "g.txt"), "w").write(greeting)
-    subprocess.run("grep -qi hi g.txt && printf v > V", shell=True, cwd=d)
+    with open(os.path.join(d, "reticuli.toml"), "w") as f:
+        f.write(RECIPE)
+    with open(os.path.join(d, "g.txt"), "w") as f:
+        f.write(greeting)
+    subprocess.run("grep -qi hi g.txt && printf v > V", shell=True, cwd=d, check=True)
     kernel.seal(d)
     return d
 

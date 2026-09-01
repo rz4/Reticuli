@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 
-from reticuli import kernel, registry
+from reticuli import registry
 from reticuli.condense import condense
 
 
@@ -26,11 +26,11 @@ def test_condense_links_a_component_and_deps_shows_it(tmp_path):
         f.write("LIBDATA")
     with open(os.path.join(d, "out.txt"), "w") as f:
         f.write("built\n")
+    events = ({"event": "read", "path": "dep.txt"},
+              {"event": "write", "path": "out.txt"},
+              {"event": "bash", "cmd": "cat out.txt dep.txt > result.txt"})
     with open(os.path.join(d, ".reticuli", "vapor.jsonl"), "w") as f:
-        for e in ({"event": "read", "path": "dep.txt"},
-                  {"event": "write", "path": "out.txt"},
-                  {"event": "bash", "cmd": "cat out.txt dep.txt > result.txt"}):
-            f.write(json.dumps(e) + "\n")
+        f.write("".join(json.dumps(e) + "\n" for e in events))
     subprocess.run("cat out.txt dep.txt > result.txt", shell=True, cwd=d, check=True)
     r = condense(d, ["out.txt", "result.txt"], os.path.join(d, ".reticuli", "liquid", "B"), name="B")
     assert r["ok"]
@@ -41,7 +41,7 @@ def test_condense_links_a_component_and_deps_shows_it(tmp_path):
 
 
 def test_pull_registers_and_materializes(tmp_path):
-    d, ra = _component_a(tmp_path)
+    _, ra = _component_a(tmp_path)
     dst = str(tmp_path / "consumer")
     os.makedirs(os.path.join(dst, ".reticuli"))
     r = registry.pull(ra["into"], dst)
