@@ -218,8 +218,10 @@ room: the model reconstructs each file *blind* from the check and has to land
 in the basin.
 
 ```bash
+# run from the repo root; producers run with the clean room as cwd, so the
+# script path must be absolute ($PWD resolves before realize hands it off)
 ret realize . --recursive \
-  --producer "python3 scripts/producer_claude.py" --into M3
+  --producer "python3 $PWD/scripts/producer_claude.py" --into M3
 ```
 
 [`scripts/producer_openai.py`](../scripts/producer_openai.py) is the same
@@ -264,6 +266,8 @@ record's view of itself; `dry` is a dependent's view of the same record.
 ## Design notes
 
 - [`basin.md`](basin.md) — the basin of attraction, and self-hosting.
+- [`impedance.md`](impedance.md) — the record as an impedance-matching problem:
+  the spec, the load, the center of the Smith chart, and the minimal-cost probe.
 - [`landscape.md`](landscape.md) — prior art and impact: what exists, what
   doesn't, and the limits that will decide it.
 - [`three_machine_problem_white_paper.pdf`](three_machine_problem_white_paper.pdf)
