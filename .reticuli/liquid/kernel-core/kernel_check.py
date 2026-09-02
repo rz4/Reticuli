@@ -13,6 +13,15 @@ escaping gate refuses, and the ledger tells the truth about the jail either
 way. Writes KERNEL_OK iff it conforms. Stdlib only, so it runs in any clean
 room.
 
+THE EXECUTION CONTRACT: gates are judged *inside* a platform jail when the host
+has one (sandbox-exec on darwin, bwrap on linux), and jails do not nest. The
+environment variable RETICULI_JAILED means "you are already inside one" — a
+conformant kernel must then inherit (run the gate unwrapped, record its
+quarantine as inherited) rather than re-apply a sandbox, which would refuse.
+To make a producer's test environment equal the verdict environment, this check
+re-execs itself under the host jail when run bare — so a kernel that re-applies
+fails here, visibly, not only at the final gate.
+
 Any kernel that passes this check hashes to the same kernel-core root — the
 basin of kernels is what the component *is*. The whole toolchain layers on top:
 its own gate ([`whole_check.py`](whole_check.py)) certifies the CLI, condense,
@@ -43,6 +52,32 @@ output = "V"
 run = "grep -qi hello g.txt && printf v > V"
 class = "validated"
 '''
+
+
+def _rejail() -> None:
+    """Judge in the verdict's environment: if the host has a jail and we are
+    not already inside one, re-exec this check under it, RETICULI_JAILED set.
+    Jails do not nest — a conformant kernel inherits, never re-applies."""
+    if os.environ.get("RETICULI_JAILED"):
+        return                                       # already judged inside a jail
+    cwd = os.path.realpath(os.getcwd())
+    tmp = os.path.join(cwd, ".kc-tmp")
+    os.makedirs(tmp, exist_ok=True)
+    env = {**os.environ, "TMPDIR": tmp}
+    argv = None
+    if sys.platform == "darwin" and shutil.which("sandbox-exec"):
+        profile = ('(version 1)(allow default)(deny network*)(deny file-write*)'
+                   f'(allow file-write* (subpath "{cwd}") (subpath "/dev"))')
+        argv, env["RETICULI_JAILED"] = ["sandbox-exec", "-p", profile], "seatbelt"
+    elif shutil.which("bwrap") and subprocess.run(
+            ["bwrap", "--ro-bind", "/", "/", "--unshare-net", "true"],
+            capture_output=True, check=False).returncode == 0:
+        argv = ["bwrap", "--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev",
+                "--proc", "/proc", "--bind", cwd, cwd, "--unshare-net",
+                "--die-with-parent"]
+        env["RETICULI_JAILED"] = "bubblewrap"
+    if argv:
+        os.execvpe(argv[0], argv + [sys.executable, os.path.abspath(__file__)], env)
 
 
 def battery() -> None:
@@ -117,6 +152,7 @@ def battery() -> None:
 
 
 if __name__ == "__main__":
+    _rejail()
     battery()
     with open("KERNEL_OK", "w") as f:
         f.write("kernel-ok\n")

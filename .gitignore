@@ -2,6 +2,7 @@
 .reticuli/vapor.jsonl
 .reticuli/**/ledger.jsonl
 .reticuli/**/tmp/
+.kc-tmp/
 
 # transient sweep rooms (the profile jsonl they leave is committed; the lock too)
 runs/

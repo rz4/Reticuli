@@ -209,7 +209,7 @@ fresh README against `readme_check.py`, and — because all of it is free and th
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo yields a **per-layer cost envelope**: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
-roots, inner to outer: `787c5fcd…`, `26a1f7a0…`, `f1168e37…`, `b3d17a3e…`,
+roots, inner to outer: `81622000…`, `26a1f7a0…`, `f1168e37…`, `b3d17a3e…`,
 surface `9213b976…`, whole `4a6c4e3e…`. `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
 and its pinned verdict, contact to leaf.

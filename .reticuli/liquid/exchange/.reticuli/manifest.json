@@ -4,13 +4,13 @@
       "component": "kernel-core",
       "input": "reticuli/__init__.py",
       "output": "reticuli/__init__.py",
-      "root": "787c5fcd9a9378259f402b08ca111509c7c1ed4f070eb81de95c113b160d17f0"
+      "root": "816220002c93548f0245425439938548e85b20399ea87b01efa7d6abcc0065ad"
     },
     {
       "component": "kernel-core",
       "input": "reticuli/kernel.py",
       "output": "reticuli/kernel.py",
-      "root": "787c5fcd9a9378259f402b08ca111509c7c1ed4f070eb81de95c113b160d17f0"
+      "root": "816220002c93548f0245425439938548e85b20399ea87b01efa7d6abcc0065ad"
     }
   ],
   "name": "exchange",
