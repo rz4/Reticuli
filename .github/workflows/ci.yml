@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest ruff
+
+      - name: ruff
+        run: ruff check reticuli tests scripts kernel_check.py whole_check.py
+
+      - name: tests
+        run: pytest -q
+
+      - name: self-host verifies fresh
+        run: |
+          ret verify .
+          ret verify .reticuli/liquid/kernel-core
+
+      - name: recursive rehydrate reproduces the claim
+        run: |
+          ret realize . --recursive \
+            --producer 'mkdir -p reticuli && cp "$GITHUB_WORKSPACE/$RETICULI_OUTPUT" "$RETICULI_OUTPUT"' \
+            --into "$RUNNER_TEMP/m3"
+          repo=$(ret verify . --json | python -c "import json,sys;print(json.load(sys.stdin)['root'])")
+          m3=$(ret verify "$RUNNER_TEMP/m3" --json | python -c "import json,sys;print(json.load(sys.stdin)['root'])")
+          echo "whole root repo=$repo  m3=$m3"
+          test "$repo" = "$m3"
