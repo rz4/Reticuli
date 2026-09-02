@@ -50,6 +50,6 @@ kernel basin is exactly the set of kernels that can carry the stack above them.
 That re-mints the chain (a check moved), and the next probe measures whether the
 cheapest load now reaches center on more rungs.
 
-The visual companion is [`basin_lagrange.png`](experiments/basin_lagrange.png): ζ¹ and ζ²
+The visual companion is [`basin_lagrange.png`](../experiments/basin_lagrange.png): ζ¹ and ζ²
 Reticuli as two wells, the spec at the saddle between them. Same center, two
 languages — the gravitational L1 and the electrical `Γ = 0`.

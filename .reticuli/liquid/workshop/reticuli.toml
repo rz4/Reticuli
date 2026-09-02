@@ -94,12 +94,6 @@ request = "regenerate scripts/envelope.py to pass the gate"
 
 [[step]]
 kind = "produce"
-output = "scripts/lagrange.py"
-class = "free"
-request = "regenerate scripts/lagrange.py to pass the gate"
-
-[[step]]
-kind = "produce"
 output = "scripts/probe.py"
 class = "free"
 request = "regenerate scripts/probe.py to pass the gate"

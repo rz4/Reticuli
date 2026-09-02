@@ -95,13 +95,6 @@ request = "supplied by the workshop component"
 
 [[step]]
 kind = "produce"
-output = "scripts/lagrange.py"
-class = "free"
-from = "workshop"
-request = "supplied by the workshop component"
-
-[[step]]
-kind = "produce"
 output = "scripts/probe.py"
 class = "free"
 from = "workshop"
@@ -276,60 +269,6 @@ kind = "produce"
 output = ".github/workflows/release.yml"
 class = "free"
 request = "regenerate .github/workflows/release.yml to pass the gate"
-
-[[step]]
-kind = "produce"
-output = "docs/basin.md"
-class = "free"
-request = "regenerate docs/basin.md to pass the gate"
-
-[[step]]
-kind = "produce"
-output = "docs/guide.md"
-class = "free"
-request = "regenerate docs/guide.md to pass the gate"
-
-[[step]]
-kind = "produce"
-output = "docs/impedance.md"
-class = "free"
-request = "regenerate docs/impedance.md to pass the gate"
-
-[[step]]
-kind = "produce"
-output = "docs/landscape.md"
-class = "free"
-request = "regenerate docs/landscape.md to pass the gate"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/README.md"
-class = "free"
-request = "regenerate examples/cube/README.md to pass the gate"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/checker.py"
-class = "free"
-request = "regenerate examples/cube/checker.py to pass the gate"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/rotating_cube.py"
-class = "free"
-request = "regenerate examples/cube/rotating_cube.py to pass the gate"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/rotating_cube_alt.py"
-class = "free"
-request = "regenerate examples/cube/rotating_cube_alt.py to pass the gate"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/rotating_cube_alt2.py"
-class = "free"
-request = "regenerate examples/cube/rotating_cube_alt2.py to pass the gate"
 
 [[step]]
 kind = "gate"

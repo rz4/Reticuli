@@ -54,7 +54,7 @@ jobs:
       - name: recursive rehydrate reproduces the claim
         run: |
           ret realize . --recursive \
-            --producer 'mkdir -p reticuli && cp "$GITHUB_WORKSPACE/$RETICULI_OUTPUT" "$RETICULI_OUTPUT"' \
+            --producer 'mkdir -p "$(dirname "$RETICULI_OUTPUT")" 2>/dev/null; cp "$GITHUB_WORKSPACE/$RETICULI_OUTPUT" "$RETICULI_OUTPUT"' \
             --into "$RUNNER_TEMP/m3"
           repo=$(ret verify . --json | python -c "import json,sys;print(json.load(sys.stdin)['root'])")
           m3=$(ret verify "$RUNNER_TEMP/m3" --json | python -c "import json,sys;print(json.load(sys.stdin)['root'])")

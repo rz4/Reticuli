@@ -1,6 +1,6 @@
 [record]
 name = "reticuli"
-inputs = ["readme_check.py"]
+inputs = ["docs_check.py"]
 
 [[step]]
 kind = "produce"
@@ -89,13 +89,6 @@ request = "supplied by the vessel component"
 [[step]]
 kind = "produce"
 output = "scripts/envelope.py"
-class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
-
-[[step]]
-kind = "produce"
-output = "scripts/lagrange.py"
 class = "free"
 from = "vessel"
 request = "supplied by the vessel component"
@@ -284,66 +277,9 @@ request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
-output = "docs/basin.md"
-class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
-
-[[step]]
-kind = "produce"
 output = "docs/guide.md"
 class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
-
-[[step]]
-kind = "produce"
-output = "docs/impedance.md"
-class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
-
-[[step]]
-kind = "produce"
-output = "docs/landscape.md"
-class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/README.md"
-class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/checker.py"
-class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/rotating_cube.py"
-class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/rotating_cube_alt.py"
-class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
-
-[[step]]
-kind = "produce"
-output = "examples/cube/rotating_cube_alt2.py"
-class = "free"
-from = "vessel"
-request = "supplied by the vessel component"
+request = "regenerate docs/guide.md to pass the gate"
 
 [[step]]
 kind = "produce"
@@ -355,4 +291,4 @@ request = "regenerate README.md to pass the gate"
 kind = "gate"
 output = "VERIFIED"
 class = "validated"
-run = "python3 readme_check.py"
+run = "python3 docs_check.py"

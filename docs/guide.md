@@ -2,7 +2,7 @@
 
 The long form. The [README](../README.md) is the 60-second contact layer — a
 free output of the repo's own self-record, gated by
-[`readme_check.py`](../readme_check.py); this guide is where the depth lives.
+[`docs_check.py`](../docs_check.py); this guide is where the depth lives.
 
 ## The one idea: the root *is* the claim
 
@@ -60,7 +60,7 @@ tolerance = 2.0
 2  M3       c124ba320206…
 ```
 
-See [`examples/cube`](../examples/cube): three genuinely different
+See [`docs/experiments/cube`](experiments/cube/): three genuinely different
 rotating-cube implementations (≈0.1 code similarity) all certify against one
 fixed checker.
 
@@ -193,8 +193,8 @@ by [`scripts/selfrecord.py`](../scripts/selfrecord.py):
 | **agents** | `+ hooks.py` | [`agents_check.py`](../agents_check.py) | the agent handshake → `AGENTS_OK` |
 | **surface** | `+ {cli,__main__}.py` | [`surface_check.py`](../surface_check.py) | the human handshake → `SURFACE_OK` |
 | **workshop** | `+ scripts/*.py, tests/*.py` | [`workshop_check.py`](../workshop_check.py) | the bench: suite passes AND has teeth (a killed `seal` must fail it) → `WORKSHOP_OK` |
-| **vessel** | `+ pyproject, CI, docs, example, git skin` | [`vessel_check.py`](../vessel_check.py) | the skin it ships in; LICENSE and logo pinned as seeds → `VESSEL_OK` |
-| **reticuli** (contact) | `+ README.md` | [`readme_check.py`](../readme_check.py) | consumable in a minute, no lies → `VERIFIED` |
+| **vessel** | `+ pyproject, CI, git skin` | [`vessel_check.py`](../vessel_check.py) | the skin it ships in; LICENSE and logo pinned as seeds → `VESSEL_OK` |
+| **reticuli** (documentation) | `+ README.md, docs/guide.md` | [`docs_check.py`](../docs_check.py) | the hand-off: a minute for contact, depth for engineers and agents, every verb and env var documented, no lies → `VERIFIED` |
 
 Each rung obtains the layers beneath it from its predecessor as `from` produce
 steps — free code it *layers on*, not bytes it pins. Even the README is free
@@ -207,12 +207,12 @@ ret realize . --recursive --producer <model> --into M3
 
 rehydrates **leaf-first**: it regrows the kernel from `kernel_check.py`,
 threads it up through exchange, authoring, agents, and the surface, writes a
-fresh README against `readme_check.py`, and — because all of it is free and the
+fresh README against `docs_check.py`, and — because all of it is free and the
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo yields a **per-layer cost envelope**: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
 roots, inner to outer: `81622000…`, `26a1f7a0…`, `f1168e37…`, `b3d17a3e…`,
-`9213b976…`, workshop `e21fa12e…`, vessel `8943ae81…`, whole `9fdd89b0…`.
+`9213b976…`, workshop `efc35bfc…`, vessel `59845d94…`, whole `4a8625e0…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
 and its pinned verdict, contact to leaf.
@@ -291,8 +291,8 @@ either way — the claim reproduces from the leaves, not just one layer.
 
 | phase | verb | |
 |---|---|---|
-| vapor | `init` · `hooks` · `run` · `status` · `tree` | set up · wire the agent · record a command · where am I · two lenses: a session's dry/wet, a record's anatomy |
-| liquid | `condense` · `verify` · `audit` · `show` · `pack` · `records` · `deps` · `pull` · `attest` | seal · does the identity hold · do the verdicts reproduce · print the recipe · self-record · the drawer · the DAG · depend on a record · sign it for others |
+| vapor | `init` · `hooks` · `hook` · `run` · `status` · `tree` | set up · wire the agent · receive one agent event (stdin) · record a command · where am I · two lenses: a session's dry/wet, a record's anatomy |
+| liquid | `condense` · `verify` · `audit` · `show` · `pack` · `records` · `deps` · `pull` · `export` · `import` · `attest` | seal · does the identity hold · do the verdicts reproduce · print the recipe · self-record · the drawer · the DAG · depend on a record · deterministic tar out · unpack and verify back · sign it for others |
 | solid | `realize` · `realize --recursive` · `prove` | an independent redo · redo the whole component DAG · the three-machine test |
 
 Records compose: a dry seed that matches a registry record's output links the
@@ -300,12 +300,28 @@ two (content-addressed). `ret pull` brings a component in as seeds; `ret deps`
 draws the DAG; `ret realize --recursive` rehydrates it bottom-up. `solid` is a
 record's view of itself; `dry` is a dependent's view of the same record.
 
+## The environment contract
+
+The variables a driver — human or agent — needs, all optional:
+
+- `RETICULI_QUARANTINE` — `auto` (default: jail gates when the platform has
+  one) · `require` (refuse without a jail) · `off`.
+- `RETICULI_JAILED` — set *by* the toolchain in a jailed gate's environment:
+  "you are already inside a jail — inherit, never re-apply." A conformant
+  kernel honors it; the kernel check enforces it.
+- `RETICULI_USAGE` — a file path handed to producers; write `{"tokens": n,
+  "usd": x}` there and the realization's ledger accounts real oracle cost.
+- `RETICULI_MODEL` — which model the bundled producers call
+  (`producer_claude.py`, `producer_claude_agentic.py`, `producer_openai.py`).
+- `RETICULI_AGENT_BUDGET` — the agentic producer's per-layer dollar cap: it
+  may run the gate and iterate until it passes or the budget is spent.
+
 ## Design notes
 
-- [`basin.md`](basin.md) — the basin of attraction, and self-hosting.
-- [`impedance.md`](impedance.md) — the record as an impedance-matching problem:
+- [`notes/basin.md`](notes/basin.md) — the basin of attraction, and self-hosting.
+- [`notes/impedance.md`](notes/impedance.md) — the record as an impedance-matching problem:
   the spec, the load, the center of the Smith chart, and the minimal-cost probe.
-- [`landscape.md`](landscape.md) — prior art and impact: what exists, what
+- [`notes/landscape.md`](notes/landscape.md) — prior art and impact: what exists, what
   doesn't, and the limits that will decide it.
 - [`three_machine_problem_white_paper.pdf`](three_machine_problem_white_paper.pdf)
   — the three-machine problem, stated tool-agnostically: seed design, oracle,

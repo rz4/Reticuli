@@ -14,7 +14,7 @@ supplied `from` its predecessor:
   workshop      + scripts/*.py + tests/*.py              the bench (free, with teeth)
   vessel        + pyproject, CI, docs, example, git skin  the skin it ships in
                   (seeds: LICENSE + logo.png — the law and the mark, pinned)
-  reticuli      + README.md  (repo root)                 contact: consumable, no lies
+  reticuli      + README.md, docs/guide.md  (repo root)    documentation: the hand-off
 
 Each rung is gated by its own check — the checks are the claims. `ret verify .`
 holds, `ret realize . --recursive` rehydrates the chain leaf-first, each rung
@@ -43,7 +43,7 @@ def _g(*patterns: str) -> list[str]:
 
 
 VESSEL_FREE = _g("pyproject.toml", ".gitignore", ".gitattributes",
-                 ".github/workflows/*.yml", "docs/*.md", "examples/cube/*")
+                 ".github/workflows/*.yml")
 
 # (name, own stratum, produce globs, check, verdict, extra seeds)
 RUNGS = [
@@ -61,14 +61,13 @@ RUNGS = [
      "workshop_check.py", "WORKSHOP_OK", []),
     ("vessel", VESSEL_FREE,
      ["reticuli/*.py", "scripts/*.py", "tests/*.py", "pyproject.toml",
-      ".gitignore", ".gitattributes", ".github/workflows/*.yml",
-      "docs/*.md", "examples/cube/*"],
+      ".gitignore", ".gitattributes", ".github/workflows/*.yml"],
      "vessel_check.py", "VESSEL_OK", ["LICENSE", "logo.png"]),
 ]
 
 WHOLE_GLOBS = ["reticuli/*.py", "scripts/*.py", "tests/*.py", "pyproject.toml",
                ".gitignore", ".gitattributes", ".github/workflows/*.yml",
-               "docs/*.md", "examples/cube/*", "README.md"]
+               "docs/guide.md", "README.md"]
 
 
 def _drawer(name: str) -> str:
@@ -99,7 +98,7 @@ if __name__ == "__main__":
         roots[name] = _build(name, supplied, globs, check, verdict, component, seeds)
         prev = name
     whole = pack.pack(ROOT, "reticuli", WHOLE_GLOBS,
-                      ["readme_check.py"], "python3 readme_check.py", "VERIFIED",
+                      ["docs_check.py"], "python3 docs_check.py", "VERIFIED",
                       component={"name": prev, "record": _drawer(prev),
                                  "outputs": list(supplied)})
     roots["reticuli"] = whole["root"]

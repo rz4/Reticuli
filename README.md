@@ -40,5 +40,5 @@ records, kernel to README, each rung regrown *blind* by a live model onto the
 same roots; even this file is a free output, gated only by its own
 consumability check.
 
-Depth: [the guide](docs/guide.md) · [the basin](docs/basin.md) ·
-[prior art](docs/landscape.md)
+Depth: [the guide](docs/guide.md) · [the basin](docs/notes/basin.md) ·
+[prior art](docs/notes/landscape.md)

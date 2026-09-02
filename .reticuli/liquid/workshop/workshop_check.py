@@ -24,8 +24,7 @@ import tempfile
 
 SCRIPTS = ["scripts/selfrecord.py", "scripts/probe.py", "scripts/sweep.py",
            "scripts/envelope.py", "scripts/producer_claude.py",
-           "scripts/producer_claude_agentic.py", "scripts/producer_openai.py",
-           "scripts/lagrange.py"]
+           "scripts/producer_claude_agentic.py", "scripts/producer_openai.py"]
 
 
 def _pytest(cwd: str) -> int:

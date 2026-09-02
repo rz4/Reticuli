@@ -55,9 +55,14 @@ Every file in the repo belongs to exactly one class, decided by one question —
   in the basin; the workshop rung's TEETH clause keeps a regenerated test
   suite honest (an empty suite cannot land).
 - **Residue** (what happened, never identity): experiment rows, specimens,
-  ledgers, traces, generated figures, retired data. Lives under
-  `docs/experiments/` or is gitignored; link-checks treat it as a declared
-  namespace, never a requirement.
+  ledgers, traces, generated figures and their tooling (`lagrange.py`), the
+  cube experiment (whose deliberately weak checker is the documented
+  Goodhart exhibit), retired data — under `docs/experiments/` — and
+  **thought residue**: the essays under `docs/notes/` (basin, impedance,
+  landscape) and the white paper, which record thinking and must never be
+  "regenerated." Link-checks treat both namespaces as declared, never
+  required. The claimed documentation is README + docs/guide.md (docs_check):
+  the hand-off surface, held to verb-complete, env-complete, link-sound.
 
 **The promotion rule (D):** tests are where knowledge is *discovered*; checks
 are where it is *ratified*. When a test encodes claim-critical knowledge (the

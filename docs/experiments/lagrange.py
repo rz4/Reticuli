@@ -8,7 +8,7 @@ That saddle is where the *spec* sits: massless next to the implementations,
 reproducible into either. The minimal-USD realization is the spec arriving at
 L1 — trivial cost, then downhill to a valid star.
 
-    python3 scripts/lagrange.py [out.png]
+    python3 docs/experiments/lagrange.py [out.png]
 """
 import sys
 
