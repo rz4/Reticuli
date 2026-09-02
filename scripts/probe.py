@@ -66,10 +66,14 @@ def probe(name: str, d: str, producer: str, label: str) -> dict:
             "seconds": cost.get("seconds")}
 
 
-def main(producer: str, label: str) -> int:
+def main(producer: str, label: str, only: str | None = None) -> int:
     when = datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds")
+    rungs = [(n, d) for n, d in RUNGS if only in (None, n)]
+    if not rungs:
+        print(f"no such layer: {only} (choose from {[n for n, _ in RUNGS]})")
+        return 2
     rows = []
-    for name, d in RUNGS:
+    for name, d in rungs:
         print(f"# probing {name} …", flush=True)
         r = probe(name, d, producer, label)
         r["when"] = when
@@ -91,7 +95,7 @@ def main(producer: str, label: str) -> int:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4):
         print(__doc__)
         sys.exit(2)
-    sys.exit(main(sys.argv[1], sys.argv[2]))
+    sys.exit(main(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) == 4 else None))
