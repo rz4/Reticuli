@@ -224,8 +224,21 @@ ret realize . --recursive \
   --producer "python3 $PWD/scripts/producer_claude.py" --into M3
 ```
 
+There are two producer *modes*, measuring two different questions.
+[`producer_claude.py`](../scripts/producer_claude.py) is **oneshot** — one blind
+call per file, no tools, no ability to run the gate: "can the model land in the
+basin from the contract *alone*." [`producer_claude_agentic.py`](../scripts/producer_claude_agentic.py)
+is **agentic** — one autonomous session in the room, with tools, that may run the
+gate, see it fail, and fix until it passes or a dollar budget
+(`RETICULI_AGENT_BUDGET`) is spent: "can an agent land it given the ability to
+test, and at what cost." Oneshot is cheaper and honest about raw capability;
+agentic lands more and turns the reflection profile into a *repair-cost* map. The
+room holds only the check and the already-free lower layers — no reference — so
+the agent iterating against the gate is honest "make the tests pass," and
+realize's jailed gate stays the authoritative verdict.
+
 [`scripts/producer_openai.py`](../scripts/producer_openai.py) is the same
-contract for OpenAI models, and [`scripts/envelope.py`](../scripts/envelope.py)
+oneshot contract for OpenAI models, and [`scripts/envelope.py`](../scripts/envelope.py)
 sweeps a producer across the whole chain and appends one row *per rung per run*
 to [`docs/envelope.jsonl`](envelope.jsonl) — the provenance cost envelope
 across diverse models, taken at each layer.
