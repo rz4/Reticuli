@@ -9,11 +9,14 @@ Default mode is **oneshot** (lowest privilege): one `claude -p` text call per
 produce file, NO tools, NO autonomous loop. The model gets the recipe and the
 check inline and must return the file blind (it cannot run the gate to iterate).
 The script writes the returned text; realize then certifies the record cold.
+Real oracle usage (tokens, usd) is reported back through $RETICULI_USAGE, so the
+redo's ledger accounts what the model actually cost.
 
 Usage:
     ret realize <record> --producer "python3 scripts/producer_claude.py" --into M3
     RETICULI_MODEL=claude-opus-4-8 ret realize ...        # pick the model
 """
+import json
 import os
 import re
 import subprocess
@@ -70,10 +73,25 @@ The record's files are {produce} (each reconstructed the same way).
 Standard library only. Correct over clever. Write `{OUT}` now.{present_text}"""
 
 env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}   # subscription auth
-r = subprocess.run(["claude", "-p", prompt, "--model", MODEL],
+r = subprocess.run(["claude", "-p", prompt, "--model", MODEL, "--output-format", "json"],
                    env=env, capture_output=True, text=True, check=False)
 
 text = r.stdout
+try:                                   # the json envelope: result text + real usage
+    envelope = json.loads(text)
+    if not isinstance(envelope, dict):
+        raise TypeError("not an envelope")
+    text = envelope.get("result") or ""
+    u = envelope.get("usage") or {}
+    usage = {"tokens": int(u.get("input_tokens", 0)) + int(u.get("output_tokens", 0))}
+    if isinstance(envelope.get("total_cost_usd"), (int, float)):
+        usage["usd"] = envelope["total_cost_usd"]
+    upath = os.environ.get("RETICULI_USAGE")
+    if upath and usage["tokens"]:
+        with open(upath, "w", encoding="utf-8") as f:
+            json.dump(usage, f)
+except (json.JSONDecodeError, TypeError, ValueError, OSError):
+    pass                               # plain text from an older CLI — use as-is
 fence = re.search(r"```(?:[a-zA-Z0-9_+-]*)\n(.*?)```", text, re.DOTALL)   # take a code fence if present
 body = (fence.group(1) if fence else text).strip("\n")
 if body:

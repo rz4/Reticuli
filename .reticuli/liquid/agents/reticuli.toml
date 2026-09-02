@@ -1,0 +1,78 @@
+[record]
+name = "agents"
+inputs = ["agents_check.py"]
+
+[[step]]
+kind = "produce"
+output = "reticuli/__init__.py"
+class = "free"
+from = "authoring"
+request = "supplied by the authoring component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/attest.py"
+class = "free"
+from = "authoring"
+request = "supplied by the authoring component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/condense.py"
+class = "free"
+from = "authoring"
+request = "supplied by the authoring component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/feedback.py"
+class = "free"
+from = "authoring"
+request = "supplied by the authoring component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/hooks.py"
+class = "free"
+request = "regenerate reticuli/hooks.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/kernel.py"
+class = "free"
+from = "authoring"
+request = "supplied by the authoring component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/pack.py"
+class = "free"
+from = "authoring"
+request = "supplied by the authoring component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/registry.py"
+class = "free"
+from = "authoring"
+request = "supplied by the authoring component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/render.py"
+class = "free"
+from = "authoring"
+request = "supplied by the authoring component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/transfer.py"
+class = "free"
+from = "authoring"
+request = "supplied by the authoring component"
+
+[[step]]
+kind = "gate"
+output = "AGENTS_OK"
+class = "validated"
+run = "python3 agents_check.py"

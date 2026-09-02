@@ -31,5 +31,9 @@ line-length = 100
 # conformance gates and the builder import the (re)generated package after
 # sys.path.insert; the split import block is deliberate, not unsorted
 "kernel_check.py" = ["I001"]
+"exchange_check.py" = ["I001"]
+"authoring_check.py" = ["I001"]
+"agents_check.py" = ["I001"]
 "whole_check.py" = ["I001"]
 "scripts/selfrecord.py" = ["I001"]
+"scripts/envelope.py" = ["I001"]

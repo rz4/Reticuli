@@ -1,60 +1,89 @@
-"""Toolchain conformance gate — the seed of the repo's whole self-record.
+"""Surface conformance gate — the seed of the repo's whole self-record.
 
-Layers on `kernel-core`: imports the full CLI surface (so a broken module fails
-the gate, not just a broken kernel) and runs a functional condense -> verify ->
-rehydrate cycle through the higher layers (condense, registry, render, feedback).
-Writes VERIFIED iff the toolchain built over a conformant kernel is itself
-conformant. Stdlib only, so it runs in any clean room.
-
-The kernel it exercises is supplied by the kernel-core component (a `from`
-produce step, free): `ret realize . --recursive` rehydrates kernel-core first,
-threads its kernel up, then regrows the toolchain and runs this gate.
+The outermost layer: the public handshake. Drives the CLI end-to-end through
+the layers beneath it (init -> run -> condense -> verify -> realize -> prove)
+and claims the volatile surface itself — argv grammar, exit codes, the shape of
+what a user sees (TOML verdicts, the cost block, --json underneath). The
+functional depth is claimed by the inner gates (kernel_check, exchange_check,
+authoring_check); this gate certifies the toolchain a *user* touches. Writes
+VERIFIED iff the surface built over conformant layers is itself conformant.
+Stdlib only, so it runs in any clean room.
 """
+import contextlib
+import io
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 
 sys.path.insert(0, ".")
 import reticuli.__main__   # the CLI entrypoint
-import reticuli.cli        # pulls condense, feedback, pack, registry, render, transfer
-from reticuli import feedback, kernel, registry, render
-from reticuli.condense import condense
+from reticuli import cli
+
+
+def _run(argv: list[str]) -> tuple[int, str]:
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
+        code = cli.main(argv)
+    return code, buf.getvalue()
 
 
 def battery() -> None:
-    # the CLI entrypoint is wired over the toolchain (validates both modules import)
-    assert reticuli.__main__.main is reticuli.cli.main, "entrypoint"
+    assert reticuli.__main__.main is cli.main, "entrypoint"
     d = tempfile.mkdtemp()
     try:
         ws = os.path.join(d, "ws")
-        os.makedirs(os.path.join(ws, ".reticuli"))
+        code, _ = _run(["init", ws])
+        assert code == 0, "init exits 0"
+        with open(os.path.join(ws, ".gitignore")) as f:
+            assert "ledger.jsonl" in f.read(), "init is git-native"
+
         with open(os.path.join(ws, "answer.txt"), "w") as f:
             f.write("42\n")
         gate = "grep -qx 42 answer.txt && printf ok > OK"
-        events = [{"event": "write", "path": "answer.txt"}, {"event": "bash", "cmd": gate}]
+        code, _ = _run(["run", gate, "-C", ws])
+        assert code == 0 and os.path.isfile(os.path.join(ws, "OK")), "run authors a gate"
+        events = [{"event": "prompt", "text": "write the answer", "ts": 5.0},
+                  {"event": "write", "path": "answer.txt", "ts": 6.0},
+                  {"event": "bash", "cmd": gate, "ts": 7.0}]
         with open(os.path.join(ws, ".reticuli", "vapor.jsonl"), "w") as f:
             f.write("\n".join(json.dumps(e) for e in events) + "\n")
-        subprocess.run(gate, shell=True, cwd=ws, check=True)
 
-        # the pilot senses a checked session as condensable
-        assert feedback.pilot(ws)["condensable"], "feedback"
-
-        # condense certifies it cold; the record verifies
         rec = os.path.join(ws, ".reticuli", "liquid", "answer")
-        assert condense(ws, ["OK"], rec, name="answer")["ok"], "condense"
-        assert kernel.verify(rec)["ok"], "verify"
+        code, _ = _run(["condense", ws, "--accept", "OK", "--into", rec, "--name", "answer"])
+        assert code == 0, "condense exits 0"
+        code, out = _run(["verify", rec])
+        assert code == 0 and "fresh" in out, "verify says fresh"
+        code, out = _run(["verify", rec, "--json"])
+        assert code == 0 and json.loads(out)["ok"], "--json underneath"
 
-        # an independent redo with different work lands on the same root (the basin)
         m3 = os.path.join(d, "m3")
-        kernel.realize(rec, "printf '42\\n' > answer.txt", m3)
-        assert kernel.verify(m3)["root"] == kernel.verify(rec)["root"], "basin"
+        code, out = _run(["realize", rec, "--producer", "printf '42\\n' > answer.txt",
+                          "--into", m3])
+        assert code == 0 and "calls" in out, "realize reports what it paid"
+        m2 = os.path.join(d, "m2")
+        shutil.copytree(rec, m2)
+        code, out = _run(["prove", rec, m2, m3])
+        assert code == 0, "prove exits 0"
+        assert "satisfied = true" in out and "[cost]" in out, "the verdict and the bill"
 
-        # the registry sees the record; render shapes the root without error
-        assert any(x["name"] == "answer" for x in registry.records(ws)), "registry"
-        assert render.short(kernel.verify(rec)["root"]), "render"
+        code, out = _run(["records", ws])
+        assert code == 0 and "answer" in out, "the drawer renders"
+
+        # the agent handshake at the surface: `ret hook` is silent, `ret hooks` wires
+        payload = {"hook_event_name": "UserPromptSubmit", "prompt": "again", "cwd": ws}
+        stdin, sys.stdin = sys.stdin, io.StringIO(json.dumps(payload))
+        try:
+            code, out = _run(["hook", "-C", ws])
+        finally:
+            sys.stdin = stdin
+        assert code == 0 and out == "", "hook exits 0 and prints nothing"
+        with open(os.path.join(ws, ".reticuli", "vapor.jsonl")) as f:
+            assert '"prompt"' in f.readlines()[-1], "the payload became a trace event"
+        code, _ = _run(["hooks", ws])
+        assert code == 0 and os.path.isfile(
+            os.path.join(ws, ".claude", "settings.json")), "hooks wires the agent"
     finally:
         shutil.rmtree(d, ignore_errors=True)
 

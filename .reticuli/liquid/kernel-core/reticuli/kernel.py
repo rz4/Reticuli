@@ -16,10 +16,14 @@ import json
 import os
 import shutil
 import subprocess
+import sys
+import time
 import tomllib
 
 STORE = ".reticuli"
 RECIPE = "reticuli.toml"
+LEDGER = os.path.join(STORE, "ledger.jsonl")
+TOLERANCE = 2.0                 # comparable cost: 1/2 <= C3/C1 <= 2, unless the claim declares
 
 
 class ReticuliError(Exception):
@@ -126,6 +130,9 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
     component: the bytes are supplied by the rehydrated component instead of the
     producer, so the output stays free (never pinned) yet layered. exist_ok
     tolerates a target already holding rehydrated deps (under .reticuli/deps).
+
+    Every oracle call and gate is accounted to the target's ledger — cost is
+    residue of the event, never part of the claim.
     """
     seed_from = seed_from or {}
     produce_from = produce_from or {}
@@ -140,19 +147,152 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
     for step in recipe.get("step", []):
         if step["kind"] == "produce" and _out(step) in produce_from:
             _copy(produce_from[_out(step)], os.path.join(into, _out(step)))
+    usage_path = os.path.join(into, STORE, "usage.json")
+    os.makedirs(os.path.join(into, STORE), exist_ok=True)
     for step in recipe.get("step", []):
         out = _out(step)
         if step["kind"] == "produce" and out in produce_from:
+            _ledger_add(into, {"event": "reuse", "output": out})
             continue
-        cmd = step["run"] if step["kind"] == "gate" else producer
         env = {**os.environ, "RETICULI_REQUEST": step.get("request", ""),
                "RETICULI_OUTPUT": out, "RETICULI": "1"}
-        r = subprocess.run(cmd, shell=True, cwd=into, env=env,
-                           capture_output=True, text=True, check=False)
+        t0 = time.monotonic()
+        if step["kind"] == "gate":
+            r, jailed_as = _jailed(step["run"], into, env)
+        else:
+            env["RETICULI_USAGE"] = usage_path
+            r = subprocess.run(producer, shell=True, cwd=into, env=env,
+                               capture_output=True, text=True, check=False)
         if r.returncode != 0 or not os.path.isfile(os.path.join(into, out)):
             raise ReticuliError(
                 f"redo failed at {out}: {(r.stderr or r.stdout).strip()[:200]}")
-    return {**seal(into), "into": into}
+        entry = {"event": "gate" if step["kind"] == "gate" else "oracle",
+                 "output": out, "seconds": round(time.monotonic() - t0, 3)}
+        if step["kind"] == "gate":
+            entry["quarantine"] = jailed_as
+        else:
+            entry.update({"calls": 1, **_usage(usage_path)})
+        _ledger_add(into, entry)
+    return {**seal(into), "into": into, "cost": cost(into)}
+
+
+# -- quarantine: a record's gates are not your shell -------------------------
+
+_PROFILE = """(version 1)
+(allow default)
+(deny network*)
+(deny file-write*)
+(allow file-write* (subpath "{room}") (subpath "/dev"))
+"""
+
+_BWRAP: bool | None = None
+
+
+def _bwrap_ok() -> bool:
+    global _BWRAP                      # probed once — a present-but-broken bwrap is "none"
+    if _BWRAP is None:
+        _BWRAP = bool(shutil.which("bwrap")) and subprocess.run(
+            ["bwrap", "--ro-bind", "/", "/", "--unshare-net", "true"],
+            capture_output=True, check=False).returncode == 0
+    return _BWRAP
+
+
+def jail(cmd: str, room: str) -> tuple[list[str] | str, str]:
+    """Wrap a gate command in the platform's jail: writes confined to the room,
+    network denied. Producers are never jailed — you chose that command; a
+    pulled record's gates you did not. RETICULI_QUARANTINE: auto (default) uses
+    a jail when the platform has one, require refuses to run without one, off
+    opts out. Whichever happened, the ledger records it."""
+    mode = os.environ.get("RETICULI_QUARANTINE", "auto")
+    if mode == "off":
+        return cmd, "off"
+    if os.environ.get("RETICULI_JAILED"):    # jails don't nest; the outer one holds
+        return cmd, "inherited"
+    room = os.path.realpath(room)
+    if sys.platform == "darwin":
+        profile = _PROFILE.format(room=room.replace('"', '\\"'))
+        return ["sandbox-exec", "-p", profile, "/bin/sh", "-c", cmd], "seatbelt"
+    if _bwrap_ok():
+        return ["bwrap", "--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev",
+                "--proc", "/proc", "--bind", room, room, "--unshare-net",
+                "--die-with-parent", "/bin/sh", "-c", cmd], "bubblewrap"
+    if mode == "require":
+        raise ReticuliError("quarantine required, but no jail here (sandbox-exec or bwrap)")
+    return cmd, "none"
+
+
+def _jailed(cmd: str, room: str, env: dict) -> tuple[subprocess.CompletedProcess, str]:
+    """Run a gate in the jail. TMPDIR moves inside the room so well-behaved
+    temp use stays confined; the jail refuses the rest."""
+    wrapped, status = jail(cmd, room)
+    if isinstance(wrapped, list):
+        tmp = os.path.join(os.path.realpath(room), STORE, "tmp")
+        os.makedirs(tmp, exist_ok=True)
+        env = {**env, "TMPDIR": tmp, "RETICULI_JAILED": status}
+    return subprocess.run(wrapped, shell=isinstance(wrapped, str), cwd=room, env=env,
+                          capture_output=True, text=True, check=False), status
+
+
+# -- the cost ledger: residue of the event, never part of the claim ----------
+
+
+def _ledger_add(d: str, entry: dict) -> None:
+    os.makedirs(os.path.join(d, STORE), exist_ok=True)
+    with open(os.path.join(d, LEDGER), "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, sort_keys=True) + "\n")
+
+
+def _usage(path: str) -> dict:
+    """Optional oracle-reported usage ({tokens, usd}), consumed once per call."""
+    if not os.path.isfile(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            u = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        u = {}
+    os.remove(path)
+    u = u if isinstance(u, dict) else {}
+    return {k: u[k] for k in ("tokens", "usd") if isinstance(u.get(k), (int, float))}
+
+
+def cost(d: str) -> dict | None:
+    """Total the machine's ledger — the paid cost of its realization event:
+    oracle calls, wall seconds, and tokens/usd where a producer reported them.
+    None if nothing was measured. The root never sees any of this."""
+    path = os.path.join(d, LEDGER)
+    if not os.path.isfile(path):
+        return None
+    totals = {"calls": 0, "seconds": 0.0, "tokens": 0, "usd": 0.0}
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            try:
+                e = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            for k in totals:
+                if isinstance(e.get(k), (int, float)):
+                    totals[k] += e[k]
+    totals["seconds"] = round(totals["seconds"], 3)
+    totals["usd"] = round(totals["usd"], 6)
+    return {k: v for k, v in totals.items() if v} or {"calls": 0}
+
+
+def _comparable(c1: dict | None, c3: dict | None, tol: float) -> dict:
+    """C3/C1 in the strongest unit both machines measured (usd > tokens > calls
+    > seconds), within [1/tol, tol]. An unmeasured machine is reported, not
+    failed: comparable is None and does not gate the test."""
+    if not c1 or not c3:
+        missing = " and ".join(m for m, c in (("M1", c1), ("M3", c3)) if not c)
+        return {"tolerance": tol, "comparable": None,
+                "note": f"unmeasured: no ledger on {missing}"}
+    unit = next((u for u in ("usd", "tokens", "calls", "seconds")
+                 if c1.get(u) and c3.get(u)), None)
+    if unit is None:
+        return {"tolerance": tol, "comparable": None, "note": "no shared measured unit"}
+    ratio = round(c3[unit] / c1[unit], 3)
+    return {"unit": unit, "c1": c1[unit], "c3": c3[unit], "ratio": ratio,
+            "tolerance": tol, "comparable": (1.0 / tol) <= ratio <= tol}
 
 
 # -- three_machine: THE INVARIANT -------------------------------------------
@@ -160,15 +300,19 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
 
 def three_machine(m1: str, m2: str, m3: str) -> dict:
     """M1 a claim, M2 a byte-reuse, M3 an independent redo. Valid iff all three
-    share a root: the redo reproduced the claim, the reuse proves the record is
-    self-contained."""
+    share a root — the redo reproduced the claim, the reuse proves the record is
+    self-contained — and, where both machines kept a ledger, the redo's cost is
+    comparable to the original's within the claim's declared tolerance."""
     roots = {name: verify(m)["root"] for name, m in (("M1", m1), ("M2", m2), ("M3", m3))}
     integrity = all(verify(m)["ok"] for m in (m1, m2, m3))
     reuse = _outputs(m2) == _outputs(m1)          # M2 is a byte-copy of M1
     equivalence = roots["M3"] == roots["M1"]       # M3 redid it to the same claim
+    tol = float(load_recipe(m1).get("record", {}).get("tolerance", TOLERANCE))
+    cost_ = _comparable(cost(m1), cost(m3), tol)
     return {"roots": roots, "integrity": integrity, "reuse": reuse,
-            "equivalence": equivalence,
-            "satisfied": integrity and reuse and equivalence}
+            "equivalence": equivalence, "cost": cost_,
+            "satisfied": integrity and reuse and equivalence
+            and cost_["comparable"] is not False}
 
 
 def freeze_dry(m1: str, m2: str, m3: str) -> dict:

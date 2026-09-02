@@ -10,8 +10,10 @@ import subprocess
 import sys
 import time
 
+from . import attest as attest_mod
 from . import condense as condense_mod
 from . import feedback as feedback_mod
+from . import hooks as hooks_mod
 from . import kernel
 from . import pack as pack_mod
 from . import registry as registry_mod
@@ -45,7 +47,8 @@ def init(project: str) -> dict:
         made.append({"path": ".reticuli/vapor.jsonl", "status": "created"})
     _ensure(os.path.join(root, ".gitignore"),
             ["# Reticuli: history is local — never committed",
-             ".reticuli/vapor.jsonl", ".reticuli/**/ledger.jsonl"], made, ".gitignore")
+             ".reticuli/vapor.jsonl", ".reticuli/**/ledger.jsonl",
+             ".reticuli/**/tmp/"], made, ".gitignore")
     _ensure(os.path.join(root, ".gitattributes"),
             ["# Reticuli: sealed bytes are binary — no text/CRLF conversion",
              ".reticuli/** -text"], made, ".gitattributes")
@@ -74,6 +77,31 @@ def _r_init(r: dict) -> None:
     print("# ready: work, `ret run` your checks, `ret condense` when it holds")
 
 
+def _r_attest(r: dict) -> None:
+    toml(("attest", {"name": r["name"], "root": short(r["root"]),
+                     "identity": r["identity"], "statement": r["statement"],
+                     "signature": r["signature"]}))
+    print("# commit the pair — the attestation travels with the record")
+
+
+def _r_attest_check(r: dict) -> None:
+    toml(("attest", {"name": r["name"], "root": short(r["root"]),
+                     "fresh": r["fresh"], "attested": r["ok"]}))
+    print()
+    table([{"identity": a["identity"], "verdict": a["verdict"],
+            "root_match": a["root_match"], "when": a["when"]}
+           for a in r["attestations"]] or
+          [{"identity": "(none)", "verdict": "", "root_match": None, "when": ""}],
+          ("identity", "identity"), ("verdict", "verdict"),
+          ("root_match", "root_match"), ("when", "when"))
+
+
+def _r_hooks(r: dict) -> None:
+    toml(("hooks", {"settings": r["settings"], "status": r["status"],
+                    "wired": r["wired"] or None}))
+    print("# needs `ret` on PATH; events flow once a session exists (`ret init`)")
+
+
 def _r_verify(r: dict) -> None:
     toml(("verify", {"name": r["name"], "phase": r["phase"],
                      "verdict": "fresh" if r["ok"] else "broken",
@@ -81,7 +109,10 @@ def _r_verify(r: dict) -> None:
 
 
 def _r_realize(r: dict) -> None:
-    toml(("rehydrate", {"name": r["name"], "root": short(r["root"]), "into": r["into"]}))
+    c = r.get("cost") or {}
+    toml(("rehydrate", {"name": r["name"], "root": short(r["root"]), "into": r["into"],
+                        "calls": c.get("calls"), "seconds": c.get("seconds"),
+                        "tokens": c.get("tokens"), "usd": c.get("usd")}))
 
 
 def _r_condense(r: dict) -> None:
@@ -127,9 +158,11 @@ def _r_import(r: dict) -> None:
 
 
 def _r_prove(r: dict) -> None:
+    c = r.get("cost") or {}
     toml(("prove", {"satisfied": r["satisfied"], "integrity": r["integrity"],
                     "reuse": r["reuse"], "equivalence": r["equivalence"],
-                    "minted_solid": r.get("minted")}))
+                    "cost": c.get("comparable"), "minted_solid": r.get("minted")}),
+         ("cost", {k: c.get(k) for k in ("unit", "c1", "c3", "ratio", "tolerance", "note")}))
     print()
     table([{"machine": m, "root": short(h)} for m, h in r["roots"].items()],
           ("machine", "machine"), ("root", "root"))
@@ -186,6 +219,10 @@ def main(argv: list[str] | None = None) -> int:
         return sub.add_parser(name, **kw)
 
     add("init", help="set up a git-native session").add_argument("project", nargs="?", default=".")
+    q = add("hook", help="consume one agent hook payload from stdin (silent; wired by `ret hooks`)")
+    q.add_argument("-C", "--workspace", default=None)
+    add("hooks", help="wire the project's agent to the trace (.claude/settings.json)") \
+        .add_argument("project", nargs="?", default=".")
     q = add("run", help="run a command and record it in the trace")
     q.add_argument("command")
     q.add_argument("-C", "--workspace", default=".")
@@ -217,6 +254,12 @@ def main(argv: list[str] | None = None) -> int:
     q = add("pull", help="bring a record in as a dependency (dry seeds)")
     q.add_argument("component")
     q.add_argument("-C", "--into", default=".")
+    q = add("attest", help="sign a realization with ssh-keygen -Y (or --check its attestations)")
+    q.add_argument("record")
+    q.add_argument("--key", default=None, metavar="SSH_KEY")
+    q.add_argument("--as", dest="identity", default=None, metavar="IDENTITY")
+    q.add_argument("--check", action="store_true")
+    q.add_argument("--signers", default=None, metavar="ALLOWED_SIGNERS")
     q = add("export", help="pack a record into a deterministic tar")
     q.add_argument("record")
     q.add_argument("tar")
@@ -226,7 +269,7 @@ def main(argv: list[str] | None = None) -> int:
     add("status", help="where you are: phase and freshness (or a session's progress)").add_argument("workspace", nargs="?", default=".")
     add("tree", help="the session through Reticuli's lens: dry/wet, covered/uncovered").add_argument("workspace", nargs="?", default=".")
     for name in ("verify", "realize", "prove", "condense", "pack", "records",
-                 "deps", "pull", "export", "import", "status", "tree"):
+                 "deps", "pull", "export", "import", "status", "tree", "hooks", "attest"):
         sub.choices[name].add_argument("--json", action="store_true")
 
     args = p.parse_args(argv)
@@ -234,6 +277,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.cmd == "init":
             return emit(init(args.project), False, _r_init)
+        if args.cmd == "hook":
+            hooks_mod.consume(args.workspace)   # silent: hook stdout can leak into the agent
+            return 0
+        if args.cmd == "hooks":
+            return emit(hooks_mod.install(args.project), j, _r_hooks)
         if args.cmd == "run":
             return run(args.command, args.workspace)
         if args.cmd == "condense":
@@ -265,6 +313,15 @@ def main(argv: list[str] | None = None) -> int:
             return emit(registry_mod.deps(args.workspace), j, _r_deps)
         if args.cmd == "pull":
             return emit(registry_mod.pull(args.component, args.into), j, _r_pull)
+        if args.cmd == "attest":
+            if args.check:
+                r = attest_mod.check(args.record, args.signers)
+                emit(r, j, _r_attest_check)
+                return 0 if r["ok"] else 1
+            if not args.key or not args.identity:
+                print("ret: attest needs --key and --as (or --check)", file=sys.stderr)
+                return 2
+            return emit(attest_mod.attest(args.record, args.key, args.identity), j, _r_attest)
         if args.cmd == "export":
             return emit(transfer_mod.export(args.record, args.tar), j, _r_export)
         if args.cmd == "import":

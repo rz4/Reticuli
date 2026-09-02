@@ -27,6 +27,7 @@ jobs:
 
       - name: install
         run: |
+          sudo apt-get update -q && sudo apt-get install -y -q bubblewrap
           python -m pip install --upgrade pip
           pip install -e .
           pip install pytest ruff
@@ -37,9 +38,12 @@ jobs:
       - name: tests
         run: pytest -q
 
-      - name: self-host verifies fresh
+      - name: self-host verifies fresh (all five rungs)
         run: |
           ret verify .
+          ret verify .reticuli/liquid/agents
+          ret verify .reticuli/liquid/authoring
+          ret verify .reticuli/liquid/exchange
           ret verify .reticuli/liquid/kernel-core
 
       - name: recursive rehydrate reproduces the claim

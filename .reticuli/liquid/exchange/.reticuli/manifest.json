@@ -1,0 +1,18 @@
+{
+  "components": [
+    {
+      "component": "kernel-core",
+      "input": "reticuli/__init__.py",
+      "output": "reticuli/__init__.py",
+      "root": "af831de033d74cf1f4a085fb618068d145721fbb928a40987d50b769a080af6f"
+    },
+    {
+      "component": "kernel-core",
+      "input": "reticuli/kernel.py",
+      "output": "reticuli/kernel.py",
+      "root": "af831de033d74cf1f4a085fb618068d145721fbb928a40987d50b769a080af6f"
+    }
+  ],
+  "name": "exchange",
+  "root": "63fa5e75ca1198af42ef5ccb4376f4503450bb4a4c441cdee896edc94167788f"
+}

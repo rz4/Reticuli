@@ -16,6 +16,7 @@ Point Reticuli at its own repo and it becomes a **basin-compiler that compiles
 itself**: a record whose recipe *produces* the code (free) gated by the test
 suite (the check). `ret realize .` regrows a fresh implementation; if it passes
 the tests, it lands on the same root — the repo, rehydrated from its own
-`.reticuli/`. Grown rung by rung (kernel → authoring → cli → whole), the repo's
-`.reticuli/` becomes a deterministic, git-committed genome; `src/` is one
-phenotype in the basin.
+`.reticuli/`. Grown rung by rung (kernel-core → exchange → authoring →
+surface), ordered by interface volatility, the repo's `.reticuli/` becomes a
+deterministic, git-committed genome; `src/` is one phenotype in the basin — and
+each rung's ledger prices its stratum of the regrowth.

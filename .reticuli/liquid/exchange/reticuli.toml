@@ -1,0 +1,41 @@
+[record]
+name = "exchange"
+inputs = ["exchange_check.py"]
+
+[[step]]
+kind = "produce"
+output = "reticuli/__init__.py"
+class = "free"
+from = "kernel-core"
+request = "supplied by the kernel-core component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/attest.py"
+class = "free"
+request = "regenerate reticuli/attest.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/kernel.py"
+class = "free"
+from = "kernel-core"
+request = "supplied by the kernel-core component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/registry.py"
+class = "free"
+request = "regenerate reticuli/registry.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/transfer.py"
+class = "free"
+request = "regenerate reticuli/transfer.py to pass the gate"
+
+[[step]]
+kind = "gate"
+output = "EXCHANGE_OK"
+class = "validated"
+run = "python3 exchange_check.py"

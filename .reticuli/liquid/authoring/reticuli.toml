@@ -1,0 +1,68 @@
+[record]
+name = "authoring"
+inputs = ["authoring_check.py"]
+
+[[step]]
+kind = "produce"
+output = "reticuli/__init__.py"
+class = "free"
+from = "exchange"
+request = "supplied by the exchange component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/attest.py"
+class = "free"
+from = "exchange"
+request = "supplied by the exchange component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/condense.py"
+class = "free"
+request = "regenerate reticuli/condense.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/feedback.py"
+class = "free"
+request = "regenerate reticuli/feedback.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/kernel.py"
+class = "free"
+from = "exchange"
+request = "supplied by the exchange component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/pack.py"
+class = "free"
+request = "regenerate reticuli/pack.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/registry.py"
+class = "free"
+from = "exchange"
+request = "supplied by the exchange component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/render.py"
+class = "free"
+request = "regenerate reticuli/render.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/transfer.py"
+class = "free"
+from = "exchange"
+request = "supplied by the exchange component"
+
+[[step]]
+kind = "gate"
+output = "AUTHORING_OK"
+class = "validated"
+run = "python3 authoring_check.py"

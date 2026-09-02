@@ -6,14 +6,21 @@ inputs = ["whole_check.py"]
 kind = "produce"
 output = "reticuli/__init__.py"
 class = "free"
-from = "kernel-core"
-request = "supplied by the kernel-core component"
+from = "agents"
+request = "supplied by the agents component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/__main__.py"
 class = "free"
 request = "regenerate reticuli/__main__.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/attest.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
 
 [[step]]
 kind = "produce"
@@ -25,44 +32,57 @@ request = "regenerate reticuli/cli.py to pass the gate"
 kind = "produce"
 output = "reticuli/condense.py"
 class = "free"
-request = "regenerate reticuli/condense.py to pass the gate"
+from = "agents"
+request = "supplied by the agents component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/feedback.py"
 class = "free"
-request = "regenerate reticuli/feedback.py to pass the gate"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/hooks.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/kernel.py"
 class = "free"
-from = "kernel-core"
-request = "supplied by the kernel-core component"
+from = "agents"
+request = "supplied by the agents component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/pack.py"
 class = "free"
-request = "regenerate reticuli/pack.py to pass the gate"
+from = "agents"
+request = "supplied by the agents component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/registry.py"
 class = "free"
-request = "regenerate reticuli/registry.py to pass the gate"
+from = "agents"
+request = "supplied by the agents component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/render.py"
 class = "free"
-request = "regenerate reticuli/render.py to pass the gate"
+from = "agents"
+request = "supplied by the agents component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/transfer.py"
 class = "free"
-request = "regenerate reticuli/transfer.py to pass the gate"
+from = "agents"
+request = "supplied by the agents component"
 
 [[step]]
 kind = "gate"

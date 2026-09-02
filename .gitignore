@@ -1,6 +1,12 @@
 # Reticuli: history is local — never committed
 .reticuli/vapor.jsonl
 .reticuli/**/ledger.jsonl
+.reticuli/**/tmp/
+
+# envelope rooms (the rows they leave go to docs/envelope.jsonl, committed)
+runs/
+
+.DS_Store
 
 # python
 __pycache__/
