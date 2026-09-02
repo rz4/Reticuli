@@ -128,6 +128,27 @@ The manifest is pure `{name, root}` (+ component links), no free-output hashes, 
 a self-hosted record stays byte-stable under code edits and commits clean. Re-run
 `scripts/selfrecord.py` when files change (it's a lockfile).
 
+### Rehydrated by a live model
+
+`<model>` above can be a real one. [`scripts/producer_claude.py`](scripts/producer_claude.py)
+drives the redo with the `claude` CLI — one text call per file, no tools, no
+reference in the room: the model reconstructs each file *blind* from the check and
+has to land in the basin.
+
+```bash
+ret realize . --recursive \
+  --producer "python3 scripts/producer_claude.py" --into M3
+```
+
+It does. In one such run (sonnet-5), given only `kernel_check.py` and
+`whole_check.py`, a live model regrew the whole repo — **every one of the 10
+modules byte-different from the committed code** (991 lines vs 1130; `kernel.py`
+352 vs 206, `cli.py` 160 vs 285) — and the chain landed on the *same two roots*
+(`a1fc505a`, `30968ae8`). A different kernel and a different toolchain, one claim.
+Run it again and the model writes different code again; the roots don't move. That
+is the three-machine test with an independent producer: the basin is real, not a
+copy.
+
 ### Composition, in general
 
 `kernel-core → whole` is one instance of a general facility: a record can depend
