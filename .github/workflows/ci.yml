@@ -33,7 +33,9 @@ jobs:
           pip install pytest ruff
 
       - name: ruff
-        run: ruff check reticuli tests scripts kernel_check.py whole_check.py
+        run: |
+          ruff check reticuli tests scripts kernel_check.py exchange_check.py \
+            authoring_check.py agents_check.py surface_check.py readme_check.py
 
       - name: tests
         run: pytest -q
