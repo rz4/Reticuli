@@ -71,16 +71,22 @@ def probe(name: str, d: str, producer: str, label: str) -> dict:
             reflection = "root mismatch (gate passed, wrong claim)"
     except kernel.ReticuliError as e:
         msg = str(e)
-        reflection = msg.split(": ", 1)[-1].strip()[:160]
+        # keep the head AND the tail of a traceback — the tail names the assert
+        lines = [x for x in msg.splitlines() if x.strip()]
+        reflection = (lines[0][:100] + " … " + lines[-1][:160]) if len(lines) > 1 else msg[:200]
         # a producer/API failure is NOT a reflection — the model never got to
         # try. Flag it so it can't count as a landing OR a measurement, and so a
         # resuming sweep re-runs it rather than trusting the failure.
         producer_error = any(s in msg for s in _PRODUCER_FAIL)
     cost = kernel.cost(room) or {}
-    if landed and ARCHIVE:                                # keep the specimen
-        dst = os.path.join(ARCHIVE, label)
-        os.makedirs(dst, exist_ok=True)
-        transfer.export(room, os.path.join(dst, f"{name}.tar"))
+    if ARCHIVE and os.path.isdir(room):                   # keep the evidence either way:
+        dst = os.path.join(ARCHIVE, label)                # a landed specimen, or a
+        os.makedirs(dst, exist_ok=True)                   # failed room for diagnosis
+        tag = name if landed else f"failed-{name}"
+        try:
+            transfer.export(room, os.path.join(dst, f"{tag}.tar"))
+        except kernel.ReticuliError:
+            shutil.make_archive(os.path.join(dst, tag), "tar", room)   # unsealed room
     shutil.rmtree(room, ignore_errors=True)               # room is transient; tar is the evidence
     return {"label": label, "layer": name, "own": own, "claim_root": committed,
             "landed": landed, "audited": audited, "producer_error": producer_error,
