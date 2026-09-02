@@ -3,8 +3,12 @@
 .reticuli/**/ledger.jsonl
 .reticuli/**/tmp/
 
-# envelope rooms (the rows they leave go to docs/envelope.jsonl, committed)
+# transient sweep rooms (the profile jsonl they leave is committed; the lock too)
 runs/
+
+# archived specimens: the profile jsonl is the committed index; the tars can be
+# large and many — kept locally, published as a dataset when a result is written up
+docs/experiments/specimens/
 
 .DS_Store
 

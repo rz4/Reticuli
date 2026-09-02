@@ -4,12 +4,17 @@ Where envelope.py rehydrates the whole chain (and hard-fails at the first
 reflection), this isolates each rung: it supplies the *committed* lower layers
 and asks one producer to regrow only that rung's own stratum. So every layer is
 measured against a correct foundation — a clean per-layer reading of whether the
-load lands at center (Γ=0, root exact) or reflects (the gate bounces), and what
-it cost either way. The cost ledger is the tuning circuit; this is the meter.
+load lands at center (Γ=0, root exact) or reflects, and what it cost either way.
 
-    python3 scripts/probe.py "<producer>" <label>
-    RETICULI_MODEL=claude-haiku-4-5-20251001 python3 scripts/probe.py \\
-        "python3 $PWD/scripts/producer_claude.py" haiku-4.5
+Honesty: every row records `claim_root`, the committed root of the layer *at
+measurement time*, so data can never be silently mixed across a re-mint. A cell
+counts as landed only when the redo hits that root AND `audit` passes (the
+verdicts are re-earned from the produced bytes, not carried). Set
+RETICULI_ARCHIVE=<dir> to export each landed specimen (the actual regrown code)
+as a deterministic tar under <dir>/<label>/<layer>.tar; RETICULI_PROFILE
+overrides the output jsonl.
+
+    python3 scripts/probe.py "<producer>" <label> [layer]
 """
 import datetime
 import json
@@ -20,11 +25,11 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from reticuli import kernel, render
+from reticuli import kernel, render, transfer
 
-DATA = os.path.join(ROOT, "docs", "reflection_profile.jsonl")
+DATA = os.environ.get("RETICULI_PROFILE", os.path.join(ROOT, "docs", "reflection_profile.jsonl"))
+ARCHIVE = os.environ.get("RETICULI_ARCHIVE")
 
-# name -> committed record dir; inner to outer, contact last (repo root)
 RUNGS = [
     ("kernel-core", os.path.join(ROOT, kernel.STORE, "liquid", "kernel-core")),
     ("exchange", os.path.join(ROOT, kernel.STORE, "liquid", "exchange")),
@@ -37,33 +42,40 @@ RUNGS = [
 
 def probe(name: str, d: str, producer: str, label: str) -> dict:
     recipe = kernel.load_recipe(d)
-    committed = kernel.read_manifest(d)["root"]
-    # supply the committed lower layers; the producer regrows only this stratum
+    committed = kernel.read_manifest(d)["root"]           # the claim, at this instant
     produce_from, own = {}, []
     for step in recipe.get("step", []):
         if step["kind"] != "produce":
             continue
-        if "from" in step:
+        if "from" in step:                                # supplied committed lower layer
             produce_from[step["output"]] = os.path.join(d, step["output"])
         else:
-            own.append(step["output"])
-    # per-process tag so two concurrent sweeps never share (and stomp) a room
+            own.append(step["output"])                    # this rung's stratum, to regrow
     room = os.path.join(ROOT, "runs", f"probe-{label}-{os.getpid()}-{name}")
     if os.path.exists(room):
         shutil.rmtree(room)
-    landed, reflection = False, None
+    landed, reflection, audited = False, None, None
     try:
         res = kernel.realize(d, producer, room, produce_from=produce_from)
-        landed = res["root"] == committed
-        if not landed:
-            reflection = "root mismatch"          # gate passed but not to the claim
+        root_match = res["root"] == committed
+        audited = kernel.audit(room)["ok"]                # verdicts re-earned, jailed
+        landed = root_match and audited
+        if root_match and not audited:
+            reflection = "root matched but verdicts not re-earned (audit)"
+        elif not root_match:
+            reflection = "root mismatch (gate passed, wrong claim)"
     except kernel.ReticuliError as e:
-        reflection = str(e).split(": ", 1)[-1].strip()[:120]   # the bounce
+        reflection = str(e).split(": ", 1)[-1].strip()[:140]
     cost = kernel.cost(room) or {}
-    return {"label": label, "layer": name, "own": own, "landed": landed,
-            "reflection": reflection, "calls": cost.get("calls", 0),
-            "tokens": cost.get("tokens"), "usd": cost.get("usd"),
-            "seconds": cost.get("seconds")}
+    if landed and ARCHIVE:                                # keep the specimen
+        dst = os.path.join(ARCHIVE, label)
+        os.makedirs(dst, exist_ok=True)
+        transfer.export(room, os.path.join(dst, f"{name}.tar"))
+    shutil.rmtree(room, ignore_errors=True)               # room is transient; tar is the evidence
+    return {"label": label, "layer": name, "own": own, "claim_root": committed,
+            "landed": landed, "audited": audited, "reflection": reflection,
+            "calls": cost.get("calls", 0), "tokens": cost.get("tokens"),
+            "usd": cost.get("usd"), "seconds": cost.get("seconds")}
 
 
 def main(producer: str, label: str, only: str | None = None) -> int:
@@ -72,25 +84,24 @@ def main(producer: str, label: str, only: str | None = None) -> int:
     if not rungs:
         print(f"no such layer: {only} (choose from {[n for n, _ in RUNGS]})")
         return 2
+    os.makedirs(os.path.dirname(DATA), exist_ok=True)
     rows = []
     for name, d in rungs:
         print(f"# probing {name} …", flush=True)
         r = probe(name, d, producer, label)
         r["when"] = when
         rows.append(r)
-        with open(DATA, "a", encoding="utf-8") as f:   # append per layer: an
-            f.write(json.dumps(r, sort_keys=True) + "\n")   # interrupt keeps the rest
+        with open(DATA, "a", encoding="utf-8") as f:
+            f.write(json.dumps(r, sort_keys=True) + "\n")
 
-    render.table([{"layer": r["layer"], "regrew": len(r["own"]),
-                   "match": r["landed"], "usd": r["usd"], "calls": r["calls"],
-                   "reflection": r["reflection"] or "—"}
+    render.table([{"layer": r["layer"], "regrew": len(r["own"]), "match": r["landed"],
+                   "usd": r["usd"], "calls": r["calls"], "reflection": r["reflection"] or "—"}
                   for r in rows],
                  ("layer", "layer"), ("regrew", "regrew"), ("match", "Γ=0"),
                  ("usd", "usd"), ("calls", "calls"), ("reflection", "reflection"))
     landed = [r for r in rows if r["landed"]]
     total = sum(r["usd"] or 0 for r in rows)
-    print(f"# {label}: {len(landed)}/{len(rows)} layers at center · "
-          f"${total:.3f} total · -> {DATA}")
+    print(f"# {label}: {len(landed)}/{len(rows)} at center · ${total:.3f} · -> {DATA}")
     return 0 if len(landed) == len(rows) else 1
 
 

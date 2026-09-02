@@ -255,10 +255,14 @@ the agent iterating against the gate is honest "make the tests pass," and
 realize's jailed gate stays the authoritative verdict.
 
 [`scripts/producer_openai.py`](../scripts/producer_openai.py) is the same
-oneshot contract for OpenAI models, and [`scripts/envelope.py`](../scripts/envelope.py)
-sweeps a producer across the whole chain and appends one row *per rung per run*
-to [`docs/envelope.jsonl`](envelope.jsonl) — the provenance cost envelope
-across diverse models, taken at each layer.
+oneshot contract for OpenAI models. [`scripts/sweep.py`](../scripts/sweep.py) is
+the reproducible runner for the whole grid — controls plus {haiku, sonnet, opus}
+× {oneshot, agentic} — over [`scripts/probe.py`](../scripts/probe.py), which
+isolates each layer and lands a cell only when the redo hits the committed root
+*and* passes `audit`. Every row is stamped with the `claim_root` it was measured
+against (never mix data across a re-mint), one sweep runs at a time (a lock), and
+each landed specimen is archived as a re-auditable record. The protocol and its
+honesty rules live in [`docs/experiments/`](experiments/).
 
 It works — and the redo's ledger accounts what the model actually cost: the
 producer reports real token/usd usage back through `$RETICULI_USAGE`, one line
