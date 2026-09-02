@@ -3,8 +3,9 @@
 Records meeting records — and other parties: the registry (drawers,
 content-addressed component links, DAG-aware rehydrate), transfer
 (deterministic tar, verify-on-import, volatile history stays home), and
-attestation (a keyholder's signed statement of a realization: signs only fresh
-records, refuses tampered statements, anchors identity to allowed signers).
+attestation (a keyholder's signed statement of a realization: signs only
+records whose verdicts reproduce from their own bytes — never a carried
+verdict — refuses tampered statements, anchors identity to allowed signers).
 Layers on kernel-core; knows nothing of authoring or the CLI. Writes
 EXCHANGE_OK iff the layer conforms. Stdlib only, so it runs in any clean room.
 """
@@ -41,7 +42,7 @@ class = "free"
 [[step]]
 kind = "gate"
 output = "V"
-run = "grep -q LIBDATA dep.txt && cat app.txt >/dev/null && printf ok > V"
+run = "grep -qi implementation app.txt && grep -q LIBDATA dep.txt && printf ok > V"
 class = "validated"
 '''
 
@@ -113,8 +114,16 @@ def battery() -> None:
             f.write("\n")                                        # tamper the statement
         assert not attest.check(m3, signers)["ok"], "a tampered statement refuses"
         imported = os.path.join(d, "back")
+        with open(os.path.join(imported, "app.txt"), "w") as f:
+            f.write("no longer satisfies the gate\n")            # free bytes: root still fresh
+        assert kernel.verify(imported)["ok"], "identity survives a free tamper"
+        try:
+            attest.attest(imported, key, "checker@basin")
+            raise AssertionError("attest must never notarize a carried verdict")
+        except kernel.ReticuliError:
+            pass
         with open(os.path.join(imported, "V"), "w") as f:
-            f.write("tampered")                                  # break the imported copy
+            f.write("tampered")                                  # and a broken pin refuses too
         try:
             attest.attest(imported, key, "checker@basin")
             raise AssertionError("attest must refuse a broken record")

@@ -17,6 +17,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import tomllib
 
@@ -295,24 +296,66 @@ def _comparable(c1: dict | None, c3: dict | None, tol: float) -> dict:
             "tolerance": tol, "comparable": (1.0 / tol) <= ratio <= tol}
 
 
+# -- audit: the verdicts must reproduce, not merely be carried ---------------
+
+
+def audit(d: str) -> dict:
+    """The deep check. verify() proves *identity* — the root holds over the
+    bytes present. audit() proves the verdicts are *earned by* those bytes: it
+    rebuilds a scratch room from the record's recipe, seeds, and produce
+    outputs (no verdicts carried in), re-runs every gate jailed, and requires
+    each pinned output to reproduce the record's bytes exactly. A verdict that
+    was copied rather than produced does not survive it."""
+    v = verify(d)
+    recipe = load_recipe(d)
+    steps = recipe.get("step", [])
+    room = tempfile.mkdtemp(prefix="reticuli-audit-")
+    gates, ok = [], v["ok"]
+    try:
+        shutil.copyfile(os.path.join(d, RECIPE), os.path.join(room, RECIPE))
+        for seed in _seeds(recipe):
+            _copy(os.path.join(d, seed), os.path.join(room, seed))
+        for step in steps:
+            if step["kind"] == "produce" and os.path.isfile(os.path.join(d, _out(step))):
+                _copy(os.path.join(d, _out(step)), os.path.join(room, _out(step)))
+        for step in steps:
+            if step["kind"] != "gate":
+                continue
+            out = _out(step)
+            r, jailed_as = _jailed(step["run"], room, {**os.environ, "RETICULI": "1"})
+            produced = os.path.join(room, out)
+            reproduced = (r.returncode == 0 and os.path.isfile(produced)
+                          and os.path.isfile(os.path.join(d, out))
+                          and _hf(produced) == _hf(os.path.join(d, out)))
+            gates.append({"output": out, "ok": reproduced, "quarantine": jailed_as})
+            ok = ok and reproduced
+    finally:
+        shutil.rmtree(room, ignore_errors=True)
+    return {"name": v["name"], "root": v["root"], "fresh": v["ok"],
+            "gates": gates, "ok": ok}
+
+
 # -- three_machine: THE INVARIANT -------------------------------------------
 
 
 def three_machine(m1: str, m2: str, m3: str) -> dict:
     """M1 a claim, M2 a byte-reuse, M3 an independent redo. Valid iff all three
     share a root — the redo reproduced the claim, the reuse proves the record is
-    self-contained — and, where both machines kept a ledger, the redo's cost is
-    comparable to the original's within the claim's declared tolerance."""
+    self-contained — AND every machine's gates re-run clean against its own
+    bytes (audit: a carried verdict does not survive), and, where both machines
+    kept a ledger, the redo's cost is comparable within the claim's declared
+    tolerance. Root equality alone is identity; audit makes it evidence."""
     roots = {name: verify(m)["root"] for name, m in (("M1", m1), ("M2", m2), ("M3", m3))}
+    audited = {name: audit(m)["ok"] for name, m in (("M1", m1), ("M2", m2), ("M3", m3))}
     integrity = all(verify(m)["ok"] for m in (m1, m2, m3))
-    reuse = _outputs(m2) == _outputs(m1)          # M2 is a byte-copy of M1
+    reuse = _outputs(m2) == _outputs(m1)          # M2 carries M1's outputs, byte-for-byte
     equivalence = roots["M3"] == roots["M1"]       # M3 redid it to the same claim
     tol = float(load_recipe(m1).get("record", {}).get("tolerance", TOLERANCE))
     cost_ = _comparable(cost(m1), cost(m3), tol)
     return {"roots": roots, "integrity": integrity, "reuse": reuse,
-            "equivalence": equivalence, "cost": cost_,
+            "equivalence": equivalence, "audited": audited, "cost": cost_,
             "satisfied": integrity and reuse and equivalence
-            and cost_["comparable"] is not False}
+            and all(audited.values()) and cost_["comparable"] is not False}
 
 
 def freeze_dry(m1: str, m2: str, m3: str) -> dict:

@@ -3,12 +3,15 @@
 This is the seed of the `kernel-core` component record. It imports the
 (re)generated kernel and confirms it implements the invariant: seal + verify
 hold, an independent redo lands on the *same root* (root = claim), the
-three-machine test is satisfied — cost is accounted: a redo leaves a ledger
-(residue, outside the root), an unmeasured machine is reported rather than
-failed, an incomparable redo fails the test — and gates run in quarantine:
-where the platform has a jail, an escaping gate refuses, and the ledger tells
-the truth about the jail either way. Writes KERNEL_OK iff it conforms. Stdlib
-only, so it runs in any clean room.
+three-machine test is satisfied — and is SOUND: verdicts must be earned, not
+carried, so a fabricated machine that shares the root but whose gates cannot
+reproduce its verdicts from its own bytes neither proves nor mints (audit).
+Cost is accounted: a redo leaves a ledger (residue, outside the root), an
+unmeasured machine is reported rather than failed, an incomparable redo fails
+the test. And gates run in quarantine: where the platform has a jail, an
+escaping gate refuses, and the ledger tells the truth about the jail either
+way. Writes KERNEL_OK iff it conforms. Stdlib only, so it runs in any clean
+room.
 
 Any kernel that passes this check hashes to the same kernel-core root — the
 basin of kernels is what the component *is*. The whole toolchain layers on top:
@@ -63,6 +66,20 @@ def battery() -> None:
 
         r = kernel.three_machine(m1, m2, m3)
         assert r["satisfied"] and len(set(r["roots"].values())) == 1, "three-machine"
+
+        # soundness: the verdicts must be EARNED, not carried. Root equality is
+        # identity; audit re-runs the gates against the bytes present, so a
+        # fabricated M3 — M1 copied, free output scribbled over, gate failing —
+        # shares the root yet must not prove, and must never mint solid.
+        m3f = os.path.join(d, "m3f")
+        shutil.copytree(m1, m3f)
+        with open(os.path.join(m3f, "g.txt"), "w") as f:
+            f.write("fabricated, does not satisfy the gate\n")
+        rf = kernel.three_machine(m1, m2, m3f)
+        assert rf["equivalence"] and not rf["audited"]["M3"], "audit sees through the root"
+        assert not rf["satisfied"], "a carried verdict does not prove"
+        assert not kernel.freeze_dry(m1, m2, m3f)["minted"], "and does not mint"
+        assert kernel.audit(m3)["ok"] and not kernel.audit(m3f)["ok"], "audit is the deep check"
 
         # cost: the redo's ledger accounts the oracle call — residue, outside
         # the root (m1 has no ledger, m3 does, and they share a root above)

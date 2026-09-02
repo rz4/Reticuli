@@ -12,9 +12,10 @@ root = hash( recipe + dry seeds + pinned verdicts )    # the implementation is f
 ```
 
 Two different implementations that pass the same checks share a root — like the
-two stars above: one system. M1 a claim, M2 a byte-copy, M3 an independent
-redo; `ret prove` is their root equality, with the redo's cost compared
-(C3/C1 within tolerance) and every gate run in a jail.
+two stars above: one system. M1 a claim, M2 a reuse of its outputs, M3 an
+independent redo; `ret prove` is their root equality with every machine's gates
+re-run against its own bytes (`ret audit` — a carried verdict does not survive)
+and the redo's cost compared (C3/C1 within tolerance).
 
 ## Quickstart
 
@@ -33,7 +34,8 @@ ret attest M3 --key ~/.ssh/id_ed25519 --as you@lab   # sign it for others
 
 The checks are the claim: edit the implementation and the root holds; edit a
 check and it moves. Records commit like lockfiles, travel by content, carry a
-cost ledger, and run their gates quarantined. This repo is its own proof — six
+cost ledger, and jail their gates where the platform has one. This repo is its
+own proof — six
 records, kernel to README, each rung regrown *blind* by a live model onto the
 same roots; even this file is a free output, gated only by its own
 consumability check.

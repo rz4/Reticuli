@@ -7,8 +7,13 @@ mature fields, each of which owns a piece of it. The move that appears genuinely
 novel is the identity construction: `root = hash(recipe + checks + verdicts)`
 with the implementation *excluded*, so validator-equivalence collapses into hash
 equality and "independent re-realization" becomes a mechanically checkable
-predicate. Nothing found content-addresses the *acceptance conditions* as the
-artifact's identity.
+predicate — **claim-addressed computation** (a term owed to the project's first
+external review): content-addressing the invariant an artifact must satisfy
+instead of the artifact's particular bytes. Nothing found content-addresses the
+*acceptance conditions* as the artifact's identity. Identity is deliberately
+weaker than evidence: root equality alone can be carried, which is why prove
+audits (re-runs) the gates, and why independence itself remains a provenance
+property for attestation and witnessing, not hashing.
 
 ## Neighbors
 

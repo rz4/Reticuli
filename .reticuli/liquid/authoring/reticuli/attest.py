@@ -70,11 +70,16 @@ def statement(d: str, identity: str) -> dict:
 
 
 def attest(d: str, key: str, identity: str) -> dict:
-    """Sign this realization. Refuses a broken record — an attestation is a
-    statement that it verified fresh, here, now."""
+    """Sign this realization. Refuses a record that is broken *or* whose
+    verdicts do not reproduce from its own bytes (kernel.audit) — an
+    attestation says the gates passed here, now, against these bytes; it must
+    never notarize a carried verdict."""
+    a = kernel.audit(d)
+    if not a["ok"]:
+        raise kernel.ReticuliError(
+            "attest: refusing to sign — the record is broken or its verdicts "
+            "do not reproduce from its bytes")
     v = kernel.verify(d)
-    if not v["ok"]:
-        raise kernel.ReticuliError("attest: the record is broken — refusing to sign")
     st = statement(d, identity)
     os.makedirs(os.path.join(d, ATTEST), exist_ok=True)
     path = os.path.join(d, ATTEST, f"{_slug(identity)}.json")

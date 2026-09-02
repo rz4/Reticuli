@@ -18,9 +18,9 @@ realizations of one claim share a root, and the three-machine test collapses to
 
 ```
 M1  a claim              root = hash(recipe · seeds · pinned)
-M2  a byte-reuse (copy)  verifies from its own bytes, produces nothing
+M2  a reuse              carries M1's outputs byte-for-byte, produces nothing
 M3  an independent redo  re-produced from the recipe by any producer
-valid  ⇔  root(M1) == root(M2) == root(M3)
+valid  ⇔  roots equal  ∧  every machine's gates re-run clean (audit)
 ```
 
 The **basin of attraction** is exactly the preimage of the root: every
@@ -116,6 +116,23 @@ cost gates `satisfied` only when both ledgers exist. Ledgers are volatile
 history — gitignored by `ret init`, excluded from `ret export`; identity
 travels, events don't.
 
+## Soundness: earned, not carried
+
+Root equality is *identity*, not evidence — the root deliberately excludes the
+free outputs, so a directory can carry M1's recipe, seeds, and verdict bytes
+while its free bytes no longer satisfy the gate at all. `ret verify` will still
+say fresh (it proves the identity holds); it will not catch this. That is what
+`ret audit` is for: it rebuilds a scratch room from the record's recipe, seeds,
+and produce outputs — **no verdicts carried in** — re-runs every gate jailed,
+and requires each pinned output to reproduce the record's bytes exactly.
+`ret prove` audits all three machines, so a fabricated M3 that shares the root
+neither proves nor mints, and `ret attest` refuses to notarize one. (This
+closes the carried-verdict forgery demonstrated by the project's first external
+review.) What audit cannot establish is *independence* — that M3's bytes were
+genuinely produced rather than copied from M1 is a provenance property, not a
+content property; that is attestation's and, eventually, witnessed execution's
+job.
+
 ## Quarantine
 
 A record's gates are not your shell. Realizing (or condensing, or packing) runs
@@ -192,7 +209,7 @@ fresh README against `readme_check.py`, and — because all of it is free and th
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo yields a **per-layer cost envelope**: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
-roots, inner to outer: `af831de0…`, `63fa5e75…`, `f1168e37…`, `b3d17a3e…`,
+roots, inner to outer: `787c5fcd…`, `26a1f7a0…`, `f1168e37…`, `b3d17a3e…`,
 surface `9213b976…`, whole `4a6c4e3e…`. `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
 and its pinned verdict, contact to leaf.
@@ -268,7 +285,7 @@ either way — the claim reproduces from the leaves, not just one layer.
 | phase | verb | |
 |---|---|---|
 | vapor | `init` · `hooks` · `run` · `status` · `tree` | set up · wire the agent · record a command · where am I · two lenses: a session's dry/wet, a record's anatomy |
-| liquid | `condense` · `verify` · `show` · `pack` · `records` · `deps` · `pull` · `attest` | seal · does it hold · print the recipe · self-record · the drawer · the DAG · depend on a record · sign it for others |
+| liquid | `condense` · `verify` · `audit` · `show` · `pack` · `records` · `deps` · `pull` · `attest` | seal · does the identity hold · do the verdicts reproduce · print the recipe · self-record · the drawer · the DAG · depend on a record · sign it for others |
 | solid | `realize` · `realize --recursive` · `prove` | an independent redo · redo the whole component DAG · the three-machine test |
 
 Records compose: a dry seed that matches a registry record's output links the

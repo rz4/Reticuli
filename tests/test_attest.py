@@ -1,12 +1,16 @@
 """Attestation: a keyholder's signed statement of a realization — signs only
-fresh records, refuses tampered statements, anchors identity to allowed
-signers, and never enters the root."""
+records whose verdicts reproduce, refuses tampered statements, anchors identity
+to allowed signers, and never enters the root."""
 import os
+import shutil
 import subprocess
 
 import pytest
 
 from reticuli import attest, kernel
+
+pytestmark = pytest.mark.skipif(shutil.which("ssh-keygen") is None,
+                                reason="no ssh-keygen on this platform")
 
 RECIPE = ('[record]\nname = "g"\n\n[[step]]\nkind = "produce"\noutput = "g.txt"\n'
           'request = "hi"\nclass = "free"\n\n[[step]]\nkind = "gate"\noutput = "V"\n'

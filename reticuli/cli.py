@@ -108,6 +108,15 @@ def _r_verify(r: dict) -> None:
                      "root": r["root"], "recomputed": r["recomputed"]}))
 
 
+def _r_audit(r: dict) -> None:
+    toml(("audit", {"name": r["name"], "root": short(r["root"]), "fresh": r["fresh"],
+                    "verdict": "earned" if r["ok"] else "carried or broken"}))
+    print()
+    table([{"gate": g["output"], "reproduced": g["ok"], "quarantine": g["quarantine"]}
+           for g in r["gates"]] or [{"gate": "(none)", "reproduced": None, "quarantine": ""}],
+          ("gate", "gate"), ("reproduced", "reproduced"), ("quarantine", "quarantine"))
+
+
 def _r_realize(r: dict) -> None:
     c = r.get("cost") or {}
     toml(("rehydrate", {"name": r["name"], "root": short(r["root"]), "into": r["into"],
@@ -161,6 +170,7 @@ def _r_prove(r: dict) -> None:
     c = r.get("cost") or {}
     toml(("prove", {"satisfied": r["satisfied"], "integrity": r["integrity"],
                     "reuse": r["reuse"], "equivalence": r["equivalence"],
+                    "audited": all(r.get("audited", {}).values()) or False,
                     "cost": c.get("comparable"), "minted_solid": r.get("minted")}),
          ("cost", {k: c.get(k) for k in ("unit", "c1", "c3", "ratio", "tolerance", "note")}))
     print()
@@ -257,7 +267,9 @@ def main(argv: list[str] | None = None) -> int:
     q.add_argument("--accept", action="append", default=[], metavar="PATH", required=True)
     q.add_argument("--into", required=True)
     q.add_argument("--name", default=None)
-    add("verify", help="does the record hold (recompute the root)").add_argument("record")
+    add("verify", help="does the record hold (recompute the root — identity only)").add_argument("record")
+    add("audit", help="re-run the gates against the bytes present — verdicts must reproduce") \
+        .add_argument("record")
     q = add("realize", help="rehydrate: an independent redo in a clean room (M3)")
     q.add_argument("record")
     q.add_argument("--producer", required=True)
@@ -296,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
     add("tree", help="the workspace through Reticuli's lens: a session's dry/wet, "
                      "or a sealed record's rungs (seeds, strata, verdicts)") \
         .add_argument("workspace", nargs="?", default=".")
-    for name in ("verify", "realize", "prove", "condense", "pack", "records",
+    for name in ("verify", "audit", "realize", "prove", "condense", "pack", "records",
                  "deps", "pull", "export", "import", "status", "tree", "hooks", "attest"):
         sub.choices[name].add_argument("--json", action="store_true")
 
@@ -318,6 +330,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "verify":
             r = kernel.verify(args.record)
             emit(r, j, _r_verify)
+            return 0 if r["ok"] else 1
+        if args.cmd == "audit":
+            r = kernel.audit(args.record)
+            emit(r, j, _r_audit)
             return 0 if r["ok"] else 1
         if args.cmd == "realize":
             fn = registry_mod.rehydrate if args.recursive else kernel.realize
