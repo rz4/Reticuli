@@ -1,0 +1,231 @@
+[record]
+name = "workshop"
+inputs = ["workshop_check.py"]
+
+[[step]]
+kind = "produce"
+output = "reticuli/__init__.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/__main__.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/attest.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/cli.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/condense.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/feedback.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/hooks.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/kernel.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/pack.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/registry.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/render.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/transfer.py"
+class = "free"
+from = "surface"
+request = "supplied by the surface component"
+
+[[step]]
+kind = "produce"
+output = "scripts/envelope.py"
+class = "free"
+request = "regenerate scripts/envelope.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "scripts/lagrange.py"
+class = "free"
+request = "regenerate scripts/lagrange.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "scripts/probe.py"
+class = "free"
+request = "regenerate scripts/probe.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "scripts/producer_claude.py"
+class = "free"
+request = "regenerate scripts/producer_claude.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "scripts/producer_claude_agentic.py"
+class = "free"
+request = "regenerate scripts/producer_claude_agentic.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "scripts/producer_openai.py"
+class = "free"
+request = "regenerate scripts/producer_openai.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "scripts/selfrecord.py"
+class = "free"
+request = "regenerate scripts/selfrecord.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "scripts/sweep.py"
+class = "free"
+request = "regenerate scripts/sweep.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_attest.py"
+class = "free"
+request = "regenerate tests/test_attest.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_audit.py"
+class = "free"
+request = "regenerate tests/test_audit.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_cli.py"
+class = "free"
+request = "regenerate tests/test_cli.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_composition.py"
+class = "free"
+request = "regenerate tests/test_composition.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_condense.py"
+class = "free"
+request = "regenerate tests/test_condense.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_cost.py"
+class = "free"
+request = "regenerate tests/test_cost.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_feedback.py"
+class = "free"
+request = "regenerate tests/test_feedback.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_hooks.py"
+class = "free"
+request = "regenerate tests/test_hooks.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_kernel.py"
+class = "free"
+request = "regenerate tests/test_kernel.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_layered.py"
+class = "free"
+request = "regenerate tests/test_layered.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_quarantine.py"
+class = "free"
+request = "regenerate tests/test_quarantine.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_recursive.py"
+class = "free"
+request = "regenerate tests/test_recursive.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_repo_selfhost.py"
+class = "free"
+request = "regenerate tests/test_repo_selfhost.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_selfhost.py"
+class = "free"
+request = "regenerate tests/test_selfhost.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "tests/test_transfer.py"
+class = "free"
+request = "regenerate tests/test_transfer.py to pass the gate"
+
+[[step]]
+kind = "gate"
+output = "WORKSHOP_OK"
+class = "validated"
+run = "python3 workshop_check.py"

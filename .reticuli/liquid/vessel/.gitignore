@@ -1,0 +1,24 @@
+# Reticuli: history is local — never committed
+.reticuli/vapor.jsonl
+.reticuli/**/ledger.jsonl
+.reticuli/**/tmp/
+.kc-tmp/
+
+# transient sweep rooms (the profile jsonl they leave is committed; the lock too)
+runs/
+
+# archived specimens: the profile jsonl is the committed index; the tars can be
+# large and many — kept locally, published as a dataset when a result is written up
+docs/experiments/specimens/
+
+.DS_Store
+
+# python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+.venv/

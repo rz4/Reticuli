@@ -6,85 +6,344 @@ inputs = ["readme_check.py"]
 kind = "produce"
 output = "reticuli/__init__.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/__main__.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/attest.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/cli.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/condense.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/feedback.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/hooks.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/kernel.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/pack.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/registry.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/render.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
 output = "reticuli/transfer.py"
 class = "free"
-from = "surface"
-request = "supplied by the surface component"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "scripts/envelope.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "scripts/lagrange.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "scripts/probe.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "scripts/producer_claude.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "scripts/producer_claude_agentic.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "scripts/producer_openai.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "scripts/selfrecord.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "scripts/sweep.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_attest.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_audit.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_cli.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_composition.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_condense.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_cost.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_feedback.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_hooks.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_kernel.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_layered.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_quarantine.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_recursive.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_repo_selfhost.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_selfhost.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_transfer.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "pyproject.toml"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = ".gitignore"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = ".gitattributes"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = ".github/workflows/ci.yml"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = ".github/workflows/release.yml"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "docs/basin.md"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "docs/guide.md"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "docs/impedance.md"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "docs/landscape.md"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/README.md"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/checker.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/rotating_cube.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/rotating_cube_alt.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/rotating_cube_alt2.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"

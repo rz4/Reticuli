@@ -1,0 +1,216 @@
+{
+  "components": [
+    {
+      "component": "workshop",
+      "input": "reticuli/__init__.py",
+      "output": "reticuli/__init__.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/kernel.py",
+      "output": "reticuli/kernel.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/registry.py",
+      "output": "reticuli/registry.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/transfer.py",
+      "output": "reticuli/transfer.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/attest.py",
+      "output": "reticuli/attest.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/render.py",
+      "output": "reticuli/render.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/condense.py",
+      "output": "reticuli/condense.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/feedback.py",
+      "output": "reticuli/feedback.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/pack.py",
+      "output": "reticuli/pack.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/hooks.py",
+      "output": "reticuli/hooks.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/cli.py",
+      "output": "reticuli/cli.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "reticuli/__main__.py",
+      "output": "reticuli/__main__.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "scripts/envelope.py",
+      "output": "scripts/envelope.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "scripts/lagrange.py",
+      "output": "scripts/lagrange.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "scripts/probe.py",
+      "output": "scripts/probe.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "scripts/producer_claude.py",
+      "output": "scripts/producer_claude.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "scripts/producer_claude_agentic.py",
+      "output": "scripts/producer_claude_agentic.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "scripts/producer_openai.py",
+      "output": "scripts/producer_openai.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "scripts/selfrecord.py",
+      "output": "scripts/selfrecord.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "scripts/sweep.py",
+      "output": "scripts/sweep.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_attest.py",
+      "output": "tests/test_attest.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_audit.py",
+      "output": "tests/test_audit.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_cli.py",
+      "output": "tests/test_cli.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_composition.py",
+      "output": "tests/test_composition.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_condense.py",
+      "output": "tests/test_condense.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_cost.py",
+      "output": "tests/test_cost.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_feedback.py",
+      "output": "tests/test_feedback.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_hooks.py",
+      "output": "tests/test_hooks.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_kernel.py",
+      "output": "tests/test_kernel.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_layered.py",
+      "output": "tests/test_layered.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_quarantine.py",
+      "output": "tests/test_quarantine.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_recursive.py",
+      "output": "tests/test_recursive.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_repo_selfhost.py",
+      "output": "tests/test_repo_selfhost.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_selfhost.py",
+      "output": "tests/test_selfhost.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    },
+    {
+      "component": "workshop",
+      "input": "tests/test_transfer.py",
+      "output": "tests/test_transfer.py",
+      "root": "e21fa12efae623d7b28ad96d5546620d5db3ac96f4f0457cc3fd2461f2b42881"
+    }
+  ],
+  "name": "vessel",
+  "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+}

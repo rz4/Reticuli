@@ -35,7 +35,7 @@ ret attest M3 --key ~/.ssh/id_ed25519 --as you@lab   # sign it for others
 The checks are the claim: edit the implementation and the root holds; edit a
 check and it moves. Records commit like lockfiles, travel by content, carry a
 cost ledger, and jail their gates where the platform has one. This repo is its
-own proof — six
+own proof — eight
 records, kernel to README, each rung regrown *blind* by a live model onto the
 same roots; even this file is a free output, gated only by its own
 consumability check.

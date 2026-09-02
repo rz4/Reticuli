@@ -1,78 +1,300 @@
 {
   "components": [
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/__init__.py",
       "output": "reticuli/__init__.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/kernel.py",
       "output": "reticuli/kernel.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/registry.py",
       "output": "reticuli/registry.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/transfer.py",
       "output": "reticuli/transfer.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/attest.py",
       "output": "reticuli/attest.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/render.py",
       "output": "reticuli/render.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/condense.py",
       "output": "reticuli/condense.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/feedback.py",
       "output": "reticuli/feedback.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/pack.py",
       "output": "reticuli/pack.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/hooks.py",
       "output": "reticuli/hooks.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/cli.py",
       "output": "reticuli/cli.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     },
     {
-      "component": "surface",
+      "component": "vessel",
       "input": "reticuli/__main__.py",
       "output": "reticuli/__main__.py",
-      "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "scripts/envelope.py",
+      "output": "scripts/envelope.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "scripts/lagrange.py",
+      "output": "scripts/lagrange.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "scripts/probe.py",
+      "output": "scripts/probe.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "scripts/producer_claude.py",
+      "output": "scripts/producer_claude.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "scripts/producer_claude_agentic.py",
+      "output": "scripts/producer_claude_agentic.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "scripts/producer_openai.py",
+      "output": "scripts/producer_openai.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "scripts/selfrecord.py",
+      "output": "scripts/selfrecord.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "scripts/sweep.py",
+      "output": "scripts/sweep.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_attest.py",
+      "output": "tests/test_attest.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_audit.py",
+      "output": "tests/test_audit.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_cli.py",
+      "output": "tests/test_cli.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_composition.py",
+      "output": "tests/test_composition.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_condense.py",
+      "output": "tests/test_condense.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_cost.py",
+      "output": "tests/test_cost.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_feedback.py",
+      "output": "tests/test_feedback.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_hooks.py",
+      "output": "tests/test_hooks.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_kernel.py",
+      "output": "tests/test_kernel.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_layered.py",
+      "output": "tests/test_layered.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_quarantine.py",
+      "output": "tests/test_quarantine.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_recursive.py",
+      "output": "tests/test_recursive.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_repo_selfhost.py",
+      "output": "tests/test_repo_selfhost.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_selfhost.py",
+      "output": "tests/test_selfhost.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "tests/test_transfer.py",
+      "output": "tests/test_transfer.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "pyproject.toml",
+      "output": "pyproject.toml",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": ".gitignore",
+      "output": ".gitignore",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": ".gitattributes",
+      "output": ".gitattributes",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": ".github/workflows/ci.yml",
+      "output": ".github/workflows/ci.yml",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": ".github/workflows/release.yml",
+      "output": ".github/workflows/release.yml",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "docs/basin.md",
+      "output": "docs/basin.md",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "docs/guide.md",
+      "output": "docs/guide.md",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "docs/impedance.md",
+      "output": "docs/impedance.md",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "docs/landscape.md",
+      "output": "docs/landscape.md",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "examples/cube/README.md",
+      "output": "examples/cube/README.md",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "examples/cube/checker.py",
+      "output": "examples/cube/checker.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "examples/cube/rotating_cube.py",
+      "output": "examples/cube/rotating_cube.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "examples/cube/rotating_cube_alt.py",
+      "output": "examples/cube/rotating_cube_alt.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
+    },
+    {
+      "component": "vessel",
+      "input": "examples/cube/rotating_cube_alt2.py",
+      "output": "examples/cube/rotating_cube_alt2.py",
+      "root": "8943ae815a67f6ffd0f26af44e08471239dbc4f45ed831f32fad379aaf0937a1"
     }
   ],
   "name": "reticuli",
-  "root": "4a6c4e3ef1eb252dbebfba389d5b79fd7ceaadf6cd477426e02a370b51effbcd"
+  "root": "9fdd89b09a4322c435cd2813eb1d1a5f78405a37dde7c0947e658f0e02eaca04"
 }

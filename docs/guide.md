@@ -177,11 +177,11 @@ entity), a **table** (rows), or a **tree** (a DAG) — with `--json` underneath.
 
 ## Self-hosting
 
-Reticuli is a **basin-compiler that compiles itself** — in six rungs, ordered
+Reticuli is a **basin-compiler that compiles itself** — in eight rungs, ordered
 by interface volatility: the deeper the layer, the more stable its contract;
 the outer layers face other parties — agents, humans, first contact — and
 churn. `ret pack` declares a project as a record: its code the *free* outputs,
-its check the *seed*, gated by running the check. Six records make up the repo,
+its check the *seed*, gated by running the check. Eight records make up the repo,
 each carrying everything below it and layering its own stratum on top, sealed
 by [`scripts/selfrecord.py`](../scripts/selfrecord.py):
 
@@ -192,6 +192,8 @@ by [`scripts/selfrecord.py`](../scripts/selfrecord.py):
 | **authoring** | `+ {render,condense,feedback,pack}.py` | [`authoring_check.py`](../authoring_check.py) | sessions become records → `AUTHORING_OK` |
 | **agents** | `+ hooks.py` | [`agents_check.py`](../agents_check.py) | the agent handshake → `AGENTS_OK` |
 | **surface** | `+ {cli,__main__}.py` | [`surface_check.py`](../surface_check.py) | the human handshake → `SURFACE_OK` |
+| **workshop** | `+ scripts/*.py, tests/*.py` | [`workshop_check.py`](../workshop_check.py) | the bench: suite passes AND has teeth (a killed `seal` must fail it) → `WORKSHOP_OK` |
+| **vessel** | `+ pyproject, CI, docs, example, git skin` | [`vessel_check.py`](../vessel_check.py) | the skin it ships in; LICENSE and logo pinned as seeds → `VESSEL_OK` |
 | **reticuli** (contact) | `+ README.md` | [`readme_check.py`](../readme_check.py) | consumable in a minute, no lies → `VERIFIED` |
 
 Each rung obtains the layers beneath it from its predecessor as `from` produce
@@ -210,7 +212,8 @@ root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo yields a **per-layer cost envelope**: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
 roots, inner to outer: `81622000…`, `26a1f7a0…`, `f1168e37…`, `b3d17a3e…`,
-surface `9213b976…`, whole `4a6c4e3e…`. `ret tree .` draws the whole anatomy —
+`9213b976…`, workshop `e21fa12e…`, vessel `8943ae81…`, whole `9fdd89b0…`.
+`ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
 and its pinned verdict, contact to leaf.
 

@@ -25,14 +25,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from reticuli import kernel
 
-LAYERS = ["kernel-core", "exchange", "authoring", "agents", "surface", "reticuli"]
+LAYERS = ["kernel-core", "exchange", "authoring", "agents", "surface",
+          "workshop", "vessel", "reticuli"]
 PROBE = os.path.join(ROOT, "scripts", "probe.py")
 PROFILE = os.path.join(ROOT, "docs", "reflection_profile.jsonl")
 SPECIMENS = os.path.join(ROOT, "docs", "experiments", "specimens")
 LOCK = os.path.join(ROOT, "runs", ".sweep.lock")
 PY = sys.executable
 
-_CP = f'mkdir -p reticuli && cp "{ROOT}/$RETICULI_OUTPUT" "$RETICULI_OUTPUT"'
+_CP = ('mkdir -p "$(dirname "$RETICULI_OUTPUT")" 2>/dev/null; '
+       f'cp "{ROOT}/$RETICULI_OUTPUT" "$RETICULI_OUTPUT"')
 _STUB = 'mkdir -p "$(dirname "$RETICULI_OUTPUT")" 2>/dev/null; printf "stub = None\\n" > "$RETICULI_OUTPUT"'
 _ONESHOT = f'{PY} {ROOT}/scripts/producer_claude.py'
 _AGENTIC = f'{PY} {ROOT}/scripts/producer_claude_agentic.py'

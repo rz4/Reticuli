@@ -43,6 +43,27 @@ Series in the grid (`python3 scripts/sweep.py` prints the plan and estimates):
 - `pre-audit-roots/` — retired data measured against roots the audit fix re-minted;
   kept for the record, **not** for analysis.
 
+## The boundary taxonomy (what freeze-dries, what regenerates, what is history)
+
+Every file in the repo belongs to exactly one class, decided by one question —
+*if these bytes changed, would it still be the same repo?*
+
+- **Identity** (change should change identity): the rung checks, recipes,
+  manifests, pinned verdicts, LICENSE, logo. This is the freeze-dried core.
+- **Free** (bytes may vary; the repo stays itself): all package code, scripts,
+  tests, README, docs, pyproject, CI. Regenerable by any producer that lands
+  in the basin; the workshop rung's TEETH clause keeps a regenerated test
+  suite honest (an empty suite cannot land).
+- **Residue** (what happened, never identity): experiment rows, specimens,
+  ledgers, traces, generated figures, retired data. Lives under
+  `docs/experiments/` or is gitignored; link-checks treat it as a declared
+  namespace, never a requirement.
+
+**The promotion rule (D):** tests are where knowledge is *discovered*; checks
+are where it is *ratified*. When a test encodes claim-critical knowledge (the
+fabricated-M3 attacks, the jail contract), promote it into the owning rung's
+check — a deliberate re-mint — and leave the test as the bench copy.
+
 ## Known limits (state these with any result)
 
 - **Self-referential** — six layers of Reticuli reproducing itself. External

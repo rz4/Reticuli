@@ -1,0 +1,338 @@
+[record]
+name = "vessel"
+inputs = ["vessel_check.py", "LICENSE", "logo.png"]
+
+[[step]]
+kind = "produce"
+output = "reticuli/__init__.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/__main__.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/attest.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/cli.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/condense.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/feedback.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/hooks.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/kernel.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/pack.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/registry.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/render.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/transfer.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "scripts/envelope.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "scripts/lagrange.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "scripts/probe.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "scripts/producer_claude.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "scripts/producer_claude_agentic.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "scripts/producer_openai.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "scripts/selfrecord.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "scripts/sweep.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_attest.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_audit.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_cli.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_composition.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_condense.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_cost.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_feedback.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_hooks.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_kernel.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_layered.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_quarantine.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_recursive.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_repo_selfhost.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_selfhost.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "tests/test_transfer.py"
+class = "free"
+from = "workshop"
+request = "supplied by the workshop component"
+
+[[step]]
+kind = "produce"
+output = "pyproject.toml"
+class = "free"
+request = "regenerate pyproject.toml to pass the gate"
+
+[[step]]
+kind = "produce"
+output = ".gitignore"
+class = "free"
+request = "regenerate .gitignore to pass the gate"
+
+[[step]]
+kind = "produce"
+output = ".gitattributes"
+class = "free"
+request = "regenerate .gitattributes to pass the gate"
+
+[[step]]
+kind = "produce"
+output = ".github/workflows/ci.yml"
+class = "free"
+request = "regenerate .github/workflows/ci.yml to pass the gate"
+
+[[step]]
+kind = "produce"
+output = ".github/workflows/release.yml"
+class = "free"
+request = "regenerate .github/workflows/release.yml to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "docs/basin.md"
+class = "free"
+request = "regenerate docs/basin.md to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "docs/guide.md"
+class = "free"
+request = "regenerate docs/guide.md to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "docs/impedance.md"
+class = "free"
+request = "regenerate docs/impedance.md to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "docs/landscape.md"
+class = "free"
+request = "regenerate docs/landscape.md to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/README.md"
+class = "free"
+request = "regenerate examples/cube/README.md to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/checker.py"
+class = "free"
+request = "regenerate examples/cube/checker.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/rotating_cube.py"
+class = "free"
+request = "regenerate examples/cube/rotating_cube.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/rotating_cube_alt.py"
+class = "free"
+request = "regenerate examples/cube/rotating_cube_alt.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "examples/cube/rotating_cube_alt2.py"
+class = "free"
+request = "regenerate examples/cube/rotating_cube_alt2.py to pass the gate"
+
+[[step]]
+kind = "gate"
+output = "VESSEL_OK"
+class = "validated"
+run = "python3 vessel_check.py"
