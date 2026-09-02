@@ -9,14 +9,23 @@ you name, so spend is always explicit.
     python3 scripts/sweep.py                      # show the plan, run nothing
     python3 scripts/sweep.py --go free            # controls only (byte-copy, stub) — $0
     python3 scripts/sweep.py --go haiku           # haiku oneshot + agentic
-    python3 scripts/sweep.py --go haiku-oneshot sonnet-oneshot
+    python3 scripts/sweep.py --go sonnet --layers agents surface reticuli   # a chunk
     python3 scripts/sweep.py --go all             # the whole grid (costs real money)
+
+Resumable: a cell already in the profile for the current claim root is skipped,
+so a killed run (a long series can outlast a background time budget) just needs
+re-running, and `--layers` bounds a run to a few cells at a time.
 """
+import json
 import os
 import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+from reticuli import kernel
+
+LAYERS = ["kernel-core", "exchange", "authoring", "agents", "surface", "reticuli"]
 PROBE = os.path.join(ROOT, "scripts", "probe.py")
 PROFILE = os.path.join(ROOT, "docs", "reflection_profile.jsonl")
 SPECIMENS = os.path.join(ROOT, "docs", "experiments", "specimens")
@@ -82,10 +91,26 @@ def show_plan():
     print("# run with:  python3 scripts/sweep.py --go <group|series> …")
 
 
-def run(selected):
+def _claim_root(layer):
+    d = ROOT if layer == "reticuli" else os.path.join(ROOT, kernel.STORE, "liquid", layer)
+    return kernel.read_manifest(d)["root"]
+
+
+def _done(label, layer, root):
+    """Already measured this cell against the current claim? (resume-skip)"""
+    if not os.path.exists(PROFILE):
+        return False
+    with open(PROFILE) as f:
+        for line in f:
+            r = json.loads(line)
+            if r["label"] == label and r["layer"] == layer and r.get("claim_root") == root:
+                return True
+    return False
+
+
+def run(selected, layers):
     _lock()
     try:
-        print(f"# running {len(selected)} series, sequentially · profile {PROFILE}")
         for label, model, producer, budget, _est, _note in selected:
             print(f"\n########## {label} ##########", flush=True)
             env = {**os.environ, "RETICULI_PROFILE": PROFILE, "RETICULI_ARCHIVE": SPECIMENS}
@@ -93,19 +118,28 @@ def run(selected):
                 env["RETICULI_MODEL"] = model
             if budget:
                 env["RETICULI_AGENT_BUDGET"] = budget
-            subprocess.run([PY, PROBE, producer, label], env=env, cwd=ROOT, check=False)
+            for layer in layers:                          # one cell per probe: kill-safe
+                if _done(label, layer, _claim_root(layer)):
+                    print(f"# {layer}: already measured against the current claim — skip")
+                    continue
+                subprocess.run([PY, PROBE, producer, label, layer], env=env, cwd=ROOT, check=False)
     finally:
         os.remove(LOCK)
-    print("\n# sweep complete")
+    print("\n# sweep chunk complete")
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
     if "--go" in args:
-        names = args[args.index("--go") + 1:] or ["free"]
-        sel = _select(names)
+        rest = args[args.index("--go") + 1:]
+        layers = LAYERS
+        if "--layers" in rest:
+            i = rest.index("--layers")
+            layers = [x for x in rest[i + 1:] if x in LAYERS] or LAYERS
+            rest = rest[:i]
+        sel = _select(rest or ["free"])
         if not sel:
-            sys.exit(f"nothing selected from {names}")
-        run(sel)
+            sys.exit(f"nothing selected from {rest}")
+        run(sel, layers)
     else:
         show_plan()
