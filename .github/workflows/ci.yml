@@ -38,9 +38,10 @@ jobs:
       - name: tests
         run: pytest -q
 
-      - name: self-host verifies fresh (all five rungs)
+      - name: self-host verifies fresh (all six rungs)
         run: |
           ret verify .
+          ret verify .reticuli/liquid/surface
           ret verify .reticuli/liquid/agents
           ret verify .reticuli/liquid/authoring
           ret verify .reticuli/liquid/exchange

@@ -10,7 +10,8 @@ supplied `from` its predecessor:
   exchange      + reticuli/{registry,transfer,attest}.py  records meet records, and other parties
   authoring     + reticuli/{render,condense,feedback,pack}.py   sessions -> records
   agents        + reticuli/hooks.py                      the agent handshake
-  reticuli      + reticuli/{cli,__main__}.py  (repo root) the human handshake
+  surface       + reticuli/{cli,__main__}.py             the human handshake
+  reticuli      + README.md  (repo root)                 contact: consumable, no lies
 
 Each rung is gated by its own check (kernel_check, exchange_check,
 authoring_check, whole_check) — the checks are the claims. `ret verify .` holds,
@@ -37,6 +38,8 @@ RUNGS = [
                    "reticuli/feedback.py", "reticuli/pack.py"],
      "authoring_check.py", "AUTHORING_OK"),
     ("agents", ["reticuli/hooks.py"], "agents_check.py", "AGENTS_OK"),
+    ("surface", ["reticuli/cli.py", "reticuli/__main__.py"],
+     "surface_check.py", "SURFACE_OK"),
 ]
 
 
@@ -67,8 +70,8 @@ if __name__ == "__main__":
         supplied += own
         roots[name] = _build(name, supplied, check, verdict, component)
         prev = name
-    whole = pack.pack(ROOT, "reticuli", ["reticuli/*.py"], ["whole_check.py"],
-                      "python3 whole_check.py", "VERIFIED",
+    whole = pack.pack(ROOT, "reticuli", ["reticuli/*.py", "README.md"],
+                      ["readme_check.py"], "python3 readme_check.py", "VERIFIED",
                       component={"name": prev, "record": _drawer(prev),
                                  "outputs": list(supplied)})
     roots["reticuli"] = whole["root"]

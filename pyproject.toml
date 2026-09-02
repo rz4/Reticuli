@@ -34,6 +34,6 @@ line-length = 100
 "exchange_check.py" = ["I001"]
 "authoring_check.py" = ["I001"]
 "agents_check.py" = ["I001"]
-"whole_check.py" = ["I001"]
+"surface_check.py" = ["I001"]
 "scripts/selfrecord.py" = ["I001"]
 "scripts/envelope.py" = ["I001"]

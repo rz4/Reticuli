@@ -1,13 +1,13 @@
-"""Surface conformance gate — the seed of the repo's whole self-record.
+"""Surface conformance gate — the seed of the `surface` rung.
 
-The outermost layer: the public handshake. Drives the CLI end-to-end through
-the layers beneath it (init -> run -> condense -> verify -> realize -> prove)
-and claims the volatile surface itself — argv grammar, exit codes, the shape of
-what a user sees (TOML verdicts, the cost block, --json underneath). The
-functional depth is claimed by the inner gates (kernel_check, exchange_check,
-authoring_check); this gate certifies the toolchain a *user* touches. Writes
-VERIFIED iff the surface built over conformant layers is itself conformant.
-Stdlib only, so it runs in any clean room.
+The human handshake: drives the CLI end-to-end through the layers beneath it
+(init -> run -> condense -> verify -> realize -> prove) and claims the volatile
+surface itself — argv grammar, exit codes, the shape of what a user sees (TOML
+verdicts, the cost block, --json underneath). The functional depth is claimed
+by the inner gates (kernel_check, exchange_check, authoring_check,
+agents_check); above sits only contact — the README, claimed by
+readme_check.py. Writes SURFACE_OK iff the toolchain a *user* touches is
+conformant. Stdlib only, so it runs in any clean room.
 """
 import contextlib
 import io
@@ -90,6 +90,6 @@ def battery() -> None:
 
 if __name__ == "__main__":
     battery()
-    with open("VERIFIED", "w") as f:
-        f.write("conformant\n")
-    print("conformant")
+    with open("SURFACE_OK", "w") as f:
+        f.write("surface-ok\n")
+    print("surface-ok")

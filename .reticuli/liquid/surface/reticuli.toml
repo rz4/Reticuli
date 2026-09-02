@@ -1,0 +1,91 @@
+[record]
+name = "surface"
+inputs = ["surface_check.py"]
+
+[[step]]
+kind = "produce"
+output = "reticuli/__init__.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/__main__.py"
+class = "free"
+request = "regenerate reticuli/__main__.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/attest.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/cli.py"
+class = "free"
+request = "regenerate reticuli/cli.py to pass the gate"
+
+[[step]]
+kind = "produce"
+output = "reticuli/condense.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/feedback.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/hooks.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/kernel.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/pack.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/registry.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/render.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "produce"
+output = "reticuli/transfer.py"
+class = "free"
+from = "agents"
+request = "supplied by the agents component"
+
+[[step]]
+kind = "gate"
+output = "SURFACE_OK"
+class = "validated"
+run = "python3 surface_check.py"
