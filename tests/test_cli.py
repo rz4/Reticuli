@@ -42,3 +42,10 @@ def test_verify_cli(tmp_path, capsys):
     rec = _rec(str(tmp_path / "m1"), "hi\n")
     assert cli.main(["verify", rec]) == 0
     assert "fresh" in capsys.readouterr().out
+
+
+def test_tree_shows_a_sealed_record_as_anatomy(tmp_path, capsys):
+    rec = _rec(str(tmp_path / "m1"), "hi tree\n")
+    assert cli.main(["tree", rec]) == 0
+    out = capsys.readouterr().out
+    assert "free  g.txt" in out and "pin   V" in out and "1 rung(s)" in out

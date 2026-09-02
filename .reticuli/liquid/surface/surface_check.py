@@ -71,6 +71,13 @@ def battery() -> None:
         code, out = _run(["records", ws])
         assert code == 0 and "answer" in out, "the drawer renders"
 
+        # two lenses, one verb: a session's tree is dry/wet; a record's tree is
+        # its anatomy — seeds (the claim), free strata, pinned verdicts
+        code, out = _run(["tree", ws])
+        assert code == 0 and "vapor" in out, "the session lens"
+        code, out = _run(["tree", rec])
+        assert code == 0 and "seed" in out and "pin" in out, "the record lens"
+
         # the agent handshake at the surface: `ret hook` is silent, `ret hooks` wires
         payload = {"hook_event_name": "UserPromptSubmit", "prompt": "again", "cwd": ws}
         stdin, sys.stdin = sys.stdin, io.StringIO(json.dumps(payload))

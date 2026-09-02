@@ -143,6 +143,41 @@ def rehydrate(record: str, producer: str, into: str, ws: str | None = None) -> d
     return result
 
 
+def anatomy(record: str, ws: str | None = None) -> dict:
+    """The record lens: the chain of rungs, leaf-ward. Each rung shows its dry
+    seeds (the claim), its own free stratum, the files its component supplies,
+    and its pinned verdicts — the repo's structure as the record sees it."""
+    record = os.path.abspath(record)
+    ws = os.path.abspath(ws) if ws else _registry_of(record)
+    by_root = {r["root"]: os.path.join(ws, r["path"]) for r in records(ws)}
+
+    def node(d: str) -> dict:
+        m = kernel.read_manifest(d)
+        recipe = kernel.load_recipe(d)
+        steps = recipe.get("step", [])
+        supplied = {f for s in steps if s["kind"] == "produce" and "from" in s
+                    for f in [kernel._out(s)]}
+        groups: dict[tuple, list] = {}
+        for link in m.get("components", []):
+            groups.setdefault((link["component"], link["root"]), []).append(link["input"])
+        n = {"name": m["name"], "root": m["root"],
+             "phase": "solid" if m.get("proof") else "liquid",
+             "seeds": kernel._seeds(recipe),
+             "free": [kernel._out(s) for s in steps if s["kind"] == "produce"
+                      and s.get("class") == "free" and kernel._out(s) not in supplied],
+             "pins": [kernel._out(s) for s in steps
+                      if s.get("class", "exact") != "free"],
+             "components": []}
+        for (name, root), files in groups.items():
+            comp = by_root.get(root)
+            n["components"].append({"component": name, "root": root,
+                                    "files": sorted(set(files)),
+                                    "rung": node(comp) if comp else None})
+        return n
+
+    return {"workspace": ws, "record": node(record)}
+
+
 def deps(ws: str) -> dict:
     """The component DAG: each record's `components` provenance, with broken
     links (upstream no longer in the registry) flagged. Includes the workspace's

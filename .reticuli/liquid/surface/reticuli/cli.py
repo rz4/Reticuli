@@ -198,6 +198,32 @@ def _r_tree(r: dict) -> None:
     print(f"  {r['nudge']}")
 
 
+def _r_anatomy(r: dict) -> None:
+    def nodeify(n):
+        kids = [{"label": f"seed  {s}   (the claim)"} for s in n["seeds"]]
+        kids += [{"label": f"free  {f}"} for f in n["free"]]
+        for c in n["components"]:
+            kids.append({"label": f"{len(c['files'])} file(s)  ⇐  "
+                                  f"{c['component']}@{short(c['root'])}"})
+        kids += [{"label": f"pin   {p}   (the verdict)"} for p in n["pins"]]
+        for c in n["components"]:
+            if c["rung"]:
+                kids.append({"label": f"rung  {c['rung']['name']}  "
+                                      f"{short(c['rung']['root'])}  · {c['rung']['phase']}",
+                             "children": nodeify(c["rung"])})
+            else:
+                kids.append({"label": f"rung  {c['component']}@{short(c['root'])}"
+                                      "  (missing from the registry)"})
+        return kids
+
+    def count(n):
+        return 1 + sum(count(c["rung"]) for c in n["components"] if c["rung"])
+
+    rec = r["record"]
+    tree(f"record {rec['name']}  {short(rec['root'])}  · {rec['phase']}"
+         f" · {count(rec)} rung(s), contact to leaf", {"children": nodeify(rec)})
+
+
 def status(workspace: str) -> dict:
     ws = os.path.abspath(workspace)
     if kernel.phase(ws) == "vapor":
@@ -267,7 +293,9 @@ def main(argv: list[str] | None = None) -> int:
     q.add_argument("tar")
     q.add_argument("into")
     add("status", help="where you are: phase and freshness (or a session's progress)").add_argument("workspace", nargs="?", default=".")
-    add("tree", help="the session through Reticuli's lens: dry/wet, covered/uncovered").add_argument("workspace", nargs="?", default=".")
+    add("tree", help="the workspace through Reticuli's lens: a session's dry/wet, "
+                     "or a sealed record's rungs (seeds, strata, verdicts)") \
+        .add_argument("workspace", nargs="?", default=".")
     for name in ("verify", "realize", "prove", "condense", "pack", "records",
                  "deps", "pull", "export", "import", "status", "tree", "hooks", "attest"):
         sub.choices[name].add_argument("--json", action="store_true")
@@ -331,7 +359,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "status":
             return emit(status(args.workspace), j, _r_status)
         if args.cmd == "tree":
-            return emit(feedback_mod.pilot(os.path.abspath(args.workspace)), j, _r_tree)
+            ws = os.path.abspath(args.workspace)
+            if kernel.phase(ws) == "vapor":
+                return emit(feedback_mod.pilot(ws), j, _r_tree)
+            return emit(registry_mod.anatomy(ws), j, _r_anatomy)
     except kernel.ReticuliError as e:
         print(f"ret: {e}", file=sys.stderr)
         return 1
