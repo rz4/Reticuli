@@ -30,6 +30,11 @@ from reticuli import kernel, render, transfer
 DATA = os.environ.get("RETICULI_PROFILE", os.path.join(ROOT, "docs", "reflection_profile.jsonl"))
 ARCHIVE = os.environ.get("RETICULI_ARCHIVE")
 
+# signatures of a producer/API failure (the model never landed a real attempt) —
+# distinct from a genuine gate bounce, and never counted as a measurement
+_PRODUCER_FAIL = ("producer_claude:", "producer_agentic:", "producer_openai:",
+                  "is_error", "claude exited", "session limit", "overloaded", "rate limit")
+
 RUNGS = [
     ("kernel-core", os.path.join(ROOT, kernel.STORE, "liquid", "kernel-core")),
     ("exchange", os.path.join(ROOT, kernel.STORE, "liquid", "exchange")),
@@ -54,7 +59,7 @@ def probe(name: str, d: str, producer: str, label: str) -> dict:
     room = os.path.join(ROOT, "runs", f"probe-{label}-{os.getpid()}-{name}")
     if os.path.exists(room):
         shutil.rmtree(room)
-    landed, reflection, audited = False, None, None
+    landed, reflection, audited, producer_error = False, None, None, False
     try:
         res = kernel.realize(d, producer, room, produce_from=produce_from)
         root_match = res["root"] == committed
@@ -65,7 +70,12 @@ def probe(name: str, d: str, producer: str, label: str) -> dict:
         elif not root_match:
             reflection = "root mismatch (gate passed, wrong claim)"
     except kernel.ReticuliError as e:
-        reflection = str(e).split(": ", 1)[-1].strip()[:140]
+        msg = str(e)
+        reflection = msg.split(": ", 1)[-1].strip()[:160]
+        # a producer/API failure is NOT a reflection — the model never got to
+        # try. Flag it so it can't count as a landing OR a measurement, and so a
+        # resuming sweep re-runs it rather than trusting the failure.
+        producer_error = any(s in msg for s in _PRODUCER_FAIL)
     cost = kernel.cost(room) or {}
     if landed and ARCHIVE:                                # keep the specimen
         dst = os.path.join(ARCHIVE, label)
@@ -73,9 +83,9 @@ def probe(name: str, d: str, producer: str, label: str) -> dict:
         transfer.export(room, os.path.join(dst, f"{name}.tar"))
     shutil.rmtree(room, ignore_errors=True)               # room is transient; tar is the evidence
     return {"label": label, "layer": name, "own": own, "claim_root": committed,
-            "landed": landed, "audited": audited, "reflection": reflection,
-            "calls": cost.get("calls", 0), "tokens": cost.get("tokens"),
-            "usd": cost.get("usd"), "seconds": cost.get("seconds")}
+            "landed": landed, "audited": audited, "producer_error": producer_error,
+            "reflection": reflection, "calls": cost.get("calls", 0),
+            "tokens": cost.get("tokens"), "usd": cost.get("usd"), "seconds": cost.get("seconds")}
 
 
 def main(producer: str, label: str, only: str | None = None) -> int:

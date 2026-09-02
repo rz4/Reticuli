@@ -97,13 +97,15 @@ def _claim_root(layer):
 
 
 def _done(label, layer, root):
-    """Already measured this cell against the current claim? (resume-skip)"""
+    """A real measurement of this cell against the current claim already exists?
+    A producer/API failure does not count — it must be re-run, not skipped."""
     if not os.path.exists(PROFILE):
         return False
     with open(PROFILE) as f:
         for line in f:
             r = json.loads(line)
-            if r["label"] == label and r["layer"] == layer and r.get("claim_root") == root:
+            if (r["label"] == label and r["layer"] == layer
+                    and r.get("claim_root") == root and not r.get("producer_error")):
                 return True
     return False
 
