@@ -60,9 +60,10 @@ tolerance = 2.0
 2  M3       c124ba320206…
 ```
 
-See [`docs/experiments/cube`](experiments/cube/): three genuinely different
-rotating-cube implementations (≈0.1 code similarity) all certify against one
-fixed checker.
+The cube experiment (under `docs/experiments/cube`, residue) shows the basin
+concretely: three genuinely different rotating-cube implementations (≈0.1 code
+similarity) all certify against one fixed checker — whose deliberate weakness
+(an identity matrix passes) is kept as the documented Goodhart exhibit.
 
 ## The agent handshake
 
@@ -187,13 +188,13 @@ by [`scripts/selfrecord.py`](../scripts/selfrecord.py):
 
 | rung | own stratum (free) | seed (the check) | claims |
 |---|---|---|---|
-| **kernel-core** | `reticuli/{__init__,kernel}.py` | [`kernel_check.py`](../kernel_check.py) | the invariant → `KERNEL_OK` |
-| **exchange** | `+ {registry,transfer,attest}.py` | [`exchange_check.py`](../exchange_check.py) | records meet records, and other parties → `EXCHANGE_OK` |
-| **authoring** | `+ {render,condense,feedback,pack}.py` | [`authoring_check.py`](../authoring_check.py) | sessions become records → `AUTHORING_OK` |
-| **agents** | `+ hooks.py` | [`agents_check.py`](../agents_check.py) | the agent handshake → `AGENTS_OK` |
-| **surface** | `+ {cli,__main__}.py` | [`surface_check.py`](../surface_check.py) | the human handshake → `SURFACE_OK` |
-| **workshop** | `+ scripts/*.py, tests/*.py` | [`workshop_check.py`](../workshop_check.py) | the bench: suite passes AND has teeth (a killed `seal` must fail it) → `WORKSHOP_OK` |
-| **vessel** | `+ pyproject, CI, git skin` | [`vessel_check.py`](../vessel_check.py) | the skin it ships in; LICENSE and logo pinned as seeds → `VESSEL_OK` |
+| **kernel-core** | `reticuli/{__init__,kernel}.py` | `kernel_check.py` | the invariant → `KERNEL_OK` |
+| **exchange** | `+ {registry,transfer,attest}.py` | `exchange_check.py` | records meet records, and other parties → `EXCHANGE_OK` |
+| **authoring** | `+ {render,condense,feedback,pack}.py` | `authoring_check.py` | sessions become records → `AUTHORING_OK` |
+| **agents** | `+ hooks.py` | `agents_check.py` | the agent handshake → `AGENTS_OK` |
+| **surface** | `+ {cli,__main__}.py` | `surface_check.py` | the human handshake → `SURFACE_OK` |
+| **workshop** | `+ scripts/*.py, tests/*.py` | `workshop_check.py` | the bench: suite passes AND has teeth (a killed `seal` must fail it) → `WORKSHOP_OK` |
+| **vessel** | `+ pyproject, CI, git skin` | `vessel_check.py` | the skin it ships in; LICENSE and logo pinned as seeds → `VESSEL_OK` |
 | **reticuli** (documentation) | `+ README.md, docs/guide.md` | [`docs_check.py`](../docs_check.py) | the hand-off: a minute for contact, depth for engineers and agents, every verb and env var documented, no lies → `VERIFIED` |
 
 Each rung obtains the layers beneath it from its predecessor as `from` produce
@@ -212,7 +213,7 @@ root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo yields a **per-layer cost envelope**: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
 roots, inner to outer: `81622000…`, `26a1f7a0…`, `f1168e37…`, `b3d17a3e…`,
-`9213b976…`, workshop `efc35bfc…`, vessel `59845d94…`, whole `4a8625e0…`.
+`9213b976…`, workshop `efc35bfc…`, vessel `59845d94…`, whole `b4365b16…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
 and its pinned verdict, contact to leaf.
@@ -265,7 +266,7 @@ isolates each layer and lands a cell only when the redo hits the committed root
 *and* passes `audit`. Every row is stamped with the `claim_root` it was measured
 against (never mix data across a re-mint), one sweep runs at a time (a lock), and
 each landed specimen is archived as a re-auditable record. The protocol and its
-honesty rules live in [`docs/experiments/`](experiments/).
+honesty rules live in `docs/experiments/` (residue).
 
 It works — and the redo's ledger accounts what the model actually cost: the
 producer reports real token/usd usage back through `$RETICULI_USAGE`, one line
@@ -318,14 +319,14 @@ The variables a driver — human or agent — needs, all optional:
 
 ## Design notes
 
-- [`notes/basin.md`](notes/basin.md) — the basin of attraction, and self-hosting.
-- [`notes/impedance.md`](notes/impedance.md) — the record as an impedance-matching problem:
-  the spec, the load, the center of the Smith chart, and the minimal-cost probe.
-- [`notes/landscape.md`](notes/landscape.md) — prior art and impact: what exists, what
-  doesn't, and the limits that will decide it.
-- [`three_machine_problem_white_paper.pdf`](three_machine_problem_white_paper.pdf)
-  — the three-machine problem, stated tool-agnostically: seed design, oracle,
-  residue, and the comparable-cost standard this repo implements.
+Claimed docs are self-contained — they link only within the claim — so the
+design essays are *named* here, not linked. They are thought residue under
+`docs/notes/` (carried, never regrown): `basin.md` (the basin of attraction,
+and self-hosting), `impedance.md` (the record as an impedance-matching problem
+— the spec, the load, the center of the Smith chart), `landscape.md` (prior
+art and impact), and the three-machine white paper (the standard this repo
+implements, stated tool-agnostically). Experiment data and its protocol live
+in `docs/experiments/`.
 
 Reticuli is a **basin-compiler**: it compiles diverse implementations onto one
 certified claim. Pointed at its own repo, it compiles *itself* — a record whose

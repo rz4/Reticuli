@@ -13,9 +13,10 @@ guide — deep enough for rigorous engineers and scientists (a word floor, not a
 ceiling); EVERY verb the CLI exposes is documented (parsed live from --help,
 so an undocumented verb fails here before it ships); the load-bearing concepts
 are named; the public environment contract (the RETICULI_* variables a driver
-or agent needs) is documented; every relative link resolves — residue
-namespaces (experiments/, notes/, *.pdf) and identity-elsewhere files
-(*_check.py) exempt; and the machine audience is served (--json is shown).
+or agent needs) is documented; every relative link resolves IN THE CLAIM ROOM — claimed docs
+are self-contained: they never link residue or files outside the record
+(residue may be named in prose, never linked); and the machine audience is
+served (--json is shown).
 
 Editing the docs keeps the root; editing this check moves it. Writes VERIFIED
 iff the hand-off is conformant. Stdlib only, so it runs in any clean room.
@@ -31,7 +32,6 @@ CONCEPTS = ["root = hash(", "three-machine", "audit", "quarantine", "attest",
             "basin", "ledger", "freeze-dr", "condense", "realize"]
 ENV_CONTRACT = ["RETICULI_QUARANTINE", "RETICULI_JAILED", "RETICULI_USAGE",
                 "RETICULI_MODEL", "RETICULI_AGENT_BUDGET"]
-_ELSEWHERE = re.compile(r"experiments/|notes/|\.pdf$|_check\.py$")
 
 
 def _help() -> str:
@@ -42,15 +42,21 @@ def _help() -> str:
 
 
 def _links_resolve(md: str) -> None:
+    """Self-contained: every relative link must resolve here, in the room.
+    No exemptions — a claimed doc never links what the claim doesn't carry."""
     base = os.path.dirname(md)
     with open(md, encoding="utf-8") as f:
         text = f.read()
     for m in re.finditer(r"\]\(([^)#\s]+)\)", text):
         t = m.group(1)
-        if t.startswith(("http://", "https://", "mailto:")) or _ELSEWHERE.search(t):
+        if t.startswith(("http://", "https://", "mailto:")):
             continue
+        # residue is prose, never a link — enforced by rule, not by whether the
+        # file happens to exist where the gate runs (warm it would; cold it won't)
+        assert not re.search(r"experiments/|notes/|\.pdf$", t), \
+            f"{md} links residue: {t}"
         assert os.path.exists(os.path.normpath(os.path.join(base, t))), \
-            f"{md} links a ghost: {t}"
+            f"{md} links outside the claim: {t}"
 
 
 def battery() -> None:
