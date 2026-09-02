@@ -76,7 +76,8 @@ def battery() -> None:
         code, out = _run(["tree", ws])
         assert code == 0 and "vapor" in out, "the session lens"
         code, out = _run(["tree", rec])
-        assert code == 0 and "seed" in out and "pin" in out, "the record lens"
+        assert code == 0 and "free  answer.txt" in out and "pin   OK" in out \
+            and "rung(s)" in out, "the record lens"
 
         # the agent handshake at the surface: `ret hook` is silent, `ret hooks` wires
         payload = {"hook_event_name": "UserPromptSubmit", "prompt": "again", "cwd": ws}
