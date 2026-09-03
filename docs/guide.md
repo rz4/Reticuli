@@ -60,11 +60,6 @@ tolerance = 2.0
 2  M3       c124ba320206…
 ```
 
-The cube experiment (under `docs/experiments/cube`, residue) shows the basin
-concretely: three genuinely different rotating-cube implementations (≈0.1 code
-similarity) all certify against one fixed checker — whose deliberate weakness
-(an identity matrix passes) is kept as the documented Goodhart exhibit.
-
 ## The agent handshake
 
 `ret hooks` wires Claude Code (and compatible harnesses) to the session:
@@ -210,7 +205,7 @@ rehydrates **leaf-first**: it regrows the kernel from `kernel_check.py`,
 threads it up through exchange, authoring, agents, and the surface, writes a
 fresh README against `docs_check.py`, and — because all of it is free and the
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
-its own ledger, so a recursive redo yields a **per-layer cost envelope**: what
+its own ledger, so a recursive redo prices every layer separately: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
 roots, inner to outer: `81622000…`, `26a1f7a0…`, `f1168e37…`, `b3d17a3e…`,
 `9213b976…`, workshop `efc35bfc…`, vessel `59845d94…`, whole `b4365b16…`.
@@ -253,32 +248,14 @@ is **agentic** — one autonomous session in the room, with tools, that may run 
 gate, see it fail, and fix until it passes or a dollar budget
 (`RETICULI_AGENT_BUDGET`) is spent: "can an agent land it given the ability to
 test, and at what cost." Oneshot is cheaper and honest about raw capability;
-agentic lands more and turns the reflection profile into a *repair-cost* map. The
-room holds only the check and the already-free lower layers — no reference — so
-the agent iterating against the gate is honest "make the tests pass," and
-realize's jailed gate stays the authoritative verdict.
-
+agentic lands more, for a measured extra cost. The room holds only the check
+and the already-free lower layers — no reference — so the agent iterating
+against the gate is honest "make the tests pass," and realize's jailed gate
+stays the authoritative verdict.
 [`scripts/producer_openai.py`](../scripts/producer_openai.py) is the same
-oneshot contract for OpenAI models. [`scripts/sweep.py`](../scripts/sweep.py) is
-the reproducible runner for the whole grid — controls plus {haiku, sonnet, opus}
-× {oneshot, agentic} — over [`scripts/probe.py`](../scripts/probe.py), which
-isolates each layer and lands a cell only when the redo hits the committed root
-*and* passes `audit`. Every row is stamped with the `claim_root` it was measured
-against (never mix data across a re-mint), one sweep runs at a time (a lock), and
-each landed specimen is archived as a re-auditable record. The protocol and its
-honesty rules live in `docs/experiments/` (residue).
-
-It works — and the redo's ledger accounts what the model actually cost: the
-producer reports real token/usd usage back through `$RETICULI_USAGE`, one line
-per blind call. In one such run (sonnet-5), given only the checks, a live model
-regrew the whole repo — **every one of the 10 modules byte-different from the
-committed code** (991 lines vs 1130; `kernel.py` 352 vs 206, `cli.py` 160 vs
-285) — and the chain landed on the *same roots* (`a1fc505a`, `30968ae8`, the
-claim as it then stood — the checks have since grown the cost, quarantine, and
-attestation clauses, re-minting the roots above). A different kernel and a
-different toolchain, one claim. Run it again and the model writes different
-code again; the roots don't move. That is the three-machine test with an
-independent producer: the basin is real, not a copy.
+oneshot contract for OpenAI models. Either way the redo's ledger accounts what
+the model actually cost: producers report real token/usd usage back through
+`$RETICULI_USAGE`, one line per call.
 
 ### Composition, in general
 
@@ -316,17 +293,6 @@ The variables a driver — human or agent — needs, all optional:
   (`producer_claude.py`, `producer_claude_agentic.py`, `producer_openai.py`).
 - `RETICULI_AGENT_BUDGET` — the agentic producer's per-layer dollar cap: it
   may run the gate and iterate until it passes or the budget is spent.
-
-## Design notes
-
-Claimed docs are self-contained — they link only within the claim — so the
-design essays are *named* here, not linked. They are thought residue under
-`docs/notes/` (carried, never regrown): `basin.md` (the basin of attraction,
-and self-hosting), `impedance.md` (the record as an impedance-matching problem
-— the spec, the load, the center of the Smith chart), `landscape.md` (prior
-art and impact), and the three-machine white paper (the standard this repo
-implements, stated tool-agnostically). Experiment data and its protocol live
-in `docs/experiments/`.
 
 Reticuli is a **basin-compiler**: it compiles diverse implementations onto one
 certified claim. Pointed at its own repo, it compiles *itself* — a record whose

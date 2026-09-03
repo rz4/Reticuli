@@ -71,7 +71,7 @@ check — a deliberate re-mint — and leave the test as the bench copy.
 
 ## Known limits (state these with any result)
 
-- **Self-referential** — six layers of Reticuli reproducing itself. External
+- **Self-referential** — eight rungs of Reticuli reproducing itself. External
   validity needs a non-self specimen (a real outside project).
 - **Claude-family only** until a working OpenAI key is supplied.
 - **`audit` assumes gates are deterministic and hermetic.** A nondeterministic
@@ -80,3 +80,29 @@ check — a deliberate re-mint — and leave the test as the bench copy.
 - **Independence is not proven** — audit shows *these bytes earn these verdicts*,
   not that they were produced without copying M1. That is attestation's job.
 - Small n so far; a real result wants n ≥ 3 per cell.
+
+## Notable runs (history; some against retired claims)
+
+- **The first live rehydration (sonnet-5, pre-audit two-rung claim).** Given
+  only the checks, a live model regrew the whole repo — every one of the 10
+  modules byte-different from the committed code (991 lines vs 1130;
+  `kernel.py` 352 vs 206) — and landed the same roots (`a1fc505a`,
+  `30968ae8`, since re-minted many times over). The basin is real, not a copy.
+- **The minimal-cost probe (haiku 4.5).** The whole kernel — the invariant —
+  regrown blind to the exact committed root for **$0.14**. Blind, haiku lands
+  the deep layers and fumbles surface specifics; sonnet lands the middle and
+  over-engineers the ends.
+- **Iteration beats horsepower.** Agentic haiku (allowed to run the gate and
+  fix) landed **6/6 layers for ~$1.6–1.9** across claim versions — beating
+  blind sonnet (4/6, ~$9) on completeness and cost. Both agentic rows reach
+  6/6 once the claims state their contracts.
+- **The jail-seam finding.** Agentic sonnet reproducibly failed the kernel
+  (n=2): it re-invented quarantine and tripped the nested-jail trap our own
+  build had hit — invisible to it, because agents tested unjailed while the
+  verdict ran jailed. Tuning the source (the check now states and enforces
+  the execution contract, re-execing itself into the host jail) fixed both
+  modes: agentic sonnet landed, and even *blind* sonnet then read the stated
+  contract and landed. Realization debt: detected by the net, paid into the
+  claim, convergence measured.
+- **Both controls hold on all eight rungs**: byte-copy lands everything at $0;
+  a `stub = None` producer lands nothing. The basin is sharp.
