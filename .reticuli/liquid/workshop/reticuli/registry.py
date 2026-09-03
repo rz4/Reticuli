@@ -129,7 +129,14 @@ def rehydrate(record: str, producer: str, into: str, ws: str | None = None) -> d
             raise kernel.ReticuliError(
                 f"rehydrate: component {name}@{root[:12]}… not in registry")
         comp_into = os.path.join(into, kernel.STORE, "deps", name)
-        sub = rehydrate(comp, producer, comp_into, ws)           # recurse: leaf first
+        # resumable: a dep already sealed at the expected root is reused, so an
+        # interrupted rehydration never re-pays for completed rungs (prove/audit
+        # still validates everything at the end)
+        if (kernel.phase(comp_into) != "vapor"
+                and kernel.read_manifest(comp_into)["root"] == root):
+            sub = {"root": root}
+        else:
+            sub = rehydrate(comp, producer, comp_into, ws)       # recurse: leaf first
         rehydrated.append({"component": name, "root": sub["root"]})
         for link in links:
             src = os.path.join(comp_into, link["output"])

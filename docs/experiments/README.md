@@ -106,3 +106,15 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   claim, convergence measured.
 - **Both controls hold on all eight rungs**: byte-copy lands everything at $0;
   a `stub = None` producer lands nothing. The basin is sharp.
+- **The capstone rehearsal (2026-09-03).** The whole repo passed its own
+  three-machine test: M1 the repo, M2 its export imported (reuse, verified from
+  bytes alone), M3 an independent agentic rehydration of all eight rungs
+  (sonnet, no reference in any room) — all three on the exact root
+  `b4365b16…`, `satisfied=true`, `audited=true`. Cost: ~$16, ~382k tokens over
+  four attempts (three failures — a $5 budget cap on the 22-file workshop, a
+  transient API error, a salvage bug — each leaving a fix: resumable
+  rehydrate, producer retry-once, recipe-driven ownership). The workshop rung
+  is empirically the fragile, expensive stratum: regrowing a bench with a
+  self-detecting suite is a long-horizon session at the edge of one budget.
+  Not minted — a rehearsal; the object can survive its own test, and we anneal
+  to flight stage before the solid mint.

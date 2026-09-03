@@ -14,20 +14,26 @@ from . import kernel
 
 
 def export(d: str, tar_path: str) -> dict:
-    """Deterministic tar of a record directory. Volatile history (the trace,
-    the cost ledger) stays home — identity travels, events don't."""
+    """Deterministic tar of THE RECORD — its declared content only: recipe,
+    manifest, dry seeds, produce and gate outputs, and attestations. Neighbors
+    in the working tree (git history, environments, residue) never leak into
+    the tar, and volatile history (the trace, the cost ledger) stays home —
+    identity travels, events don't."""
     d = os.path.abspath(d)
     if kernel.phase(d) == "vapor":
         raise kernel.ReticuliError(f"no record in {d} (seal or condense first)")
+    recipe = kernel.load_recipe(d)
+    rels = [kernel.RECIPE, os.path.join(kernel.STORE, "manifest.json")]
+    rels += kernel._seeds(recipe)
+    rels += [s["output"] for s in recipe.get("step", [])]
+    att = os.path.join(d, kernel.STORE, "attest")
+    if os.path.isdir(att):
+        rels += [os.path.join(kernel.STORE, "attest", f) for f in sorted(os.listdir(att))]
     members = []
-    for root_dir, dirs, files in os.walk(d):
-        dirs.sort()
-        for f in sorted(files):
-            full = os.path.join(root_dir, f)
-            rel = os.path.relpath(full, d).replace(os.sep, "/")
-            if f in ("vapor.jsonl", "ledger.jsonl") and kernel.STORE in rel.split("/"):
-                continue
-            members.append((rel, full))
+    for rel in sorted(set(rels)):
+        full = os.path.join(d, rel)
+        if os.path.isfile(full):
+            members.append((rel.replace(os.sep, "/"), full))
     members.sort()
     with tarfile.open(tar_path, "w") as tar:
         for rel, full in members:
