@@ -27,6 +27,7 @@ basin of kernels is what the component *is*. The whole toolchain layers on top:
 its own gate ([`surface_check.py`](surface_check.py)) certifies the CLI built
 over a conformant kernel, rung by rung.
 """
+import ast
 import json
 import os
 import shutil
@@ -36,6 +37,34 @@ import tempfile
 
 sys.path.insert(0, ".")
 from reticuli import kernel   # the kernel under test
+
+# The kernel stratum touches the machine (files, subprocess for the jail) but a
+# conformant kernel never reaches the NETWORK: no honest realization we have
+# collected imports a socket, and a phone-home payload in the deepest stratum
+# needs one. This is the first behavioral clause admitted by the divergence rule
+# — promote a property only where it separates every honest realization from a
+# class of payloads, so it costs zero basin width. `root = hash(...)` cannot see
+# free bytes (that freedom IS the basin), so a mutant kernel that imports urllib
+# lands the same root and audits clean; this static wall is what catches it.
+# It narrows, it does not seal — subprocess remains, and the guide says so.
+_NET = frozenset({"socket", "ssl", "http", "urllib", "ftplib", "smtplib",
+                  "poplib", "imaplib", "nntplib", "telnetlib", "asyncio",
+                  "xmlrpc", "socketserver", "webbrowser", "requests", "httpx",
+                  "aiohttp", "urllib3"})
+KERNEL_STRATUM = ("reticuli/__init__.py", "reticuli/kernel.py")
+
+
+def _toplevel_imports(path: str) -> set[str]:
+    """Top-level module names a source file imports (stdlib check is by name)."""
+    with open(path, encoding="utf-8") as f:
+        tree = ast.parse(f.read())
+    mods: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            mods |= {a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            mods.add(node.module.split(".")[0])
+    return mods
 
 FIXTURE = '''[record]
 name = "fixture"
@@ -103,6 +132,16 @@ def _rejail() -> None:
 
 
 def battery() -> None:
+    # the free clause: the kernel stratum is stdlib-only and never networks.
+    # Checked statically against the source under test, so a payload realization
+    # that behaves correctly on every gate above yet phones home is still caught.
+    for rel in KERNEL_STRATUM:
+        mods = _toplevel_imports(rel)
+        net = mods & _NET
+        assert not net, f"kernel must not reach the network: {sorted(net)} in {rel}"
+        third = {m for m in mods if m not in sys.stdlib_module_names and m != "reticuli"}
+        assert not third, f"kernel stratum must be stdlib-only: {sorted(third)} in {rel}"
+
     d = tempfile.mkdtemp()
     try:
         m1 = os.path.join(d, "m1")

@@ -166,6 +166,35 @@ without a signers file reports signatures as `intact` (the bytes are covered;
 the signer is your problem). What remains open beyond this is witnessed
 execution — proving *where* a gate ran, not just who vouches for it.
 
+## What a root promises (and what it doesn't)
+
+`root = hash(recipe + seeds + verdicts)` pins the **claim** — these bytes
+satisfy these checks — and deliberately not the implementation. Off the checks'
+support, behavior is unconstrained; that width is the basin, and it is the
+point. So a realization can pass every gate, match the root, and `audit` clean,
+yet still carry behavior the checks never exercise. (Demonstrated: a mutant
+kernel that imports the network and writes a beacon on `seal` lands the exact
+root and audits clean — root-match and audit do not see it.)
+
+Trust in a record therefore climbs a ladder, each rung a different question:
+
+1. **root match** — the same claim (identity).
+2. **audit** — the verdicts are earned by these bytes, not carried (no
+   fabrication).
+3. **attestation** — a named keyholder ran this realization and signed the
+   statement (*who* — transport provenance).
+4. **solid mint** — these exact bytes, frozen and ceremony-signed (*what*).
+
+A record on disk is **liquid**: it gives you rungs 1–3, never 4 — the free
+implementation is unpinned by construction. Pull a record from someone you can
+name and rely on their attestation; pull from a stranger and you must read the
+code or wait for a solid — the root alone was never a claim about the bytes.
+Where a property cleanly separates every honest realization from a class of
+payloads, it is promoted to a check instead of left to trust: the kernel's
+**stdlib-only, no-network** rule is the first such clause — every honest kernel
+satisfies it, a phone-home payload cannot. Where no property separates the two,
+no gate can help and the ladder is the honest answer.
+
 ## Output
 
 Every command prints exactly one of three shapes — a **TOML** fact sheet (one
@@ -212,7 +241,7 @@ fresh README against `checks/docs_check.py`, and — because all of it is free a
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo prices every layer separately: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
-roots, inner to outer: `ebada06f…`, `9ee4b5be…`, `b7610cbb…`, `c3b3e782…`,
+roots, inner to outer: `89651ed8…`, `9ee4b5be…`, `b7610cbb…`, `c3b3e782…`,
 `e88c86e4…`, workshop `95be11f4…`, vessel `14309559…`, whole `cc1a10e7…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,

@@ -137,3 +137,10 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   checks moved to `checks/` — every new clause rejects the capstone specimen,
   the committed tree passes all eight gates, and the re-rehearsed
   three-machine test holds at the new whole root `cc1a10e7…`.
+- **Round two, payload 1 (2026-09-03).** A crafted mutant `kernel.py` that
+  imports `urllib` and writes a beacon on `seal` lands the *identical* root,
+  *audits clean*, and its side effect fires — the payload class is invisible to
+  both root-match and audit. Only a static import clause separates it from
+  every honest kernel. Motivated and validated the kernel's stdlib/no-network
+  free clause, and grounds the documented trust ladder. Full write-up in
+  [round2-payload.md](round2-payload.md).
