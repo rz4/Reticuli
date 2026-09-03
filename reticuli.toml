@@ -1,6 +1,6 @@
 [record]
 name = "reticuli"
-inputs = ["docs_check.py"]
+inputs = ["checks/docs_check.py"]
 
 [[step]]
 kind = "produce"
@@ -291,4 +291,4 @@ request = "regenerate README.md to pass the gate"
 kind = "gate"
 output = "VERIFIED"
 class = "validated"
-run = "python3 docs_check.py"
+run = "python3 checks/docs_check.py"

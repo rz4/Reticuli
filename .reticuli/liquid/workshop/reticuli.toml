@@ -1,6 +1,6 @@
 [record]
 name = "workshop"
-inputs = ["workshop_check.py"]
+inputs = ["checks/workshop_check.py"]
 
 [[step]]
 kind = "produce"
@@ -222,4 +222,4 @@ request = "regenerate tests/test_transfer.py to pass the gate"
 kind = "gate"
 output = "WORKSHOP_OK"
 class = "validated"
-run = "python3 workshop_check.py"
+run = "python3 checks/workshop_check.py"

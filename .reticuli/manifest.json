@@ -4,237 +4,237 @@
       "component": "vessel",
       "input": "reticuli/__init__.py",
       "output": "reticuli/__init__.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/kernel.py",
       "output": "reticuli/kernel.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/registry.py",
       "output": "reticuli/registry.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/transfer.py",
       "output": "reticuli/transfer.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/attest.py",
       "output": "reticuli/attest.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/render.py",
       "output": "reticuli/render.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/condense.py",
       "output": "reticuli/condense.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/feedback.py",
       "output": "reticuli/feedback.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/pack.py",
       "output": "reticuli/pack.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/hooks.py",
       "output": "reticuli/hooks.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/cli.py",
       "output": "reticuli/cli.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "reticuli/__main__.py",
       "output": "reticuli/__main__.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "scripts/envelope.py",
       "output": "scripts/envelope.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "scripts/probe.py",
       "output": "scripts/probe.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "scripts/producer_claude.py",
       "output": "scripts/producer_claude.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "scripts/producer_claude_agentic.py",
       "output": "scripts/producer_claude_agentic.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "scripts/producer_openai.py",
       "output": "scripts/producer_openai.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "scripts/selfrecord.py",
       "output": "scripts/selfrecord.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "scripts/sweep.py",
       "output": "scripts/sweep.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_attest.py",
       "output": "tests/test_attest.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_audit.py",
       "output": "tests/test_audit.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_cli.py",
       "output": "tests/test_cli.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_composition.py",
       "output": "tests/test_composition.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_condense.py",
       "output": "tests/test_condense.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_cost.py",
       "output": "tests/test_cost.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_feedback.py",
       "output": "tests/test_feedback.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_hooks.py",
       "output": "tests/test_hooks.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_kernel.py",
       "output": "tests/test_kernel.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_layered.py",
       "output": "tests/test_layered.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_quarantine.py",
       "output": "tests/test_quarantine.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_recursive.py",
       "output": "tests/test_recursive.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_repo_selfhost.py",
       "output": "tests/test_repo_selfhost.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_selfhost.py",
       "output": "tests/test_selfhost.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "tests/test_transfer.py",
       "output": "tests/test_transfer.py",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": "pyproject.toml",
       "output": "pyproject.toml",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": ".gitignore",
       "output": ".gitignore",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": ".gitattributes",
       "output": ".gitattributes",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": ".github/workflows/ci.yml",
       "output": ".github/workflows/ci.yml",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     },
     {
       "component": "vessel",
       "input": ".github/workflows/release.yml",
       "output": ".github/workflows/release.yml",
-      "root": "59845d94ea6006ca26c8519903eb417c03e9f916469b0da24a2724483ad6858a"
+      "root": "14309559000dbfc1833a69ac455f1d42a7b097c2faf5930751a69383fea324b0"
     }
   ],
   "name": "reticuli",
-  "root": "b4365b168705241275070767af754eb686ebb292965c0cff48cd888c0be1b06b"
+  "root": "cc1a10e7cd440d57327812599b9e2570d3b77ceb28c43eb60381fc53f3db7798"
 }

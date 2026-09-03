@@ -33,7 +33,7 @@ jobs:
           pip install pytest ruff
 
       - name: ruff
-        run: ruff check reticuli tests scripts ./*_check.py
+        run: ruff check reticuli tests scripts checks
 
       - name: tests
         run: pytest -q

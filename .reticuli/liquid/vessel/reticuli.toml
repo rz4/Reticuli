@@ -1,6 +1,6 @@
 [record]
 name = "vessel"
-inputs = ["vessel_check.py", "LICENSE", "logo.png"]
+inputs = ["checks/vessel_check.py", "LICENSE", "logo.png"]
 
 [[step]]
 kind = "produce"
@@ -274,4 +274,4 @@ request = "regenerate .github/workflows/release.yml to pass the gate"
 kind = "gate"
 output = "VESSEL_OK"
 class = "validated"
-run = "python3 vessel_check.py"
+run = "python3 checks/vessel_check.py"

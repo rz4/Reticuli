@@ -32,6 +32,7 @@ CONCEPTS = ["root = hash(", "three-machine", "audit", "quarantine", "attest",
             "basin", "ledger", "freeze-dr", "condense", "realize"]
 ENV_CONTRACT = ["RETICULI_QUARANTINE", "RETICULI_JAILED", "RETICULI_USAGE",
                 "RETICULI_MODEL", "RETICULI_AGENT_BUDGET"]
+VERB_GROUPS = ["session", "author", "transfer", "redo", "compose"]
 
 
 def _help() -> str:
@@ -67,7 +68,11 @@ def battery() -> None:
     words = len(readme.split())
     assert words <= BUDGET, f"README is {words} words; contact allows {BUDGET}"
     assert 'pip install "git+https://github.com/rz4/reticuli"' in readme, "the real install line"
-    assert "root = hash(" in readme, "the one idea, stated"
+    # the invariant must name the SEEDS in the root, not just "hash(...)": the
+    # claim is the check, and a redo that omits the seeds from identity can still
+    # satisfy a bare `root = hash(` needle (the census caught exactly that).
+    assert re.search(r"root = hash\([^)]*\b(inputs?|seeds?)\b", readme), \
+        "the invariant must name inputs/seeds in the root (the claim, not just the code)"
     assert "three-machine" in readme, "the invariant, named"
     assert "logo.png" in readme, "the mark"
     assert "docs/guide.md" in readme, "a pointer to depth"
@@ -92,6 +97,15 @@ def battery() -> None:
     for var in ENV_CONTRACT:
         assert var in guide, f"the public env contract must be documented: {var}"
     assert "--json" in guide, "the machine audience: --json is shown"
+    # the guide's verb reference mirrors the CLI's phase map — the same five
+    # process groups, so the mental map the user reads in `--help` is the map
+    # the guide teaches. (Membership is ratified in surface_check; this keeps
+    # the two surfaces from drifting apart.)
+    assert re.search(r"root = hash\([^)]*\b(inputs?|seeds?)\b", guide), \
+        "the guide's invariant must name inputs/seeds in the root"
+    for grp in VERB_GROUPS:
+        assert re.search(rf"(?im)^\W*{grp}\b", guide), \
+            f"the guide's verb map needs the `{grp}` group"
 
     for md in ("README.md", "docs/guide.md"):
         _links_resolve(md)

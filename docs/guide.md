@@ -2,7 +2,7 @@
 
 The long form. The [README](../README.md) is the 60-second contact layer — a
 free output of the repo's own self-record, gated by
-[`docs_check.py`](../docs_check.py); this guide is where the depth lives.
+[`checks/docs_check.py`](../checks/docs_check.py); this guide is where the depth lives.
 
 ## The one idea: the root *is* the claim
 
@@ -181,7 +181,7 @@ its check the *seed*, gated by running the check. Eight records make up the repo
 each carrying everything below it and layering its own stratum on top, sealed
 by [`scripts/selfrecord.py`](../scripts/selfrecord.py):
 
-| rung | own stratum (free) | seed (the check) | claims |
+| rung | own stratum (free) | seed (the check, under `checks/`) | claims |
 |---|---|---|---|
 | **kernel-core** | `reticuli/{__init__,kernel}.py` | `kernel_check.py` | the invariant → `KERNEL_OK` |
 | **exchange** | `+ {registry,transfer,attest}.py` | `exchange_check.py` | records meet records, and other parties → `EXCHANGE_OK` |
@@ -190,25 +190,30 @@ by [`scripts/selfrecord.py`](../scripts/selfrecord.py):
 | **surface** | `+ {cli,__main__}.py` | `surface_check.py` | the human handshake → `SURFACE_OK` |
 | **workshop** | `+ scripts/*.py, tests/*.py` | `workshop_check.py` | the bench: suite passes AND has teeth (a killed `seal` must fail it) → `WORKSHOP_OK` |
 | **vessel** | `+ pyproject, CI, git skin` | `vessel_check.py` | the skin it ships in; LICENSE and logo pinned as seeds → `VESSEL_OK` |
-| **reticuli** (documentation) | `+ README.md, docs/guide.md` | [`docs_check.py`](../docs_check.py) | the hand-off: a minute for contact, depth for engineers and agents, every verb and env var documented, no lies → `VERIFIED` |
+| **reticuli** (documentation) | `+ README.md, docs/guide.md` | [`docs_check.py`](../checks/docs_check.py) | the hand-off: a minute for contact, depth for engineers and agents, every verb and env var documented, no lies → `VERIFIED` |
+
+`tests/` is where knowledge is *discovered* (free water, any bytes that pass);
+`checks/` is where it is *ratified* (dry seeds, identity). Promotion is
+physical: move a test's knowledge across that boundary and re-mint — the
+directory line is the type system.
 
 Each rung obtains the layers beneath it from its predecessor as `from` produce
 steps — free code it *layers on*, not bytes it pins. Even the README is free
 water: its word budget and honesty are the claim. So `ret verify .` holds,
-`ret deps .` draws the chain, and:
+`ret tree .` draws the chain, and:
 
 ```bash
 ret realize . --recursive --producer <model> --into M3
 ```
 
-rehydrates **leaf-first**: it regrows the kernel from `kernel_check.py`,
+rehydrates **leaf-first**: it regrows the kernel from `checks/kernel_check.py`,
 threads it up through exchange, authoring, agents, and the surface, writes a
-fresh README against `docs_check.py`, and — because all of it is free and the
+fresh README against `checks/docs_check.py`, and — because all of it is free and the
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo prices every layer separately: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
-roots, inner to outer: `81622000…`, `26a1f7a0…`, `f1168e37…`, `b3d17a3e…`,
-`9213b976…`, workshop `efc35bfc…`, vessel `59845d94…`, whole `b4365b16…`.
+roots, inner to outer: `ebada06f…`, `9ee4b5be…`, `b7610cbb…`, `c3b3e782…`,
+`e88c86e4…`, workshop `95be11f4…`, vessel `14309559…`, whole `cc1a10e7…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
 and its pinned verdict, contact to leaf.
@@ -267,16 +272,31 @@ either way — the claim reproduces from the leaves, not just one layer.
 
 ## The verbs
 
-| phase | verb | |
-|---|---|---|
-| vapor | `init` · `hooks` · `hook` · `run` · `status` · `tree` | set up · wire the agent · receive one agent event (stdin) · record a command · where am I · two lenses: a session's dry/wet, a record's anatomy |
-| liquid | `condense` · `verify` · `audit` · `show` · `pack` · `records` · `deps` · `pull` · `export` · `import` · `attest` | seal · does the identity hold · do the verdicts reproduce · print the recipe · self-record · the drawer · the DAG · depend on a record · deterministic tar out · unpack and verify back · sign it for others |
-| solid | `realize` · `realize --recursive` · `prove` | an independent redo · redo the whole component DAG · the three-machine test |
+`ret --help` lists them in five process groups — read top to bottom, it *is*
+the workflow, and it is the same map on both surfaces (the grouping is claimed
+by the surface check; the wording is free water).
 
-Records compose: a dry seed that matches a registry record's output links the
-two (content-addressed). `ret pull` brings a component in as seeds; `ret deps`
-draws the DAG; `ret realize --recursive` rehydrates it bottom-up. `solid` is a
-record's view of itself; `dry` is a dependent's view of the same record.
+- **session** (vapor): `init` sets up the store and git skin · `hooks` wires the
+  agent to the trace · `status` prints phase and freshness.
+- **author** (M1, vapor → liquid): `run` records a command in the trace ·
+  `condense` drafts a record from it and certifies it cold · `verify` recomputes
+  the root and compares it with the sealed manifest.
+- **transfer** (M2, liquid): `export` writes the record's declared content to a
+  deterministic tar · `import` unpacks it and verifies from the bytes alone ·
+  `audit` re-runs the gates so the verdicts are re-earned, never carried.
+- **redo** (M3, liquid → solid): `realize` rebuilds the free code in a clean room
+  (`--recursive` rehydrates the whole component DAG, bottom-up) · `prove` runs the
+  three-machine test (`--freeze-dry` mints M1 solid on success) · `attest` signs a
+  realization with `ssh-keygen -Y` (`--check` verifies the signatures).
+- **compose**: `pack` seals a project directory as a self-record · `pull` brings
+  a record in as a dependency · `tree` shows a session's dry/wet plus its
+  drawer's dependency graph, or a sealed record's anatomy · `records` lists the
+  drawer.
+
+`ret hook` exists but is internal — the installed agent hooks invoke it to
+append one trace event; you never type it. Records compose: a dry seed that
+matches a registry record's output links the two (content-addressed); `solid` is
+a record's view of itself, `dry` a dependent's view of the same record.
 
 ## The environment contract
 

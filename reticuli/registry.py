@@ -146,6 +146,12 @@ def rehydrate(record: str, producer: str, into: str, ws: str | None = None) -> d
     # deps now live under into/.reticuli/deps — thread them into the record and seal
     result = kernel.realize(record, producer, into, seed_from=seed_from,
                             produce_from=produce_from, exist_ok=True)
+    # carry the provenance forward: realize seals bare {name, root}, but a redo
+    # of a composed record must keep the links it was rebuilt from (same root —
+    # components are manifest metadata, outside the claim) so its anatomy is not
+    # lost. Without this a rehydrated record's `ret tree` is a stump.
+    if manifest.get("components"):
+        kernel.seal(into, components=manifest["components"])
     result["rehydrated_components"] = rehydrated
     return result
 

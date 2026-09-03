@@ -24,8 +24,8 @@ fails here, visibly, not only at the final gate.
 
 Any kernel that passes this check hashes to the same kernel-core root — the
 basin of kernels is what the component *is*. The whole toolchain layers on top:
-its own gate ([`whole_check.py`](whole_check.py)) certifies the CLI, condense,
-registry, and render built over a conformant kernel.
+its own gate ([`surface_check.py`](surface_check.py)) certifies the CLI built
+over a conformant kernel, rung by rung.
 """
 import json
 import os
@@ -50,6 +50,28 @@ class = "free"
 kind = "gate"
 output = "V"
 run = "grep -qi hello g.txt && printf v > V"
+class = "validated"
+'''
+
+# A record WITH a dry seed — the acceptance criteria are part of the claim.
+# Used to pin the deepest property of the invariant: the root is a function of
+# the seed bytes. A kernel that hashes only its validated outputs passes the
+# seedless FIXTURE yet fails here — which is exactly the hole a live redo fell
+# into (a regrown kernel whose `verify` blesses a record whose check was edited).
+SEEDED = '''[record]
+name = "seeded"
+inputs = ["spec.txt"]
+
+[[step]]
+kind = "produce"
+output = "impl.txt"
+request = "any implementation that satisfies the spec"
+class = "free"
+
+[[step]]
+kind = "gate"
+output = "V"
+run = "grep -q PASS impl.txt && printf v > V"
 class = "validated"
 '''
 
@@ -102,6 +124,32 @@ def battery() -> None:
         r = kernel.three_machine(m1, m2, m3)
         assert r["satisfied"] and len(set(r["roots"].values())) == 1, "three-machine"
 
+        # the root is the CLAIM: it is a function of the dry seeds (the check),
+        # and independent of the free outputs (the implementation). Editing a
+        # free output must keep the root; editing a seed must move it AND break
+        # identity. A kernel that omits the seeds from the root passes the
+        # seedless fixture above but fails right here.
+        s = os.path.join(d, "seeded")
+        os.makedirs(s)
+        with open(os.path.join(s, "reticuli.toml"), "w") as f:
+            f.write(SEEDED)
+        with open(os.path.join(s, "spec.txt"), "w") as f:
+            f.write("acceptance criteria: v1\n")
+        with open(os.path.join(s, "impl.txt"), "w") as f:
+            f.write("PASS — implementation one\n")
+        subprocess.run("grep -q PASS impl.txt && printf v > V", shell=True, cwd=s, check=True)
+        kernel.seal(s)
+        assert kernel.verify(s)["ok"], "seeded record seals"
+        r_seed = kernel.verify(s)["root"]
+        with open(os.path.join(s, "impl.txt"), "w") as f:      # a different free redo
+            f.write("PASS — implementation two, wholly rewritten\n")
+        vs = kernel.verify(s)
+        assert vs["ok"] and vs["root"] == r_seed, "editing a free output keeps the root"
+        with open(os.path.join(s, "spec.txt"), "w") as f:      # edit the claim itself
+            f.write("acceptance criteria: v2 (stricter)\n")
+        vs = kernel.verify(s)
+        assert not vs["ok"] and vs["recomputed"] != r_seed, "editing a dry seed moves the claim"
+
         # soundness: the verdicts must be EARNED, not carried. Root equality is
         # identity; audit re-runs the gates against the bytes present, so a
         # fabricated M3 — M1 copied, free output scribbled over, gate failing —
@@ -147,6 +195,17 @@ def battery() -> None:
             assert not os.path.exists(os.path.join(d, "escape.txt")), "nothing escaped"
         else:                                                  # no jail here: recorded, not hidden
             kernel.realize(m1e, "printf 'hello jail\\n' > g.txt", os.path.join(d, "m4"))
+
+        # comparability is a BAND ([1/tol, tol]), not equality: a redo that cost
+        # 1.5x the original is comparable at the default tolerance. A kernel that
+        # demands exact-equal cost passes the 4:1 case above yet fails here.
+        # (last — it clobbers the ledgers it writes.)
+        with open(os.path.join(m1, kernel.LEDGER), "w") as f:
+            f.write('{"event": "oracle", "calls": 2}\n')       # a 2-call original
+        with open(os.path.join(m3, kernel.LEDGER), "w") as f:
+            f.write('{"event": "oracle", "calls": 3}\n')       # a 3-call redo -> 1.5x
+        rb = kernel.three_machine(m1, m2, m3)
+        assert rb["cost"]["comparable"] is True, "a 1.5x redo is comparable (a band, not equality)"
     finally:
         shutil.rmtree(d, ignore_errors=True)
 

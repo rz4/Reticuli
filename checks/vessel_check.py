@@ -12,6 +12,7 @@ Documentation is the contact rung's claim (docs_check); examples are residue.
 Writes VESSEL_OK iff the vessel conforms. Stdlib only.
 """
 import os
+import re
 import tomllib
 
 
@@ -31,8 +32,13 @@ def battery() -> None:
     # enforcement and git-native skin
     with open(".github/workflows/ci.yml", encoding="utf-8") as f:
         ci = f.read()
-    for needle in ("ruff", "pytest", "ret verify", "--recursive"):
+    for needle in ("ruff", "pytest", "ret verify"):
         assert needle in ci, f"CI must {needle}"
+    # the recursive redo must be RUN, not merely named: a bare `--recursive`
+    # substring is satisfiable by a comment (the census caught exactly that), so
+    # require it on an actual `ret realize` invocation.
+    assert re.search(r"ret realize\b[^\n]*--recursive", ci), \
+        "CI must run `ret realize --recursive`, not name it in a comment"
     with open(".github/workflows/release.yml", encoding="utf-8") as f:
         assert "pypi-publish" in f.read(), "the release ships to PyPI"
     with open(".gitignore", encoding="utf-8") as f:

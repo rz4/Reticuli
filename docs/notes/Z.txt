@@ -1,0 +1,38 @@
+FINDING 1
+- the observational equivalence class induced by the test oracle.
+- the three-machine test serves as a reproducibility protocol: same spec, independent implementations, same verdict.
+- equivalence is only as fine as the tests.
+- tests show the presence of behavior, never its absence.
+- same behavior on the tests' support.
+
+FINDING 2
+- Assertions: executable tests 100% transfer, hard constraint
+- Comments: transfer <100%, soft contstraint
+- String matching: can be gamed because there's no differentiation between if its code or comment.
+- Documentation outside the room. Stil don't understand this one.
+
+FINDING 3 
+- This is good! it means we can fence in the generation to specific files.
+- This is like the cup that gets filled with water.
+
+FINDING 4
+Yes, the layering in concentric circles gives a area for the extent of divergence.
+We are trying to search for the "most true" version of Reticuli, converging on a seed,
+that will serve its functional purpose when replayed from the seed towards diverging waves.
+
+FINDING 5
+This is interesting, the cup has a volume. The oracle not having well blocked stages leak water into others.
+I think another good metaphor is sealing layers of water with layers of oil. A *_check.py is oil.
+ 
+I think all these are pointing in the correct direction.
+Some things that I still don't get from using ret CLI.
+
+ret tree on M1 shows a deep tree, ret tree on M3 shows a shallow tree.
+the checks in M3 is just the last surface one.
+
+Also, checks seem to be very similar to what you would consider tests/ in typical python programing.
+Would it make sense to have a checks/ module, keeps things clean.
+
+Reticuli takes vapor, condenses it to liquid, and freeze-dries to solid.
+The layering of Reticuli should go in the inverse direction, 
+solid support, liquid support, vapor support.

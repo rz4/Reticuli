@@ -6,20 +6,39 @@ surface itself — argv grammar, exit codes, the shape of what a user sees (TOML
 verdicts, the cost block, --json underneath). The functional depth is claimed
 by the inner gates (kernel_check, exchange_check, authoring_check,
 agents_check); above sits only contact — the README, claimed by
-readme_check.py. Writes SURFACE_OK iff the toolchain a *user* touches is
+docs_check.py. Writes SURFACE_OK iff the toolchain a *user* touches is
 conformant. Stdlib only, so it runs in any clean room.
 """
 import contextlib
 import io
 import json
 import os
+import re
 import shutil
+import subprocess
 import sys
 import tempfile
 
 sys.path.insert(0, ".")
 import reticuli.__main__   # the CLI entrypoint
 from reticuli import cli
+
+# --help is organized by process phase, not a flat verb dump — a mental map the
+# user reads top to bottom as the workflow itself. The census showed structure
+# evaporates unless a gate demands it, so the sections and their membership are
+# ratified here; the wording of each line stays free.
+SECTIONS = ("session (vapor):", "author (vapor -> liquid, M1):",
+            "transfer (liquid, M2):", "redo (liquid -> solid, M3):", "compose:")
+LISTED = {"init", "hooks", "status", "run", "condense", "verify", "export",
+          "import", "audit", "realize", "prove", "attest", "pack", "pull",
+          "tree", "records"}
+
+
+def _help() -> str:
+    r = subprocess.run([sys.executable, "-m", "reticuli", "--help"],
+                       capture_output=True, text=True, check=False)
+    assert r.returncode == 0, "the CLI answers --help"
+    return r.stdout
 
 
 def _run(argv: list[str]) -> tuple[int, str]:
@@ -31,6 +50,19 @@ def _run(argv: list[str]) -> tuple[int, str]:
 
 def battery() -> None:
     assert reticuli.__main__.main is cli.main, "entrypoint"
+
+    # the sectioned map: five phase groups in process order, every human verb
+    # under exactly one, and `hook` present but unlisted (agent plumbing).
+    help_out = _help()
+    last = -1
+    for s in SECTIONS:
+        i = help_out.find(s)
+        assert i > last, f"help section missing or out of order: {s!r}"
+        last = i
+    listed = set(re.findall(r"^\s{4}([a-z][a-z-]+)\s{2,}", help_out, re.MULTILINE))
+    assert listed == LISTED, f"help verb map drifted: {listed ^ LISTED}"
+    assert "hook" not in listed, "hook is internal — it must not be listed"
+
     d = tempfile.mkdtemp()
     try:
         ws = os.path.join(d, "ws")
@@ -68,13 +100,34 @@ def battery() -> None:
         assert code == 0, "prove exits 0"
         assert "satisfied = true" in out and "[cost]" in out, "the verdict and the bill"
 
+        # the transfer and attestation verbs, end to end at the surface — the
+        # census showed a redo can shrink the CLI to just what the gate drives,
+        # so the whole README proof (export -> import -> audit -> attest) is
+        # exercised here, not merely named.
+        tar = os.path.join(d, "answer.tar")
+        code, out = _run(["export", rec, tar])
+        assert code == 0 and os.path.isfile(tar), "export writes the record's tar"
+        imp = os.path.join(d, "imported")
+        code, out = _run(["import", tar, imp])
+        assert code == 0 and "fresh" in out, "import verifies from bytes alone"
+        code, out = _run(["audit", rec])
+        assert code == 0 and "earned" in out, "audit re-earns the verdict"
+        key = os.path.join(d, "id")
+        subprocess.run(["ssh-keygen", "-t", "ed25519", "-N", "", "-q", "-f", key], check=True)
+        code, out = _run(["attest", m3, "--key", key, "--as", "you@lab"])
+        assert code == 0, "attest signs a realization"
+        code, out = _run(["attest", m3, "--check"])
+        assert code == 0 and "attested" in out, "attest --check verifies the signature"
+
         code, out = _run(["records", ws])
         assert code == 0 and "answer" in out, "the drawer renders"
 
-        # two lenses, one verb: a session's tree is dry/wet; a record's tree is
-        # its anatomy — seeds (the claim), free strata, pinned verdicts
+        # two lenses, one verb: a session's tree is dry/wet PLUS its drawer's
+        # dependency graph (deps folded in); a record's tree is its anatomy —
+        # seeds (the claim), free strata, pinned verdicts
         code, out = _run(["tree", ws])
         assert code == 0 and "vapor" in out, "the session lens"
+        assert "answer" in out and "record(s)" in out, "the drawer graph rides in the session lens"
         code, out = _run(["tree", rec])
         assert code == 0 and "free  answer.txt" in out and "pin   OK" in out \
             and "rung(s)" in out, "the record lens"

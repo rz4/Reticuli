@@ -1,6 +1,6 @@
 [record]
 name = "exchange"
-inputs = ["exchange_check.py"]
+inputs = ["checks/exchange_check.py"]
 
 [[step]]
 kind = "produce"
@@ -38,4 +38,4 @@ request = "regenerate reticuli/transfer.py to pass the gate"
 kind = "gate"
 output = "EXCHANGE_OK"
 class = "validated"
-run = "python3 exchange_check.py"
+run = "python3 checks/exchange_check.py"

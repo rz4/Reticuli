@@ -1,6 +1,6 @@
 [record]
 name = "kernel-core"
-inputs = ["kernel_check.py"]
+inputs = ["checks/kernel_check.py"]
 
 [[step]]
 kind = "produce"
@@ -18,4 +18,4 @@ request = "regenerate reticuli/kernel.py to pass the gate"
 kind = "gate"
 output = "KERNEL_OK"
 class = "validated"
-run = "python3 kernel_check.py"
+run = "python3 checks/kernel_check.py"

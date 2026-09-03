@@ -81,6 +81,9 @@ def battery() -> None:
         out = registry.rehydrate(app, "printf 'another implementation' > app.txt", m3, ws=ws)
         assert out["root"] == kernel.verify(app)["root"], "chain reproduces"
         assert any(c["component"] == "lib" for c in out["rehydrated_components"]), "leaf first"
+        # a rehydrated record must keep its provenance: the manifest carries the
+        # component links it was rebuilt from (else `ret tree` on a redo is blind)
+        assert kernel.read_manifest(m3).get("components"), "rehydrate preserves provenance"
 
         # pull: a record becomes a dependency of a fresh session
         ws2 = os.path.join(d, "ws2")
@@ -96,12 +99,32 @@ def battery() -> None:
         back = transfer.import_(tar_path, os.path.join(d, "back"))
         assert back["ok"] and back["root"] == out["root"], "identity travels"
 
+        # declared content ONLY: a stray file dropped in the record's directory
+        # must not ride along, and two exports of one record are byte-identical.
+        # (An export that walks the tree instead of the recipe leaks the room.)
+        with open(os.path.join(m3, "stray-residue.txt"), "w") as f:
+            f.write("laptop junk that is not part of the claim\n")
+        leak_tar = os.path.join(d, "leak.tar")
+        transfer.export(m3, leak_tar)
+        with tarfile.open(leak_tar) as t:
+            assert "stray-residue.txt" not in t.getnames(), "undeclared bytes must not travel"
+        det_tar = os.path.join(d, "det.tar")
+        transfer.export(m3, det_tar)
+        assert kernel._hf(leak_tar) == kernel._hf(det_tar), "export is byte-deterministic"
+        os.remove(os.path.join(m3, "stray-residue.txt"))
+
         # attestation: a signed statement of this realization, for other parties
         key = os.path.join(d, "key")
         subprocess.run(["ssh-keygen", "-t", "ed25519", "-N", "", "-q", "-f", key], check=True)
         a = attest.attest(m3, key, "checker@basin")
         assert os.path.isfile(os.path.join(m3, a["signature"])), "signed"
         assert attest.check(m3)["ok"], "intact and naming this root"
+        # an attestation is residue ABOUT the claim that travels WITH it
+        att_tar = os.path.join(d, "attested.tar")
+        transfer.export(m3, att_tar)
+        with tarfile.open(att_tar) as t:
+            assert any(n.startswith(".reticuli/attest/") for n in t.getnames()), \
+                "attestations travel with the record"
         signers = os.path.join(d, "allowed_signers")
         with open(key + ".pub") as f:
             keytype, blob = f.read().split()[:2]

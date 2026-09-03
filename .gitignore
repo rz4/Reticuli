@@ -22,3 +22,6 @@ __pycache__/
 build/
 dist/
 .venv/
+
+# the white paper is thought-residue that stays local (untracked by request)
+docs/three_machine_problem_white_paper.pdf

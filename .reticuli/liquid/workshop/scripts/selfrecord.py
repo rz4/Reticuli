@@ -48,21 +48,21 @@ VESSEL_FREE = _g("pyproject.toml", ".gitignore", ".gitattributes",
 # (name, own stratum, produce globs, check, verdict, extra seeds)
 RUNGS = [
     ("exchange", ["reticuli/registry.py", "reticuli/transfer.py", "reticuli/attest.py"],
-     ["reticuli/*.py"], "exchange_check.py", "EXCHANGE_OK", []),
+     ["reticuli/*.py"], "checks/exchange_check.py", "EXCHANGE_OK", []),
     ("authoring", ["reticuli/render.py", "reticuli/condense.py",
                    "reticuli/feedback.py", "reticuli/pack.py"],
-     ["reticuli/*.py"], "authoring_check.py", "AUTHORING_OK", []),
+     ["reticuli/*.py"], "checks/authoring_check.py", "AUTHORING_OK", []),
     ("agents", ["reticuli/hooks.py"], ["reticuli/*.py"],
-     "agents_check.py", "AGENTS_OK", []),
+     "checks/agents_check.py", "AGENTS_OK", []),
     ("surface", ["reticuli/cli.py", "reticuli/__main__.py"], ["reticuli/*.py"],
-     "surface_check.py", "SURFACE_OK", []),
+     "checks/surface_check.py", "SURFACE_OK", []),
     ("workshop", _g("scripts/*.py", "tests/*.py"),
      ["reticuli/*.py", "scripts/*.py", "tests/*.py"],
-     "workshop_check.py", "WORKSHOP_OK", []),
+     "checks/workshop_check.py", "WORKSHOP_OK", []),
     ("vessel", VESSEL_FREE,
      ["reticuli/*.py", "scripts/*.py", "tests/*.py", "pyproject.toml",
       ".gitignore", ".gitattributes", ".github/workflows/*.yml"],
-     "vessel_check.py", "VESSEL_OK", ["LICENSE", "logo.png"]),
+     "checks/vessel_check.py", "VESSEL_OK", ["LICENSE", "logo.png"]),
 ]
 
 WHOLE_GLOBS = ["reticuli/*.py", "scripts/*.py", "tests/*.py", "pyproject.toml",
@@ -90,7 +90,7 @@ def _build(name: str, files: list[str], globs: list[str], check: str,
 
 if __name__ == "__main__":
     roots = {"kernel-core": _build("kernel-core", KERNEL_FILES, ["reticuli/*.py"],
-                                   "kernel_check.py", "KERNEL_OK", None, [])}
+                                   "checks/kernel_check.py", "KERNEL_OK", None, [])}
     prev, supplied = "kernel-core", list(KERNEL_FILES)
     for name, own, globs, check, verdict, seeds in RUNGS:
         component = {"name": prev, "record": _drawer(prev), "outputs": list(supplied)}
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         roots[name] = _build(name, supplied, globs, check, verdict, component, seeds)
         prev = name
     whole = pack.pack(ROOT, "reticuli", WHOLE_GLOBS,
-                      ["docs_check.py"], "python3 docs_check.py", "VERIFIED",
+                      ["checks/docs_check.py"], "python3 checks/docs_check.py", "VERIFIED",
                       component={"name": prev, "record": _drawer(prev),
                                  "outputs": list(supplied)})
     roots["reticuli"] = whole["root"]

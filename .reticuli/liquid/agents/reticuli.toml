@@ -1,6 +1,6 @@
 [record]
 name = "agents"
-inputs = ["agents_check.py"]
+inputs = ["checks/agents_check.py"]
 
 [[step]]
 kind = "produce"
@@ -75,4 +75,4 @@ request = "supplied by the authoring component"
 kind = "gate"
 output = "AGENTS_OK"
 class = "validated"
-run = "python3 agents_check.py"
+run = "python3 checks/agents_check.py"

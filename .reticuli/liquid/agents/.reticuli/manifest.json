@@ -4,57 +4,57 @@
       "component": "authoring",
       "input": "reticuli/__init__.py",
       "output": "reticuli/__init__.py",
-      "root": "f1168e377f0b69c5a37acd4bafbb58a67f3a16674e942a5b4083a430ea31f1ab"
+      "root": "b7610cbbbab8d96737a47ab658feb62d684834769f08092680aeb6d7f69c0a3a"
     },
     {
       "component": "authoring",
       "input": "reticuli/kernel.py",
       "output": "reticuli/kernel.py",
-      "root": "f1168e377f0b69c5a37acd4bafbb58a67f3a16674e942a5b4083a430ea31f1ab"
+      "root": "b7610cbbbab8d96737a47ab658feb62d684834769f08092680aeb6d7f69c0a3a"
     },
     {
       "component": "authoring",
       "input": "reticuli/registry.py",
       "output": "reticuli/registry.py",
-      "root": "f1168e377f0b69c5a37acd4bafbb58a67f3a16674e942a5b4083a430ea31f1ab"
+      "root": "b7610cbbbab8d96737a47ab658feb62d684834769f08092680aeb6d7f69c0a3a"
     },
     {
       "component": "authoring",
       "input": "reticuli/transfer.py",
       "output": "reticuli/transfer.py",
-      "root": "f1168e377f0b69c5a37acd4bafbb58a67f3a16674e942a5b4083a430ea31f1ab"
+      "root": "b7610cbbbab8d96737a47ab658feb62d684834769f08092680aeb6d7f69c0a3a"
     },
     {
       "component": "authoring",
       "input": "reticuli/attest.py",
       "output": "reticuli/attest.py",
-      "root": "f1168e377f0b69c5a37acd4bafbb58a67f3a16674e942a5b4083a430ea31f1ab"
+      "root": "b7610cbbbab8d96737a47ab658feb62d684834769f08092680aeb6d7f69c0a3a"
     },
     {
       "component": "authoring",
       "input": "reticuli/render.py",
       "output": "reticuli/render.py",
-      "root": "f1168e377f0b69c5a37acd4bafbb58a67f3a16674e942a5b4083a430ea31f1ab"
+      "root": "b7610cbbbab8d96737a47ab658feb62d684834769f08092680aeb6d7f69c0a3a"
     },
     {
       "component": "authoring",
       "input": "reticuli/condense.py",
       "output": "reticuli/condense.py",
-      "root": "f1168e377f0b69c5a37acd4bafbb58a67f3a16674e942a5b4083a430ea31f1ab"
+      "root": "b7610cbbbab8d96737a47ab658feb62d684834769f08092680aeb6d7f69c0a3a"
     },
     {
       "component": "authoring",
       "input": "reticuli/feedback.py",
       "output": "reticuli/feedback.py",
-      "root": "f1168e377f0b69c5a37acd4bafbb58a67f3a16674e942a5b4083a430ea31f1ab"
+      "root": "b7610cbbbab8d96737a47ab658feb62d684834769f08092680aeb6d7f69c0a3a"
     },
     {
       "component": "authoring",
       "input": "reticuli/pack.py",
       "output": "reticuli/pack.py",
-      "root": "f1168e377f0b69c5a37acd4bafbb58a67f3a16674e942a5b4083a430ea31f1ab"
+      "root": "b7610cbbbab8d96737a47ab658feb62d684834769f08092680aeb6d7f69c0a3a"
     }
   ],
   "name": "agents",
-  "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+  "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
 }

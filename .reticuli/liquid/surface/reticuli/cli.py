@@ -206,6 +206,9 @@ def _r_tree(r: dict) -> None:
     ws = os.path.basename(r["session"].rstrip(os.sep)) or r["session"]
     tree(f"session {ws}  ~ vapor · {r['trace_events']} events", node)
     print(f"  {r['nudge']}")
+    if r.get("drawer"):
+        print()
+        _r_deps(r["drawer"])
 
 
 def _r_anatomy(r: dict) -> None:
@@ -243,73 +246,108 @@ def status(workspace: str) -> dict:
 
 # -- dispatch ----------------------------------------------------------------
 
+_DESC = """\
+Sealed, reproducible records of model-assisted computation. Validity is the
+three-machine test: M1 claim, M2 byte-copy, M3 independent redo, one root.
+
+session (vapor):
+    init        initialize a session store (.reticuli/) and git skin
+    hooks       install agent hooks into .claude/settings.json
+    status      print phase and freshness
+
+author (vapor -> liquid, M1):
+    run         run a command; append it to the session trace
+    condense    draft a record from the trace, re-run gates cold, seal
+    verify      recompute the root; compare with the sealed manifest
+
+transfer (liquid, M2):
+    export      write the record's declared content to a deterministic tar
+    import      extract a tar into a new directory; verify the root
+    audit       re-run gates in a scratch room; pinned outputs must reproduce
+
+redo (liquid -> solid, M3):
+    realize     rebuild free outputs with --producer in a clean room; seal
+    prove       three-machine test over M1 M2 M3 (--freeze-dry: mint on pass)
+    attest      sign with ssh-keygen -Y (--check: verify signatures)
+
+compose:
+    pack        seal a project directory as a record (code free, checks claimed)
+    pull        copy a sealed record into this session as a dependency
+    tree        print session files and drawer graph, or a record's anatomy
+    records     list sealed records"""
+
+_EPILOG = ("`ret <verb> -h` for verb options. `ret hook` is internal, invoked by "
+           "installed\nagent hooks. Documentation: docs/guide.md")
+
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(
-        prog="ret",
-        description="Sealed, reproducible records of model-assisted work. "
-                    "The invariant is the three-machine test.")
+    p = argparse.ArgumentParser(prog="ret", description=_DESC, epilog=_EPILOG,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    # verbs carry no parser-level help= — the sectioned map in _DESC is the one
+    # listing (argparse only auto-lists verbs that set help=). Section order and
+    # membership are structure, ratified by surface_check; the wording is free.
     sub = p.add_subparsers(dest="cmd", required=True, metavar="<verb>")
 
-    def add(name, **kw):
-        return sub.add_parser(name, **kw)
+    def add(name):
+        return sub.add_parser(name)
 
-    add("init", help="set up a git-native session").add_argument("project", nargs="?", default=".")
-    q = add("hook", help="consume one agent hook payload from stdin (silent; wired by `ret hooks`)")
-    q.add_argument("-C", "--workspace", default=None)
-    add("hooks", help="wire the project's agent to the trace (.claude/settings.json)") \
-        .add_argument("project", nargs="?", default=".")
-    q = add("run", help="run a command and record it in the trace")
+    # -- session (vapor)
+    add("init").add_argument("project", nargs="?", default=".")
+    add("hooks").add_argument("project", nargs="?", default=".")
+    add("status").add_argument("workspace", nargs="?", default=".")
+    # -- author (M1)
+    q = add("run")
     q.add_argument("command")
     q.add_argument("-C", "--workspace", default=".")
-    q = add("condense", help="draft a record from the session and certify it cold")
+    q = add("condense")
     q.add_argument("session", nargs="?", default=".")
     q.add_argument("--accept", action="append", default=[], metavar="PATH", required=True)
     q.add_argument("--into", required=True)
     q.add_argument("--name", default=None)
-    add("verify", help="does the record hold (recompute the root — identity only)").add_argument("record")
-    add("audit", help="re-run the gates against the bytes present — verdicts must reproduce") \
-        .add_argument("record")
-    q = add("realize", help="rehydrate: an independent redo in a clean room (M3)")
+    add("verify").add_argument("record")
+    # -- transfer (M2)
+    q = add("export")
+    q.add_argument("record")
+    q.add_argument("tar")
+    q = add("import")
+    q.add_argument("tar")
+    q.add_argument("into")
+    add("audit").add_argument("record")
+    # -- redo (M3)
+    q = add("realize")
     q.add_argument("record")
     q.add_argument("--producer", required=True)
     q.add_argument("--into", required=True)
     q.add_argument("--recursive", action="store_true",
                    help="DAG-aware: also rehydrate component dependencies, bottom-up")
-    q = add("prove", help="the three-machine test: root equality across M1, M2, M3")
+    q = add("prove")
     q.add_argument("m1"); q.add_argument("m2"); q.add_argument("m3")
     q.add_argument("--freeze-dry", action="store_true", help="promote M1 to solid on success")
-    add("show", help="print the record's recipe (TOML)").add_argument("record")
-    q = add("pack", help="declare a project as a self-record (code free, check gated)")
+    q = add("attest")
+    q.add_argument("record")
+    q.add_argument("--key", default=None, metavar="SSH_KEY")
+    q.add_argument("--as", dest="identity", default=None, metavar="IDENTITY")
+    q.add_argument("--check", action="store_true")
+    q.add_argument("--signers", default=None, metavar="ALLOWED_SIGNERS")
+    # -- compose
+    q = add("pack")
     q.add_argument("name")
     q.add_argument("--produce", nargs="+", required=True, metavar="GLOB")
     q.add_argument("--seed", nargs="*", default=[], metavar="GLOB")
     q.add_argument("--gate", required=True)
     q.add_argument("--output", required=True)
     q.add_argument("-C", "--root", default=".")
-    add("records", help="the session's record drawer").add_argument("workspace", nargs="?", default=".")
-    add("deps", help="the component DAG: which records depend on which").add_argument("workspace", nargs="?", default=".")
-    q = add("pull", help="bring a record in as a dependency (dry seeds)")
+    q = add("pull")
     q.add_argument("component")
     q.add_argument("-C", "--into", default=".")
-    q = add("attest", help="sign a realization with ssh-keygen -Y (or --check its attestations)")
-    q.add_argument("record")
-    q.add_argument("--key", default=None, metavar="SSH_KEY")
-    q.add_argument("--as", dest="identity", default=None, metavar="IDENTITY")
-    q.add_argument("--check", action="store_true")
-    q.add_argument("--signers", default=None, metavar="ALLOWED_SIGNERS")
-    q = add("export", help="pack a record into a deterministic tar")
-    q.add_argument("record")
-    q.add_argument("tar")
-    q = add("import", help="unpack a record from a tar and verify it")
-    q.add_argument("tar")
-    q.add_argument("into")
-    add("status", help="where you are: phase and freshness (or a session's progress)").add_argument("workspace", nargs="?", default=".")
-    add("tree", help="the workspace through Reticuli's lens: a session's dry/wet, "
-                     "or a sealed record's rungs (seeds, strata, verdicts)") \
-        .add_argument("workspace", nargs="?", default=".")
+    add("tree").add_argument("workspace", nargs="?", default=".")
+    add("records").add_argument("workspace", nargs="?", default=".")
+    # -- internal: agent plumbing, invoked by installed hooks (unlisted)
+    q = add("hook")
+    q.add_argument("-C", "--workspace", default=None)
+
     for name in ("verify", "audit", "realize", "prove", "condense", "pack", "records",
-                 "deps", "pull", "export", "import", "status", "tree", "hooks", "attest"):
+                 "pull", "export", "import", "status", "tree", "hooks", "attest"):
         sub.choices[name].add_argument("--json", action="store_true")
 
     args = p.parse_args(argv)
@@ -343,18 +381,12 @@ def main(argv: list[str] | None = None) -> int:
             r.setdefault("minted", None)
             emit(r, j, _r_prove)
             return 0 if r["satisfied"] else 1
-        if args.cmd == "show":
-            from .render import dump_recipe
-            print(dump_recipe(kernel.load_recipe(args.record)))
-            return 0
         if args.cmd == "pack":
             r = pack_mod.pack(args.root, args.name, args.produce, args.seed, args.gate, args.output)
             return emit(r, j, _r_pack)
         if args.cmd == "records":
             ws = os.path.abspath(args.workspace)
             return emit({"workspace": ws, "records": registry_mod.records(ws)}, j, _r_records)
-        if args.cmd == "deps":
-            return emit(registry_mod.deps(args.workspace), j, _r_deps)
         if args.cmd == "pull":
             return emit(registry_mod.pull(args.component, args.into), j, _r_pull)
         if args.cmd == "attest":
@@ -377,7 +409,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "tree":
             ws = os.path.abspath(args.workspace)
             if kernel.phase(ws) == "vapor":
-                return emit(feedback_mod.pilot(ws), j, _r_tree)
+                r = feedback_mod.pilot(ws)
+                if registry_mod.records(ws):        # deps folded in: the drawer's DAG
+                    r["drawer"] = registry_mod.deps(ws)
+                return emit(r, j, _r_tree)
             return emit(registry_mod.anatomy(ws), j, _r_anatomy)
     except kernel.ReticuliError as e:
         print(f"ret: {e}", file=sys.stderr)

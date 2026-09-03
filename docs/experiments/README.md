@@ -40,6 +40,9 @@ Series in the grid (`python3 scripts/sweep.py` prints the plan and estimates):
 
 - `../reflection_profile.jsonl` — the live index, one row per cell (committed).
 - `specimens/<series>/<layer>.tar` — the actual regrown code, re-auditable (gitignored).
+- `capstone-census.md` — the full divergence census of the capstone's M3
+  against the committed tree: what the walls forced, what drifted, and the
+  carving agenda it produced.
 - `pre-audit-roots/` — retired data measured against roots the audit fix re-minted;
   kept for the record, **not** for analysis.
 
@@ -118,3 +121,19 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   self-detecting suite is a long-horizon session at the edge of one budget.
   Not minted — a rehearsal; the object can survive its own test, and we anneal
   to flight stage before the solid mint.
+- **The capstone census (2026-09-03).** Reading the capstone's M3 as an
+  instrument: 41/44 files byte-divergent (the three identical ones are
+  exactly the identity class), line mass conserved but redistributed along
+  the checks' pressure gradient, and every divergence a measured unforced
+  dimension of the basin — including a regrown kernel whose root ignores
+  seed bytes, a strict-equality cost verdict, an export that leaks
+  undeclared files, and a CI needle satisfied by an English comment. Full
+  triage in [capstone-census.md](capstone-census.md).
+- **The carve (2026-09-03).** The census triage executed as one deliberate
+  re-mint: seed-sensitivity and tolerance-band batteries in the kernel claim,
+  leak/determinism/attestation-travel and provenance clauses in exchange,
+  cold-certification in authoring, a phase-sectioned CLI with a raised verb
+  floor in surface, behavior-anchored needles in vessel and docs, and the
+  checks moved to `checks/` — every new clause rejects the capstone specimen,
+  the committed tree passes all eight gates, and the re-rehearsed
+  three-machine test holds at the new whole root `cc1a10e7…`.

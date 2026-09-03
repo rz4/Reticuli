@@ -1,6 +1,6 @@
 [record]
 name = "authoring"
-inputs = ["authoring_check.py"]
+inputs = ["checks/authoring_check.py"]
 
 [[step]]
 kind = "produce"
@@ -65,4 +65,4 @@ request = "supplied by the exchange component"
 kind = "gate"
 output = "AUTHORING_OK"
 class = "validated"
-run = "python3 authoring_check.py"
+run = "python3 checks/authoring_check.py"

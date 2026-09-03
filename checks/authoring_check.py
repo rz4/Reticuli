@@ -74,6 +74,26 @@ def battery() -> None:
         with open(os.path.join(proj, "check.py"), "a") as f:
             f.write("# a stricter claim\n")
         assert repack() != r0, "editing the check moves the claim"
+
+        # cold-certification: the trace has no authority. condense must rebuild
+        # in a clean room and re-run every gate COLD; a pinned verdict that does
+        # not reproduce from the bytes (a nondeterministic gate) must refuse to
+        # seal — no record forms from a claim the room cannot re-earn.
+        ws2 = os.path.join(d, "ws2")
+        os.makedirs(os.path.join(ws2, ".reticuli"))
+        nd_gate = ("python3 -c \"import time; open('STAMP','w')"
+                   ".write(str(time.time_ns()))\"")
+        events2 = [{"event": "prompt", "text": "stamp the moment", "ts": 1.0},
+                   {"event": "bash", "cmd": nd_gate, "ts": 2.0}]
+        with open(os.path.join(ws2, ".reticuli", "vapor.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(e) for e in events2) + "\n")
+        subprocess.run(nd_gate, shell=True, cwd=ws2, check=True)   # warm STAMP
+        rec2 = os.path.join(ws2, ".reticuli", "liquid", "stamp")
+        try:
+            condense(ws2, ["STAMP"], rec2, name="stamp")
+            raise AssertionError("condense must refuse a verdict it cannot re-earn cold")
+        except kernel.ReticuliError:
+            pass
     finally:
         shutil.rmtree(d, ignore_errors=True)
 

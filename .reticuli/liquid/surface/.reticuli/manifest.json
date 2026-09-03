@@ -4,63 +4,63 @@
       "component": "agents",
       "input": "reticuli/__init__.py",
       "output": "reticuli/__init__.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     },
     {
       "component": "agents",
       "input": "reticuli/kernel.py",
       "output": "reticuli/kernel.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     },
     {
       "component": "agents",
       "input": "reticuli/registry.py",
       "output": "reticuli/registry.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     },
     {
       "component": "agents",
       "input": "reticuli/transfer.py",
       "output": "reticuli/transfer.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     },
     {
       "component": "agents",
       "input": "reticuli/attest.py",
       "output": "reticuli/attest.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     },
     {
       "component": "agents",
       "input": "reticuli/render.py",
       "output": "reticuli/render.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     },
     {
       "component": "agents",
       "input": "reticuli/condense.py",
       "output": "reticuli/condense.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     },
     {
       "component": "agents",
       "input": "reticuli/feedback.py",
       "output": "reticuli/feedback.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     },
     {
       "component": "agents",
       "input": "reticuli/pack.py",
       "output": "reticuli/pack.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     },
     {
       "component": "agents",
       "input": "reticuli/hooks.py",
       "output": "reticuli/hooks.py",
-      "root": "b3d17a3efbaa61fabe40967f0087c49b219d0d8e3b3cc6c20c7cf648fed43eb8"
+      "root": "c3b3e782aa5075d135f5135d1a14758b8fae4dd5739aef1302ad6ba2c6fae793"
     }
   ],
   "name": "surface",
-  "root": "9213b9762ea2ccc28043518352fff31f921077440a5bb5021144af193a757aa9"
+  "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
 }
