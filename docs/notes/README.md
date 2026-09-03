@@ -13,6 +13,13 @@ essay would be fabricated thought.
 - `landscape.md` — prior art and impact: byte-provenance (git/Nix/SLSA/
   Sigstore), spec-driven development, artifact badging — and where
   claim-addressed computation is the missing abstraction.
+- `Z.txt` — raw notes on the capstone census findings: the cup, oil between
+  water layers, solid/liquid/vapor support. (R. Zamora Resendiz.)
+- `mintchain.md` — the mint chain: rung roots don't compose (measured), and
+  the fix is phase-dependent binding — claims freeze in liquid, bytes freeze
+  at the mint, bottom-up, with a realization digest per stratum and the
+  signature over the top of the chain. Design agreed, held for the
+  human-boundary step.
 - `../three_machine_problem_white_paper.pdf` — the three-machine problem,
   stated tool-agnostically (when present; deliberately untracked pending
   release).
