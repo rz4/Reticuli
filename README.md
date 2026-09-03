@@ -2,43 +2,46 @@
 
 # Reticuli
 
-**Sealed, reproducible records of model-assisted work. The invariant is the
-three-machine test.**
+**Sealed, reproducible records of model-assisted computation. The invariant is
+the three-machine test.**
 
-A record is valid iff an independent redo lands on the same claim:
+When an AI helps write scientific software, what survives review — a chat
+transcript? Reticuli keeps what a reviewer actually needs: the inputs, the
+acceptance checks, and the verdict, sealed as a *record* whose identity is
 
 ```
-root = hash( recipe + dry seeds + pinned verdicts )    # the implementation is free
+root = hash( recipe + inputs + pinned verdicts )    # the implementation is free
 ```
 
-Two different implementations that pass the same checks share a root — like the
-two stars above: one system. M1 a claim, M2 a reuse of its outputs, M3 an
-independent redo; `ret prove` is their root equality with every machine's gates
-re-run against its own bytes (`ret audit` — a carried verdict does not survive)
-and the redo's cost compared (C3/C1 within tolerance).
+The code is deliberately excluded — any implementation passing the same checks
+(yours, a colleague's, any model's) is *the same claim*: two stars, one system.
+Replication becomes mechanical: **M1** the original, **M2** a copy that
+traveled by content, **M3** an independent redo. `ret prove` re-runs every
+machine's checks against its own bytes (a carried verdict fails `ret audit`)
+and compares what the redo cost.
 
-## Quickstart
+## Quickstart — the full proof
 
 ```bash
 pip install "git+https://github.com/rz4/reticuli"
 
-ret init && ret hooks              # a session; Claude Code now traces itself
-ret run "python checker.py"        # author a gate -> VERIFIED
-ret condense --accept VERIFIED --into rec
-ret realize rec --producer "$MODEL" --into M3        # the independent redo
-ret prove rec M2 M3                # three machines, one root
-ret attest M3 --key ~/.ssh/id_ed25519 --as you@lab   # sign it for others
+ret init && ret hooks                   # a session; Claude Code traces itself
+ret run "python3 checker.py"            # author a gate -> VERIFIED
+ret condense --accept VERIFIED --into M1        # M1: the sealed claim
+ret export M1 claim.tar                         # the record travels by content
+ret import claim.tar M2                         # M2: verified from bytes alone
+ret realize M1 --producer "$MODEL" --into M3    # M3: independent redo, any model
+ret prove M1 M2 M3                      # three machines, one root
+ret attest M3 --key ~/.ssh/id_ed25519 --as you@lab.gov    # sign it for others
 ```
 
 ## Why
 
 The checks are the claim: edit the implementation and the root holds; edit a
-check and it moves. Records commit like lockfiles, travel by content, carry a
-cost ledger, and jail their gates where the platform has one. This repo is its
-own proof — eight
-records, kernel to README, each rung regrown *blind* by a live model onto the
-same roots; even this file is a free output, gated only by its own
-consumability check.
+check and it moves. Records commit like lockfiles; checks run sandboxed; every
+redo's cost is ledgered. This repo is its own evidence — eight records, kernel
+to README, each regrown independently by a live model onto the same roots;
+even this file is free, gated only by its own consumability check.
 
 Depth: [the guide](docs/guide.md). Design essays and experiment data live in
 `docs/notes/` and `docs/experiments/` — residue, carried but never regrown.
