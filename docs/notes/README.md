@@ -20,6 +20,10 @@ essay would be fabricated thought.
   at the mint, bottom-up, with a realization digest per stratum and the
   signature over the top of the chain. Design agreed, held for the
   human-boundary step.
+- `repack.md` — the seed repack decision: the strongest division that keeps
+  localization (and the mint chain) is the per-rung phase stratification we
+  already have; centralizing to dedup would introduce the first cross-rung
+  seed and regress it. Bind at the mint, not in shared seeds.
 - `../three_machine_problem_white_paper.pdf` — the three-machine problem,
   stated tool-agnostically (when present; deliberately untracked pending
   release).
