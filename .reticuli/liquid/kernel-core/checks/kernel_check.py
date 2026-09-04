@@ -108,29 +108,56 @@ class = "validated"
 
 
 def _rejail() -> None:
-    """Judge in the verdict's environment: if the host has a jail and we are
-    not already inside one, re-exec this check under it, RETICULI_JAILED set.
-    Jails do not nest — a conformant kernel inherits, never re-applies."""
-    if os.environ.get("RETICULI_JAILED"):
+    """Judge in the verdict's environment: if the host has a jail and we are not
+    already inside one, re-exec this check under it. We mint the per-run jail
+    token the kernel now requires (kernel._inside_our_jail): a bare env flag is
+    no longer trusted, so we write the token to a file and name it in the env,
+    exactly as kernel._jailed does — a conformant kernel then inherits, never
+    re-applies."""
+    if kernel._inside_our_jail():
         return                                       # already judged inside a jail
     cwd = os.path.realpath(os.getcwd())
     tmp = os.path.join(cwd, ".kc-tmp")
     os.makedirs(tmp, exist_ok=True)
-    env = {**os.environ, "TMPDIR": tmp}
+    token = os.urandom(16).hex()
+    ref = os.path.join(tmp, "jail.token")
+    with open(ref, "w", encoding="utf-8") as f:
+        f.write(token)
+    env = {**os.environ, "TMPDIR": tmp, "HOME": tmp,
+           kernel._JAILED: token, kernel._JAIL_REF: ref}
     argv = None
     if sys.platform == "darwin" and shutil.which("sandbox-exec"):
         profile = ('(version 1)(allow default)(deny network*)(deny file-write*)'
                    f'(allow file-write* (subpath "{cwd}") (subpath "/dev"))')
-        argv, env["RETICULI_JAILED"] = ["sandbox-exec", "-p", profile], "seatbelt"
+        argv = ["sandbox-exec", "-p", profile]
     elif shutil.which("bwrap") and subprocess.run(
             ["bwrap", "--ro-bind", "/", "/", "--unshare-net", "true"],
             capture_output=True, check=False).returncode == 0:
         argv = ["bwrap", "--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev",
                 "--proc", "/proc", "--bind", cwd, cwd, "--unshare-net",
                 "--die-with-parent"]
-        env["RETICULI_JAILED"] = "bubblewrap"
     if argv:
         os.execvpe(argv[0], argv + [sys.executable, os.path.abspath(__file__)], env)
+
+
+def _hand_mint(record: str, ident: str, keypath: str, include_proof: bool) -> None:
+    """Build and sign mint material by hand (stdlib only, no attest import): a
+    packet (root, realization digest, and the recorded proof or None), a
+    statement binding the packet digest, and an ssh signature over it."""
+    mdir = os.path.join(record, kernel.MINT)
+    os.makedirs(mdir, exist_ok=True)
+    packet = {"root": kernel.verify(record)["root"],
+              "realization_digest": kernel.realization_digest(record),
+              "proof": kernel.read_manifest(record).get("proof") if include_proof else None}
+    pdig = hashlib.sha256(json.dumps(packet, sort_keys=True).encode()).hexdigest()
+    with open(os.path.join(mdir, "x.packet.json"), "w") as f:
+        json.dump(packet, f, sort_keys=True)
+    spath = os.path.join(mdir, "x.mint.json")
+    with open(spath, "w") as f:
+        json.dump({"identity": ident, "root": packet["root"], "packet_digest": pdig,
+                   "proof_recorded": bool(packet["proof"])}, f, sort_keys=True)
+    subprocess.run(["ssh-keygen", "-Y", "sign", "-f", keypath, "-n", "reticuli", spath],
+                   capture_output=True, check=True)
 
 
 def battery() -> None:
@@ -302,57 +329,70 @@ def battery() -> None:
         rf = kernel.three_machine(m1, m2, m3f)
         assert rf["equivalence"] and not rf["audited"]["M3"], "audit sees through the root"
         assert not rf["satisfied"], "a carried verdict does not prove"
-        assert not kernel.freeze_dry(m1, m2, m3f)["proven"], "and does not record a proof"
+        assert not kernel.freeze_dry(m1, m2, m3f)["proof_recorded"], "and records no proof"
         assert kernel.audit(m3)["ok"] and not kernel.audit(m3f)["ok"], "audit is the deep check"
 
-        # proven is NOT solid. A passing test records the proof as residue on
-        # the manifest — readable, not locally re-verifiable (M2 and M3 are
-        # gone) — and the record stays liquid: solid is a *verifiable*
-        # authorization, the mint ceremony's act, not a bit anyone can write.
+        # SOLID = AUTHORIZED (by a trusted signer) AND PROVEN (a recorded proof).
+        # freeze_dry records the proof as residue; that alone is not solid. A
+        # signature from an UNTRUSTED (unanchored) key is not solid — trust is
+        # verifier-relative. Only a trusted signature over a coherent packet
+        # that binds a recorded proof, on undrifted bytes, is solid.
         fz = kernel.freeze_dry(m1, m2, m3)
-        assert fz["proven"], "a passing test records the proof"
+        assert fz["proof_recorded"], "a passing test records the proof"
         assert kernel.read_manifest(m1).get("proof"), "the proof is residue on the manifest"
-        assert kernel.phase(m1) == "liquid", "proven is not solid"
-        sol = os.path.join(d, "sol")
-        shutil.copytree(m1, sol)
-        fake_manifest = kernel.read_manifest(sol)
-        fake_manifest["proof"] = {"kind": "three-machine", "m2": "forged", "m3": "forged"}
-        with open(os.path.join(sol, kernel.STORE, "manifest.json"), "w") as f:
-            json.dump(fake_manifest, f)
-        assert kernel.phase(sol) == "liquid", "an injected proof must not create a solid"
-        # nor does UNSIGNED-but-coherent mint material: solid requires an
-        # intact signature over a statement naming this root, whose packet
-        # digest binds and whose realization digest is current (minted()).
-        mdir = os.path.join(sol, kernel.MINT)
-        os.makedirs(mdir)
-        packet = {"root": kernel.verify(sol)["root"],
-                  "realization_digest": kernel.realization_digest(sol)}
-        with open(os.path.join(mdir, "x.packet.json"), "w") as f:
-            json.dump(packet, f)
-        stmt = {"root": packet["root"], "packet_digest": hashlib.sha256(
-            json.dumps(packet, sort_keys=True).encode()).hexdigest()}
-        with open(os.path.join(mdir, "x.mint.json"), "w") as f:
-            json.dump(stmt, f)
-        with open(os.path.join(mdir, "x.mint.json.sig"), "w") as f:
-            f.write("not a signature\n")
-        assert kernel.phase(sol) == "liquid", "solid requires an intact signature"
-        ekey = os.path.join(d, "ekey")
+        assert kernel.phase(m1) == "liquid", "proof_recorded alone is not solid"
+        os.environ.pop("RETICULI_SIGNERS", None)
+        # a hand-written proof, no authorization at all: not solid
+        forged = os.path.join(d, "forged")
+        shutil.copytree(m1, forged)
+        fm = kernel.read_manifest(forged)
+        fm["proof"] = {"kind": "three-machine", "m2": "FORGED", "m3": "FORGED"}
+        with open(os.path.join(forged, kernel.STORE, "manifest.json"), "w") as f:
+            json.dump(fm, f)
+        assert kernel.phase(forged) == "liquid", "an injected proof is not an authorization"
         if shutil.which("ssh-keygen"):             # a host without ssh-keygen still gates the rest
-            subprocess.run(["ssh-keygen", "-t", "ed25519", "-N", "", "-q",
-                            "-f", ekey], capture_output=True, check=True)
-            os.remove(os.path.join(mdir, "x.mint.json.sig"))
-            subprocess.run(["ssh-keygen", "-Y", "sign", "-f", ekey, "-n", "reticuli",
-                            os.path.join(mdir, "x.mint.json")],
+            ekey = os.path.join(d, "ekey")
+            subprocess.run(["ssh-keygen", "-t", "ed25519", "-N", "", "-q", "-f", ekey],
                            capture_output=True, check=True)
-            assert kernel.phase(sol) == "solid", "an intact, coherent authorization is solid"
-            with open(os.path.join(sol, "g.txt")) as f:
-                g_bytes = f.read()
-            with open(os.path.join(sol, "g.txt"), "w") as f:
-                f.write("hello, but drifted after the mint\n")     # free redo post-mint
-            assert kernel.phase(sol) == "liquid", "the mint froze the crystal: drift demotes"
-            with open(os.path.join(sol, "g.txt"), "w") as f:
-                f.write(g_bytes)
-            assert kernel.phase(sol) == "solid", "the frozen bytes restored, solid again"
+            sol = os.path.join(d, "sol")
+            shutil.copytree(m1, sol)               # carries the recorded proof
+            _hand_mint(sol, "signer@basin", ekey, include_proof=True)
+            assert kernel.phase(sol) == "liquid", "a signature with no trust anchor is not solid"
+            signers = os.path.join(d, "allowed_signers")
+            with open(ekey + ".pub") as f:
+                ktype, blob = f.read().split()[:2]
+            with open(signers, "w") as f:
+                f.write(f"signer@basin {ktype} {blob}\n")
+            os.environ["RETICULI_SIGNERS"] = signers
+            try:
+                assert kernel.phase(sol) == "solid", "trusted + proven + coherent is solid"
+                with open(os.path.join(sol, "g.txt")) as f:
+                    g_bytes = f.read()
+                with open(os.path.join(sol, "g.txt"), "w") as f:
+                    f.write("hello, but drifted after the mint\n")   # free redo post-mint
+                assert kernel.phase(sol) == "liquid", "drift demotes: the mint froze the crystal"
+                with open(os.path.join(sol, "g.txt"), "w") as f:
+                    f.write(g_bytes)
+                assert kernel.phase(sol) == "solid", "the frozen bytes restored, solid again"
+                # authorized (trusted) but NOT proven: no recorded proof -> not solid
+                np = os.path.join(d, "noproof")
+                shutil.copytree(m1, np)
+                nm = kernel.read_manifest(np)
+                nm.pop("proof", None)
+                with open(os.path.join(np, kernel.STORE, "manifest.json"), "w") as f:
+                    json.dump(nm, f)
+                _hand_mint(np, "signer@basin", ekey, include_proof=False)
+                assert kernel.phase(np) == "liquid", "authorized but not proven is not solid"
+                # a signer NOT in the anchor is not solid (trust is relative)
+                other = os.path.join(d, "otherkey")
+                subprocess.run(["ssh-keygen", "-t", "ed25519", "-N", "", "-q", "-f", other],
+                               capture_output=True, check=True)
+                sol_o = os.path.join(d, "sol-other")
+                shutil.copytree(m1, sol_o)
+                _hand_mint(sol_o, "stranger@elsewhere", other, include_proof=True)
+                assert kernel.phase(sol_o) == "liquid", "an untrusted signer is not solid to you"
+            finally:
+                os.environ.pop("RETICULI_SIGNERS", None)
 
         # cost: the redo's ledger accounts the oracle call — residue, outside
         # the root (m1 has no ledger, m3 does, and they share a root above)

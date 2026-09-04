@@ -31,6 +31,18 @@ def _sh(argv: list[str], stdin: bytes | None = None) -> subprocess.CompletedProc
     return subprocess.run(argv, input=stdin, capture_output=True, check=False)
 
 
+def _sign(path: str, key: str) -> subprocess.CompletedProcess:
+    """Sign `path` with ssh-keygen -Y, writing `path.sig`. Removes any existing
+    signature first: `ssh-keygen -Y sign` PROMPTS to overwrite an existing .sig
+    and, with no tty, leaves the stale one in place — so a re-attest or re-mint
+    would silently keep the old signature over new bytes. We overwrite cleanly."""
+    sig = path + ".sig"
+    if os.path.exists(sig):
+        os.remove(sig)
+    return _sh(["ssh-keygen", "-Y", "sign", "-f", os.path.expanduser(key),
+                "-n", NAMESPACE, path])
+
+
 def _slug(identity: str) -> str:
     return re.sub(r"[^a-z0-9._-]+", "-", identity.lower()).strip("-") or "signer"
 
@@ -89,8 +101,7 @@ def attest(d: str, key: str, identity: str) -> dict:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(st, f, indent=2, sort_keys=True)
         f.write("\n")
-    r = _sh(["ssh-keygen", "-Y", "sign", "-f", os.path.expanduser(key),
-             "-n", NAMESPACE, path])
+    r = _sign(path, key)
     if r.returncode != 0:
         raise kernel.ReticuliError(f"attest: signing failed: {r.stderr.decode().strip()[:200]}")
     rel = os.path.join(ATTEST, f"{_slug(identity)}.json")
@@ -201,12 +212,12 @@ def mint(d: str, key: str, identity: str, ws: str | None = None) -> dict:
     statement = {"_type": MINT_TYPE, "ceremony": CEREMONY, "identity": identity,
                  "root": packet["root"], "mint": packet["mint"],
                  "packet_digest": _packet_digest(packet),
-                 "proven": bool(packet.get("proof")),
+                 "proof_recorded": bool(packet.get("proof")),
                  "when": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds")}
     with open(spath, "w", encoding="utf-8") as f:
         json.dump(statement, f, indent=2, sort_keys=True)
         f.write("\n")
-    r = _sh(["ssh-keygen", "-Y", "sign", "-f", os.path.expanduser(key), "-n", NAMESPACE, spath])
+    r = _sign(spath, key)
     if r.returncode != 0:
         raise kernel.ReticuliError(f"mint: signing failed: {r.stderr.decode().strip()[:200]}")
     rel = os.path.join(MINT, f"{slug}.mint.json")
@@ -222,7 +233,7 @@ def mint_check(d: str, ws: str | None = None, signers: str | None = None) -> dic
     signature AND that the stored review packet still hashes to the signed packet
     digest — the packet is what the keyholder reviewed; unbound, it could be
     swapped after the fact. With a signers file the authorizer's identity is
-    verified too. Each row reports `proven`: whether the statement says a
+    verified too. Each row reports `proof_recorded`: whether the statement says a
     three-machine proof was recorded at ceremony time — authorization and proof
     are separate rungs, and the ceremony never conflates them."""
     from . import registry
@@ -254,7 +265,7 @@ def mint_check(d: str, ws: str | None = None, signers: str | None = None) -> dic
         matches = st.get("mint") == current
         results.append({"identity": identity, "ceremony": st.get("ceremony"),
                         "chain_holds": matches, "packet_holds": packet_holds,
-                        "proven": st.get("proven"), "verdict": verdict,
+                        "proof_recorded": st.get("proof_recorded"), "verdict": verdict,
                         "ok": verdict in ("authorized", "intact") and matches
                         and packet_holds})
     return {"name": kernel.read_manifest(d)["name"], "mint": current,

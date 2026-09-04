@@ -144,7 +144,56 @@ three-machine rehearsal satisfied/audited at the new claim.
   must require both a recorded proof and a trusted authorization — per the
   decisions above.
 
+## Round B carved (2026-09-04): all six → WALL
+
+The architectural pass, per the decisions above. The six-attack battery now
+flips **6/6 to WALL** with controls intact.
+
+- **#3a env secret-isolation.** A gate runs with a **scrubbed environment** —
+  a small host allowlist (PATH, locale) + a room-local HOME/TMPDIR, never your
+  inherited secrets. A gate that read `$FAKE_INHERITED_SECRET` and wrote it to
+  its room now reads nothing. Producers are not scrubbed (a producer is your
+  command). *Residual, documented:* the sandbox is write-isolated, not fully
+  read-isolated — a gate can still read host files it has permission to; the
+  network is denied so a read cannot leave except through the room. Full
+  read-minimization is deferred (a larger profile change).
+- **#3b unspoofable inheritance.** The inherited-jail signal is now an
+  **unforgeable per-run token** — `_jailed` writes it to a file and names it in
+  the (scrubbed) child env; `jail()` inherits only when the env token matches
+  the file. A bare `RETICULI_JAILED` names no file and is ignored, and a record's
+  gate can't inject one (the gate env is scrubbed). `kernel_check._rejail` mints
+  the token the same way, so self-hosting under the jail still nests correctly.
+- **#5 proof_recorded.** `proven` is renamed **`proof_recorded`** everywhere
+  (result, mint statement, mint_check row, CLI) — the manifest proof is
+  unverifiable residue, and the name now says "a proof was recorded," not "this
+  is proven."
+- **#6 solid = authorized(trusted) AND proven.** `kernel.minted()`/`phase()` now
+  require a signature that verifies against a **trust anchor** (`RETICULI_SIGNERS`
+  or `~/.config/reticuli/allowed_signers`; `ssh-keygen -Y verify`, not
+  `check-novalidate`) over a packet that binds by digest, on undrifted bytes,
+  **and** whose packet records a proof. An unknown key, a missing anchor, or a
+  record with no recorded proof is liquid *to you*. Solid is verifier-relative
+  by construction — solid *to you*, against *your* signers.
+
+**Bug found and fixed in passing:** `ssh-keygen -Y sign` prompts to overwrite an
+existing `.sig` and, with no tty, leaves the **stale** signature in place — so a
+re-attest or re-mint silently kept the old signature over new bytes (it only
+"passed" when the new statement landed in the same clock-second as the old, an
+identical-bytes fluke). `attest` now removes the stale signature before signing.
+Surfaced by round B's re-mint path; the exchange gate's ceremony clause
+exercises re-mint as its regression.
+
+Localization: kernel-core `f9b01054…` → `e03676b7…` and exchange
+`844d6f8d…`→`5e6aa4d0…`→`39546fe6…` (both claims changed); authoring through
+vessel and the whole root `cc1a10e7…` held. Bench 48-pass, ruff clean,
+byte-copy three-machine rehearsal satisfied/audited at the new claims, stub
+refused at the genesis. The guide states the scrubbed environment, the
+verifier-relative solid, and the one remaining jail limit (host-file reads).
+
 ## Status
 
-Round A carved and rehearsed 2026-09-04. Round B is the (possibly final)
-architectural pass; the battery here is its specimen set.
+Rounds one and two fully carved and rehearsed (2026-09-04). Every concrete
+attack the two reviews named is a wall; what remains is genuinely outside the
+hashes (checker adequacy, epistemic independence, host-file read-isolation),
+named in the guide's honesty contract and here. The architecture is at the end
+the reviewer anticipated: the code now enforces the meaning it discovered.

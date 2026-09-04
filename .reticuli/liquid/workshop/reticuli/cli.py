@@ -178,13 +178,13 @@ def _r_mint_check(r: dict) -> None:
     print()
     table([{"identity": a["identity"], "verdict": a["verdict"],
             "chain_holds": a["chain_holds"], "packet_holds": a.get("packet_holds"),
-            "proven": a.get("proven"), "ceremony": a["ceremony"]}
+            "proof_recorded": a.get("proof_recorded"), "ceremony": a["ceremony"]}
            for a in r["authorizations"]] or
           [{"identity": "(none)", "verdict": "", "chain_holds": None,
-            "packet_holds": None, "proven": None, "ceremony": ""}],
+            "packet_holds": None, "proof_recorded": None, "ceremony": ""}],
           ("identity", "identity"), ("verdict", "verdict"),
           ("chain_holds", "chain_holds"), ("packet_holds", "packet_holds"),
-          ("proven", "proven"), ("ceremony", "ceremony"))
+          ("proof_recorded", "proof_recorded"), ("ceremony", "ceremony"))
 
 
 def _r_export(r: dict) -> None:
@@ -200,7 +200,7 @@ def _r_prove(r: dict) -> None:
     toml(("prove", {"satisfied": r["satisfied"], "integrity": r["integrity"],
                     "reuse": r["reuse"], "equivalence": r["equivalence"],
                     "audited": all(r.get("audited", {}).values()) or False,
-                    "cost": c.get("comparable"), "proven": r.get("proven")}),
+                    "cost": c.get("comparable"), "proof_recorded": r.get("proof_recorded")}),
          ("cost", {k: c.get(k) for k in ("unit", "c1", "c3", "ratio", "tolerance", "note")}))
     print()
     table([{"machine": m, "root": short(h)} for m, h in r["roots"].items()],
@@ -414,7 +414,7 @@ def main(argv: list[str] | None = None) -> int:
             return emit(fn(args.record, args.producer, args.into), j, _r_realize)
         if args.cmd == "prove":
             r = (kernel.freeze_dry if args.freeze_dry else kernel.three_machine)(args.m1, args.m2, args.m3)
-            r.setdefault("proven", None)
+            r.setdefault("proof_recorded", None)
             emit(r, j, _r_prove)
             return 0 if r["satisfied"] else 1
         if args.cmd == "pack":

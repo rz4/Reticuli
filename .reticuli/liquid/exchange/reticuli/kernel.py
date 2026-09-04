@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import secrets
 import shutil
 import signal
 import subprocess
@@ -29,6 +30,27 @@ MINT = os.path.join(STORE, "mint")           # authorization material (statement
 NAMESPACE = "reticuli"                       # the ssh-keygen -Y signing namespace
 TOLERANCE = 2.0                 # comparable cost: 1/2 <= C3/C1 <= 2, unless the claim declares
 GATE_TIMEOUT = 300.0            # a gate's wall-clock ceiling (s); the record may declare its own
+# A gate runs with a SCRUBBED environment — only these host vars pass through,
+# so a hostile gate cannot read an inherited credential (an API key, a token)
+# and write it into its room to exfiltrate at export. Producers are NOT scrubbed
+# (they are your command). The record's own RETICULI_* and a room-local HOME/
+# TMPDIR are added on top; the internal jail signal below can never be inherited.
+_ENV_PASS = ("PATH", "LANG", "LC_ALL", "LC_CTYPE", "TZ", "SYSTEMROOT")
+_JAILED = "RETICULI_JAILED"          # internal: the per-run token (never set this yourself)
+_JAIL_REF = "RETICULI_JAIL_TOKEN"    # internal: absolute path to the token's file
+
+
+def _gate_env(extra: dict) -> dict:
+    """A scrubbed base environment for a record's gate: a minimal host allowlist
+    plus the caller's `extra`. The ambient jail signal is dropped so an outer
+    environment cannot spoof 'already jailed'; _jailed re-adds a fresh, verified
+    token only when it truly wraps."""
+    env = {k: os.environ[k] for k in _ENV_PASS if k in os.environ}
+    env.setdefault("PATH", os.defpath)
+    env.update(extra)
+    env.pop(_JAILED, None)
+    env.pop(_JAIL_REF, None)
+    return env
 
 
 def _gate_timeout(recipe: dict) -> float:
@@ -99,31 +121,49 @@ def claim(recipe: dict, d: str) -> str:
     return _h(json.dumps(parts, sort_keys=True).encode())
 
 
+def _signers() -> str | None:
+    """The trust anchor: an ssh allowed-signers file naming the identities you
+    trust to authorize a mint. RETICULI_SIGNERS, else ~/.config/reticuli/
+    allowed_signers, else none — and with none, nothing is authorized *to you*.
+    Trust is verifier-relative by construction; the tool never invents it."""
+    p = os.environ.get("RETICULI_SIGNERS")
+    if p and os.path.isfile(os.path.expanduser(p)):
+        return os.path.expanduser(p)
+    default = os.path.expanduser(os.path.join("~", ".config", "reticuli", "allowed_signers"))
+    return default if os.path.isfile(default) else None
+
+
 def phase(d: str) -> str:
-    """vapor (no record) · liquid (sealed) · solid (carries a coherent, intact
-    mint authorization — see minted()). A `proof` on the manifest is residue
-    about the past (recorded by freeze_dry), never phase: it is metadata
-    outside the root, so a hand-written proof must not create a solid."""
+    """vapor (no record) · liquid (sealed) · solid (authorized AND proven — see
+    minted()). A `proof` on the manifest is residue, never phase on its own; a
+    hand-written proof or a signature from an untrusted key does not make a
+    solid. Because trust is verifier-relative, a record with no reachable trust
+    anchor is liquid *to you* even if others have vouched for it."""
     m = os.path.join(d, STORE, "manifest.json")
     if not os.path.isfile(m):
         return "vapor"
     return "solid" if minted(d)["ok"] else "liquid"
 
 
-def minted(d: str) -> dict:
-    """The kernel-local mint test: solid means at least one authorization whose
-    signature is INTACT (ssh-keygen -Y check-novalidate) over a statement that
-    names this record's sealed root, whose signed packet digest matches the
-    stored review packet, and whose packet's realization digest still describes
-    the free bytes on disk — the mint froze this crystal, and a drifted crystal
-    is not it. WHO signed (allowed signers) and whether the cross-component
-    chain still folds are the exchange stratum's questions (attest.mint_check);
-    this test needs no registry and no trust anchor."""
+def minted(d: str, signers: str | None = None) -> dict:
+    """The local solid test — solid means AUTHORIZED and PROVEN, both verifiable
+    here and now. A record is solid iff it carries a mint authorization that:
+    (1) is signed by a TRUSTED identity — the signature verifies against an
+    allowed-signers file (arg, else RETICULI_SIGNERS, else the default); with no
+    anchor nothing is authorized to you; (2) names this record's sealed root;
+    (3) binds the stored review packet by its signed digest — the reviewed
+    bundle cannot be swapped; (4) whose packet's realization digest still
+    describes the free bytes on disk — the mint froze THIS crystal, and a
+    drifted crystal is not it; and (5) whose packet records a three-machine
+    proof — authorization vouches, the recorded proof couples 'it reproduced' to
+    'a human accepts it'. WHO you trust is yours (the signers file); the
+    cross-component chain fold is attest.mint_check's."""
+    signers = signers or _signers()
     base = os.path.join(d, MINT)
     names = (sorted(n for n in os.listdir(base) if n.endswith(".mint.json"))
              if os.path.isdir(base) else [])
     if not names:
-        return {"ok": False, "statements": []}
+        return {"ok": False, "statements": [], "signers": signers}
     root = _read(os.path.join(d, STORE, "manifest.json"))["root"]
     digest = realization_digest(d)
     out = []
@@ -142,20 +182,27 @@ def minted(d: str) -> dict:
                 why.append("stored packet does not match the signed digest")
             elif packet.get("realization_digest") != digest:
                 why.append("realization drifted since the mint")
+            elif not packet.get("proof"):
+                why.append("no three-machine proof recorded (authorized, not proven)")
         except (OSError, ValueError):
             why.append("review packet missing or unreadable")
-        try:
-            with open(path, "rb") as f:
-                raw = f.read()
-            r = subprocess.run(["ssh-keygen", "-Y", "check-novalidate",
-                                "-n", NAMESPACE, "-s", path + ".sig"],
-                               input=raw, capture_output=True, check=False)
-            if r.returncode != 0:
-                why.append("signature not intact")
-        except OSError:
-            why.append("signature not checkable")
-        out.append({"statement": name, "ok": not why, "why": why})
-    return {"ok": any(x["ok"] for x in out), "statements": out}
+        if not signers:
+            why.append("no trust anchor (set RETICULI_SIGNERS); not authorized to you")
+        else:
+            try:
+                with open(path, "rb") as f:
+                    raw = f.read()
+                r = subprocess.run(
+                    ["ssh-keygen", "-Y", "verify", "-f", os.path.expanduser(signers),
+                     "-I", st.get("identity", ""), "-n", NAMESPACE, "-s", path + ".sig"],
+                    input=raw, capture_output=True, check=False)
+                if r.returncode != 0:
+                    why.append("signature not from a trusted signer")
+            except OSError:
+                why.append("signature not checkable")
+        out.append({"statement": name, "identity": st.get("identity"),
+                    "ok": not why, "why": why})
+    return {"ok": any(x["ok"] for x in out), "statements": out, "signers": signers}
 
 
 # -- seal / verify: identity ------------------------------------------------
@@ -242,13 +289,17 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
         if step["kind"] == "produce" and out in produce_from:
             _ledger_add(into, {"event": "reuse", "output": out})
             continue
-        env = {**os.environ, "RETICULI_REQUEST": step.get("request", ""),
-               "RETICULI_OUTPUT": out, "RETICULI": "1"}
         t0 = time.monotonic()
         if step["kind"] == "gate":
+            # a record's gate runs with a SCRUBBED environment (a hostile gate
+            # must not read an inherited secret and exfiltrate it via its room)
+            env = _gate_env({"RETICULI_REQUEST": step.get("request", ""),
+                             "RETICULI_OUTPUT": out, "RETICULI": "1"})
             r, jailed_as = _jailed(step["run"], into, env, timeout=timeout)
         else:
-            env["RETICULI_USAGE"] = usage_path
+            # the producer is YOUR command, not the record's — it keeps your env
+            env = {**os.environ, "RETICULI_REQUEST": step.get("request", ""),
+                   "RETICULI_OUTPUT": out, "RETICULI": "1", "RETICULI_USAGE": usage_path}
             r = subprocess.run(producer, shell=True, cwd=into, env=env,
                                capture_output=True, text=True, check=False)
         if r.returncode != 0 or not os.path.isfile(out_path):
@@ -294,7 +345,7 @@ def jail(cmd: str, room: str) -> tuple[list[str] | str, str]:
     mode = os.environ.get("RETICULI_QUARANTINE", "auto")
     if mode == "off":
         return cmd, "off"
-    if os.environ.get("RETICULI_JAILED"):    # jails don't nest; the outer one holds
+    if _inside_our_jail():                    # jails don't nest; the outer one holds
         return cmd, "inherited"
     room = os.path.realpath(room)
     if sys.platform == "darwin":
@@ -309,15 +360,45 @@ def jail(cmd: str, room: str) -> tuple[list[str] | str, str]:
     return cmd, "none"
 
 
+def _inside_our_jail() -> bool:
+    """True iff THIS process is inside a jail WE applied — proven by a per-run
+    token that `_jailed` both set in the (scrubbed) child environment and wrote
+    to a file at the absolute path the environment names. A bare `RETICULI_JAILED`
+    (an outer footgun, or a record trying to switch quarantine off) names no
+    such file and is ignored; a record's gate can't inject one because the gate
+    environment is scrubbed. The token is unguessable per run, so a stale value
+    from a previous run does not match either."""
+    tok = os.environ.get(_JAILED)
+    ref = os.environ.get(_JAIL_REF)
+    if not tok or not ref:
+        return False
+    try:
+        with open(ref, encoding="utf-8") as f:
+            return f.read() == tok
+    except OSError:
+        return False
+
+
 def _jailed(cmd: str, room: str, env: dict,
             timeout: float | None = None) -> tuple[subprocess.CompletedProcess, str]:
-    """Run a gate in the jail, time-bounded. TMPDIR moves inside the room so
-    well-behaved temp use stays confined; the jail refuses the rest."""
+    """Run a gate in the jail, time-bounded, with a scrubbed environment. TMPDIR
+    and HOME move inside the room so well-behaved temp/home use stays confined;
+    the jail refuses the rest. When we truly wrap, we mint a per-run token (in
+    the child env and a file at an absolute path) so a nested kernel recognizes
+    THIS jail — and only this one — as inherited."""
     wrapped, status = jail(cmd, room)
-    if isinstance(wrapped, list):
+    if isinstance(wrapped, list):            # we wrapped: fresh token + room-local tmp/home
         tmp = os.path.join(os.path.realpath(room), STORE, "tmp")
         os.makedirs(tmp, exist_ok=True)
-        env = {**env, "TMPDIR": tmp, "RETICULI_JAILED": status}
+        token = secrets.token_hex(16)
+        ref = os.path.join(tmp, "jail.token")
+        with open(ref, "w", encoding="utf-8") as f:
+            f.write(token)
+        env = {**env, "TMPDIR": tmp, "HOME": tmp, _JAILED: token, _JAIL_REF: ref}
+    elif status == "inherited":              # carry the outer jail's context forward
+        env = {**env, **{k: os.environ[k]
+                         for k in ("TMPDIR", "HOME", _JAILED, _JAIL_REF)
+                         if k in os.environ}}
     return _run_bounded(wrapped, shell=isinstance(wrapped, str), cwd=room,
                         env=env, timeout=timeout), status
 
@@ -433,7 +514,7 @@ def audit(d: str) -> dict:
             if step["kind"] != "gate":
                 continue
             out = _out(step)
-            r, jailed_as = _jailed(step["run"], room, {**os.environ, "RETICULI": "1"},
+            r, jailed_as = _jailed(step["run"], room, _gate_env({"RETICULI": "1"}),
                                    timeout=timeout)
             produced = _safe(room, out)
             reproduced = (r.returncode == 0 and os.path.isfile(produced)
@@ -489,11 +570,11 @@ def freeze_dry(m1: str, m2: str, m3: str) -> dict:
     re-verifiable (M2 and M3 are gone). It does NOT make the record solid:
     solid is a verifiable authorization, the mint ceremony's act."""
     result = three_machine(m1, m2, m3)
-    result["proven"] = False
+    result["proof_recorded"] = False
     if result["satisfied"]:
         seal(m1, proof={"kind": "three-machine",
                         "m2": result["roots"]["M2"], "m3": result["roots"]["M3"]})
-        result["proven"] = True
+        result["proof_recorded"] = True
     return result
 
 

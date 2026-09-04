@@ -73,7 +73,7 @@ def test_freeze_dry_records_the_proof_but_solid_is_the_ceremonys(tmp_path):
     kernel.seal(m1)
     m2 = str(tmp_path / "m2"); shutil.copytree(m1, m2)
     m3 = str(tmp_path / "m3"); kernel.realize(m1, "printf 'hello!\\n' > greeting.txt", m3)
-    assert kernel.freeze_dry(m1, m2, m3)["proven"]
+    assert kernel.freeze_dry(m1, m2, m3)["proof_recorded"]
     assert kernel.read_manifest(m1).get("proof"), "the proof is residue on the manifest"
     assert kernel.phase(m1) == "liquid", "proven is not solid: authorization is the mint ceremony"
 

@@ -195,7 +195,9 @@ def battery() -> None:
 
         # the mint ceremony: accountable authorization over the chain. Refuses a
         # record whose verdicts do not reproduce (audit), signs the chain root and
-        # the review packet, and verifies against a recomputed chain.
+        # the review packet, and verifies against a recomputed chain. SOLID means
+        # AUTHORIZED (by a trusted signer) AND PROVEN (a recorded proof) — the two
+        # facts are coupled, and both are verifier-relative through the anchor.
         mm = os.path.join(d, "mm")                                 # a fresh, clean realization
         registry.rehydrate(app, "printf 'yet another implementation' > app.txt", mm, ws=ws)
         pkt = attest.review_packet(mm, ws=ws)
@@ -204,32 +206,49 @@ def battery() -> None:
         minted = attest.mint(mm, key, "checker@basin", ws=ws)
         assert minted["ceremony"] == "RETICULI_CLAIM_BASIN_V1", "the ceremony is named"
         assert os.path.isfile(os.path.join(mm, minted["signature"])), "the mint is signed"
-        assert attest.mint_check(mm, ws=ws)["ok"], "the mint verifies (chain recomputes, signature intact)"
         checked = attest.mint_check(mm, ws=ws, signers=signers)
         assert checked["authorizations"][0]["verdict"] == "authorized", "authorizer identity anchored"
         row = checked["authorizations"][0]
         assert row["packet_holds"], "the signed digest binds the stored review packet"
-        assert row["proven"] is False, \
-            "the statement says whether a three-machine proof existed (none here) — " \
-            "authorization must never be mistaken for proof"
-        assert kernel.phase(mm) == "solid", "a verifiable authorization is what solid means"
-        # the packet is what the keyholder reviewed: swap it or delete it and
-        # the mint must refuse — and the record is no longer solid.
-        ppath = os.path.join(mm, minted["packet"])
-        with open(ppath) as f:
-            packet_bytes = f.read()
-        with open(ppath, "w") as f:
-            f.write('{"audit": {"ok": true}, "note": "forged after the ceremony"}\n')
-        assert not attest.mint_check(mm, ws=ws)["ok"], "a forged review packet refuses"
-        assert kernel.phase(mm) == "liquid", "and demotes: the reviewed bundle is gone"
-        os.remove(ppath)
-        assert not attest.mint_check(mm, ws=ws)["ok"], "a missing review packet refuses"
-        with open(ppath, "w") as f:
-            f.write(packet_bytes)
-        assert attest.mint_check(mm, ws=ws)["ok"], "the exact packet restored, the mint holds"
-        with open(os.path.join(mm, minted["statement"]), "a") as f:
-            f.write("\n")                                          # tamper the mint statement
-        assert not attest.mint_check(mm, ws=ws, signers=signers)["ok"], "a tampered mint refuses"
+        assert row["proof_recorded"] is False, \
+            "the statement says whether a proof was recorded (none here) — " \
+            "authorization is never mistaken for proof"
+        os.environ["RETICULI_SIGNERS"] = signers                   # anchor: trust checker@basin
+        try:
+            assert kernel.phase(mm) == "liquid", "authorized but not proven is not solid"
+            # the packet is what the keyholder reviewed: swap it or delete it and
+            # the mint must refuse.
+            ppath = os.path.join(mm, minted["packet"])
+            with open(ppath) as f:
+                packet_bytes = f.read()
+            with open(ppath, "w") as f:
+                f.write('{"audit": {"ok": true}, "note": "forged after the ceremony"}\n')
+            assert not attest.mint_check(mm, ws=ws, signers=signers)["ok"], "a forged packet refuses"
+            os.remove(ppath)
+            assert not attest.mint_check(mm, ws=ws, signers=signers)["ok"], "a missing packet refuses"
+            with open(ppath, "w") as f:
+                f.write(packet_bytes)
+            assert attest.mint_check(mm, ws=ws, signers=signers)["ok"], "the exact packet restored, holds"
+
+            # now record a genuine proof on mm (preserving its components) and
+            # re-mint: trusted authorization + recorded proof = solid.
+            comps = kernel.read_manifest(mm).get("components")
+            m2mm = os.path.join(d, "m2mm")
+            shutil.copytree(mm, m2mm)
+            m3mm = os.path.join(d, "m3mm")
+            registry.rehydrate(app, "printf 'a third implementation' > app.txt", m3mm, ws=ws)
+            tm = kernel.three_machine(mm, m2mm, m3mm)
+            assert tm["satisfied"], "mm proves against a distinct M2/M3"
+            kernel.seal(mm, proof={"kind": "three-machine", "m2": tm["roots"]["M2"],
+                                   "m3": tm["roots"]["M3"]}, components=comps)
+            attest.mint(mm, key, "checker@basin", ws=ws)          # re-mint over the proven record
+            assert kernel.phase(mm) == "solid", "trusted authorization + recorded proof = solid"
+            with open(os.path.join(mm, minted["statement"]), "a") as f:
+                f.write("\n")                                     # tamper the mint statement
+            assert not attest.mint_check(mm, ws=ws, signers=signers)["ok"], "a tampered mint refuses"
+            assert kernel.phase(mm) == "liquid", "and demotes: the authorization no longer verifies"
+        finally:
+            os.environ.pop("RETICULI_SIGNERS", None)
         broke = os.path.join(d, "broke")
         registry.rehydrate(app, "printf 'a broken implementation' > app.txt", broke, ws=ws)
         with open(os.path.join(broke, "V"), "w") as f:

@@ -81,14 +81,19 @@ A record moves through phases of matter:
 
 - **vapor** — a live session; a trace, nothing sealed.
 - **liquid** — condensed and sealed; a claim you can verify and share.
-- **solid** — authorized: the record carries a **mint** (below) — a keyholder's
-  signed, locally verifiable authorization of this exact crystal. Not a bit:
-  the phase demotes to liquid the moment the authorization stops verifying —
-  signature broken, review packet swapped, frozen bytes drifted. `ret prove
-  --freeze-dry` records a *proof* on the manifest instead: residue saying the
-  three-machine test passed then — readable, not re-verifiable (M2 and M3 are
-  gone), and never the phase. Proven is a fact about bytes at prove time;
-  authorized is a fact about a person; only the second stays checkable.
+- **solid** — **authorized AND proven**: the record carries a **mint** (below)
+  whose signature verifies against *your* trust anchor (an allowed-signers file
+  — an unknown key is signed, not authorized), which binds the reviewed packet
+  by digest, on undrifted bytes, and whose packet records a three-machine proof.
+  Not a bit: the phase demotes to liquid the moment any of that stops verifying
+  — signature broken or from an untrusted key, packet swapped, bytes drifted, or
+  no proof recorded. Because trust is verifier-relative, a record with no
+  reachable anchor is liquid *to you* even if others have vouched. `ret prove
+  --freeze-dry` records a *proof* on the manifest — residue (`proof_recorded`)
+  saying the three-machine test passed then, readable but not re-verifiable (M2
+  and M3 are gone), never solid on its own. The two facts are independent —
+  "it reproduced" (proof_recorded) and "a trusted human accepts it" (authorized)
+  — and solid is exactly their conjunction.
 
 Files are **dry** (given seeds, carried unchanged) or **wet** (produced). A dry
 seed is the archetype of a component: *`solid` is a record's view of itself;
@@ -154,18 +159,25 @@ out; the default `auto` uses one when the platform provides it and says so
 either way. Every gate also runs under a **wall-clock ceiling** (the record's
 `[record] gate_timeout`, capped by `RETICULI_GATE_TIMEOUT`, default 300s): a
 gate that exceeds it is killed — process group and all — and counts as a failed
-verdict, so a hostile or broken gate cannot hang the verifier. And every path a
+verdict, so a hostile or broken gate cannot hang the verifier. Every path a
 recipe names (seed, output) is **confined to the record root**: an absolute
 path, a `..` climb, or an out-of-root symlink is refused before the gate runs,
-so a record cannot make the kernel read or write outside itself. The jail
-protects *you* from a record; speaking to *others* is attestation's job, below.
+so a record cannot make the kernel read or write outside itself. And a gate runs
+with a **scrubbed environment** — only a small host allowlist (PATH, locale) plus
+a room-local HOME/TMPDIR, never your inherited secrets — so a hostile gate cannot
+read an API key from the environment and write it into its room to exfiltrate at
+export. (Producers are not scrubbed: a producer is *your* command.) The
+inherited-jail signal is an unforgeable per-run token, written to a file and
+named in the scrubbed environment, so an ambient `RETICULI_JAILED` cannot switch
+quarantine off. The jail protects *you* from a record; speaking to *others* is
+attestation's job, below.
 
-Two limits the jail does **not** yet close, stated plainly: the sandbox is
-write-isolated, not secret-isolated (a gate can still *read* host files and the
-inherited environment), and the inherited-jail signal is an environment
-variable that a hostile outer environment can set. Hardening both — a scrubbed
-gate environment and an unspoofable inheritance signal — is scheduled, and
-tracked in the experiments' attack triage.
+One limit the jail does **not** close, stated plainly: the sandbox is
+write-isolated, not fully read-isolated — a gate can still *read* host files it
+has filesystem permission to (the environment leak is closed; arbitrary host
+*reads* are not). Full read-minimization (bind only what a gate needs) is a
+larger change tracked in the experiments' attack triage; the network is denied
+throughout, so a read cannot leave except through the record's own room.
 
 ## Attestation
 
@@ -222,12 +234,14 @@ keyholder reviews before authorizing: the claim root, the chain root, the
 realization digest, the normalized recipe, the seed digests, the gate sources,
 the component chain, and a fresh audit. `ret mint <record> --key ~/.ssh/id --as
 you@lab.gov` then signs the chain root and the packet's digest with
-`ssh-keygen -Y`, under a key that lives outside any agent's authority; `--check`
-recomputes the chain and verifies the authorization — including that the stored
-packet still hashes to the signed digest (the reviewed bundle cannot be swapped
-after the fact) and reporting `proven`: whether a three-machine proof was
-recorded at ceremony time. Authorization and proof are separate rungs, and the
-signed statement says which you hold.
+`ssh-keygen -Y`, under a key that lives outside any agent's authority;
+`--check --signers <file>` recomputes the chain and verifies the authorization
+against a trust anchor — including that the stored packet still hashes to the
+signed digest (the reviewed bundle cannot be swapped after the fact) and
+reporting `proof_recorded`: whether a three-machine proof was recorded at
+ceremony time. Authorization and proof are separate facts, and the signed
+statement says which you hold — a mint over an unproven record is honest about
+being unproven, and `solid` requires both.
 
 Say exactly what this is: **accountable authorization after a defined
 ceremony** — a named keyholder is on record as having authorized this mint. It
@@ -253,13 +267,18 @@ Trust in a record therefore climbs a ladder, each rung a different question:
 2. **audit** — the verdicts are earned by these bytes, not carried (no
    fabrication).
 3. **attestation** — a named keyholder ran this realization and signed the
-   statement (*who* — transport provenance).
-4. **solid mint** — these exact bytes, frozen and ceremony-signed (*what*).
+   statement (*who* — transport provenance), verified against your allowed
+   signers; an unknown key is *intact*, not *trusted*.
+4. **solid mint** — these exact bytes, frozen, ceremony-signed **by a signer you
+   trust**, over a record that also carries a recorded proof (*what* + *who* +
+   *proven*). Solid is verifier-relative: it is solid **to you**, against your
+   trust anchor.
 
-A record on disk is **liquid**: it gives you rungs 1–3, never 4 — the free
-implementation is unpinned by construction. Pull a record from someone you can
-name and rely on their attestation; pull from a stranger and you must read the
-code or wait for a solid — the root alone was never a claim about the bytes.
+A record on disk is **liquid to you** until rung 4 verifies against your own
+allowed-signers file — the free implementation is unpinned by construction, and
+trust is never invented by the tool. Pull a record from someone you can name and
+rely on their attestation; pull from a stranger and you must read the code or
+wait for a solid you can anchor — the root alone was never a claim about the bytes.
 Where a property cleanly separates every honest realization from a class of
 payloads, it is promoted to a check instead of left to trust: the kernel's
 **stdlib-only, no-network** rule is the first such clause — every honest kernel
@@ -324,7 +343,7 @@ fresh README against `checks/docs_check.py`, and — because all of it is free a
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo prices every layer separately: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
-roots, inner to outer: `f9b01054…`, `5e6aa4d0…`, `b7610cbb…`, `c3b3e782…`,
+roots, inner to outer: `e03676b7…`, `39546fe6…`, `b7610cbb…`, `c3b3e782…`,
 `7a918dac…`, workshop `5c229b2e…`, vessel `e4e7da9a…`, whole `cc1a10e7…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
