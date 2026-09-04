@@ -35,6 +35,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 sys.path.insert(0, ".")
 from reticuli import kernel   # the kernel under test
@@ -178,6 +179,62 @@ def battery() -> None:
         rx = kernel.three_machine(m1, m2x, m3)
         assert rx["roots"]["M2"] != rx["roots"]["M1"], "the doctored M2 is a different claim"
         assert not rx["satisfied"], "a different M2 claim must fail the three-machine test"
+
+        # distinctness: three machines, not one directory presented thrice. One
+        # record supplied as M1=M2=M3 trivially "agrees with itself" and proves
+        # nothing; identical paths (by realpath — symlink and ./.. aliases too)
+        # are refused, and the test reports content-independence as unestablished.
+        try:
+            kernel.three_machine(m1, m1, m1)
+            raise AssertionError("three_machine must refuse identical paths")
+        except kernel.ReticuliError:
+            pass
+        assert "independence" in r, "the test reports independence (unestablished from content)"
+
+        # path confinement: a record's own recipe is untrusted. A seed or output
+        # name that is absolute or climbs out with `..` must be refused before any
+        # gate runs — else the kernel reads or writes outside the record. One
+        # boundary (_safe), so claim() refuses an escaping seed here.
+        esc = os.path.join(d, "escape")
+        os.makedirs(esc)
+        with open(os.path.join(esc, "reticuli.toml"), "w") as f:
+            f.write('[record]\nname = "escape"\ninputs = ["../outside.txt"]\n\n'
+                    '[[step]]\nkind = "gate"\noutput = "V"\n'
+                    'run = "printf v > V"\nclass = "validated"\n')
+        with open(os.path.join(d, "outside.txt"), "w") as f:
+            f.write("a file the record must not be able to name\n")
+        try:
+            kernel.claim(kernel.load_recipe(esc), esc)
+            raise AssertionError("claim must refuse a seed that escapes the record root")
+        except kernel.ReticuliError:
+            pass
+        with open(os.path.join(esc, "reticuli.toml"), "w") as f:      # and an absolute path
+            f.write('[record]\nname = "escape"\ninputs = ["/etc/hostname"]\n\n'
+                    '[[step]]\nkind = "gate"\noutput = "V"\n'
+                    'run = "printf v > V"\nclass = "validated"\n')
+        try:
+            kernel.claim(kernel.load_recipe(esc), esc)
+            raise AssertionError("claim must refuse an absolute seed path")
+        except kernel.ReticuliError:
+            pass
+
+        # resource bound: a gate has a wall-clock ceiling (declarable, capped by
+        # the environment), so a hostile or broken gate cannot hang the verifier.
+        # A `sleep` gate under a 1s ceiling is killed — a failed redo, not a hang.
+        slow = os.path.join(d, "slow")
+        os.makedirs(slow)
+        with open(os.path.join(slow, "reticuli.toml"), "w") as f:
+            f.write(FIXTURE.replace("grep -qi hello g.txt && printf v > V",
+                                    "sleep 30 && printf v > V"))
+        os.environ["RETICULI_GATE_TIMEOUT"] = "1"
+        t_slow = time.monotonic()
+        try:
+            kernel.realize(slow, "printf 'hello\\n' > g.txt", os.path.join(d, "slow-m3"))
+            raise AssertionError("a gate exceeding the time limit must be refused")
+        except kernel.ReticuliError:
+            assert time.monotonic() - t_slow < 10, "the gate was killed at the limit, not run out"
+        finally:
+            del os.environ["RETICULI_GATE_TIMEOUT"]
 
         # the root is the CLAIM: it is a function of the dry seeds (the check),
         # and independent of the free outputs (the implementation). Editing a

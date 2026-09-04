@@ -55,9 +55,9 @@ def statement(d: str, identity: str) -> dict:
     """The in-toto statement for this realization, as it stands on disk."""
     m = kernel.read_manifest(d)
     recipe = kernel.load_recipe(d)
-    outputs = {kernel._out(s): kernel._hf(os.path.join(d, kernel._out(s)))
+    outputs = {kernel._out(s): kernel._hf(kernel._safe(d, kernel._out(s)))
                for s in recipe.get("step", [])
-               if os.path.isfile(os.path.join(d, kernel._out(s)))}
+               if os.path.isfile(kernel._safe(d, kernel._out(s)))}
     return {
         "_type": STATEMENT_TYPE,
         "subject": [{"name": m["name"], "digest": {"reticuliRoot": m["root"]}}],
@@ -121,7 +121,7 @@ def check(d: str, signers: str | None = None) -> dict:
         roots = {dg for s in st.get("subject", []) for dg in s.get("digest", {}).values()}
         drifted = [o for o, hsh in st.get("predicate", {}).get("outputs", {}).items()
                    if not os.path.isfile(os.path.join(d, o))
-                   or kernel._hf(os.path.join(d, o)) != hsh]
+                   or kernel._hf(kernel._safe(d, o)) != hsh]
         if signers:
             r = _sh(["ssh-keygen", "-Y", "verify", "-f", os.path.expanduser(signers),
                      "-I", identity, "-n", NAMESPACE, "-s", path + ".sig"], stdin=raw)
@@ -159,8 +159,8 @@ def review_packet(d: str, ws: str | None = None, prior: str | None = None) -> di
         "mint": registry.mint_root(d, ws),
         "realization_digest": kernel.realization_digest(d),
         "recipe": recipe,
-        "seeds": {s: kernel._hf(os.path.join(d, s)) for s in kernel._seeds(recipe)
-                  if os.path.isfile(os.path.join(d, s))},
+        "seeds": {s: kernel._hf(kernel._safe(d, s)) for s in kernel._seeds(recipe)
+                  if os.path.isfile(kernel._safe(d, s))},
         "gates": [s["run"] for s in recipe.get("step", []) if s.get("kind") == "gate"],
         "components": m.get("components", []),
         "audit": {"ok": a["ok"], "gates": a["gates"]},

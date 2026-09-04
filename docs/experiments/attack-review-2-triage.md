@@ -92,9 +92,59 @@ move is to *state the interpretation boundary precisely* in the guide (already
 begun: the quarantine backend is on the ledger, the honesty contract names the
 execution boundary) — not to try to hash it.
 
+## Decisions (2026-09-04)
+
+- **State model:** keep the single liquid/solid axis; **solid** = *authorized
+  AND proof_recorded* (couple the two facts back, one word).
+- **Authorized means a trusted signer:** the top rung requires the signature to
+  verify against an allow-list identity (verifier-relative); an unknown key is
+  *frozen/signed*, never *authorized*.
+- **Scope:** the concrete fixes now (round A); the design pair next (round B).
+
+## Round A carved (2026-09-04): #1, #2, #4 → WALL
+
+Three complete fixes, all in the kernel claim (so only the kernel-core root
+moved), each rejecting its battery specimen with controls intact:
+
+- **Distinctness (#1).** `three_machine` refuses aliased paths (by `realpath`,
+  catching symlink and `.`/`..` aliases) and reports
+  `independence = "unestablished"` — content cannot prove M3 was not copied.
+  `prove M1 M1 M1` now raises.
+- **Path confinement (#2).** One boundary, `kernel._safe(root, name)`, that
+  every recipe-declared path (seed, output) crosses in claim/realize/audit/
+  attest — absolute, `..`, and out-of-root symlink targets are refused before
+  any gate runs. `claim()` on a `../` or `/etc/...` seed now raises.
+- **Resource bounds (#4).** `_run_bounded` gives every gate a wall-clock
+  ceiling (`[record] gate_timeout`, capped by `RETICULI_GATE_TIMEOUT`, default
+  300s) and kills the whole process group on expiry — a timeout is a failed
+  verdict (returncode 124), not a hang. A `sleep` gate under a 1s ceiling is
+  killed.
+
+Localization: kernel-core `669636b2…` → `f9b01054…`; exchange and every rung
+above, plus the whole root `cc1a10e7…`, unchanged. Bench 48-pass; byte-copy
+three-machine rehearsal satisfied/audited at the new claim.
+
+## Round B (next): #3a, #3b, #5, #6
+
+- **#3b moved here from round A.** A correct fix is *not* a one-liner: an
+  unforgeable-token scheme defeats only the naive spoof (a bare
+  `RETICULI_JAILED`), because an attacker who controls the environment can also
+  create a matching token file — and threading a token through the kernel
+  check's `_rejail()` is required or self-hosting breaks. The real fix is the
+  same environment redesign as #3a (a scrubbed gate environment + an
+  inheritance signal outside the record's/attacker's control), so #3b belongs
+  with #3a. Both remain LANDS until then, by design.
+- **#3a env/fs secret isolation:** scrub the gate environment, minimize the
+  visible filesystem — bounded by what the self-host workshop gate legitimately
+  needs (interpreter, package, lower layers).
+- **#5 proof_recorded:** rename `proven` → `proof_recorded` (the manifest proof
+  is unverifiable residue; the word should say so).
+- **#6 solid = authorized(trusted) AND proof_recorded:** `phase()`/`minted()`
+  must require the authorization to verify against a trust anchor, and solid
+  must require both a recorded proof and a trusted authorization — per the
+  decisions above.
+
 ## Status
 
-Measured 2026-09-04. Nothing carved — this triage is the specimen set and the
-decision memo. The three concrete fixes are unambiguous; #3 needs a
-minimization scope; #5/#6 are the (possibly final) architectural decision
-about the proof/authorization lattice.
+Round A carved and rehearsed 2026-09-04. Round B is the (possibly final)
+architectural pass; the battery here is its specimen set.

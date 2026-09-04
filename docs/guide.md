@@ -49,6 +49,7 @@ reuse = true                   # M2 carries M1's outputs byte-for-byte
 equivalence = true             # all three machines share one root
 audited = true                 # every machine's verdicts re-run clean (earned, not carried)
 cost = true                    # C3/C1 within tolerance (dropped when a machine is unmeasured)
+independence = "unestablished" # distinct paths are required; content can't prove non-copying
 
 [cost]
 unit = "calls"
@@ -150,8 +151,21 @@ record's gates you did not. The ledger records what happened to each gate
 jails don't nest, so a gate spawned inside a jail inherits the outer one.
 `RETICULI_QUARANTINE=require` refuses to run gates without a jail; `off` opts
 out; the default `auto` uses one when the platform provides it and says so
-either way. The jail protects *you* from a record; speaking to *others* is
-attestation's job, below.
+either way. Every gate also runs under a **wall-clock ceiling** (the record's
+`[record] gate_timeout`, capped by `RETICULI_GATE_TIMEOUT`, default 300s): a
+gate that exceeds it is killed — process group and all — and counts as a failed
+verdict, so a hostile or broken gate cannot hang the verifier. And every path a
+recipe names (seed, output) is **confined to the record root**: an absolute
+path, a `..` climb, or an out-of-root symlink is refused before the gate runs,
+so a record cannot make the kernel read or write outside itself. The jail
+protects *you* from a record; speaking to *others* is attestation's job, below.
+
+Two limits the jail does **not** yet close, stated plainly: the sandbox is
+write-isolated, not secret-isolated (a gate can still *read* host files and the
+inherited environment), and the inherited-jail signal is an environment
+variable that a hostile outer environment can set. Hardening both — a scrubbed
+gate environment and an unspoofable inheritance signal — is scheduled, and
+tracked in the experiments' attack triage.
 
 ## Attestation
 
@@ -310,7 +324,7 @@ fresh README against `checks/docs_check.py`, and — because all of it is free a
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo prices every layer separately: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
-roots, inner to outer: `669636b2…`, `5e6aa4d0…`, `b7610cbb…`, `c3b3e782…`,
+roots, inner to outer: `f9b01054…`, `5e6aa4d0…`, `b7610cbb…`, `c3b3e782…`,
 `7a918dac…`, workshop `5c229b2e…`, vessel `e4e7da9a…`, whole `cc1a10e7…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,

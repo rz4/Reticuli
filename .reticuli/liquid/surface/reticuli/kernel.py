@@ -15,6 +15,7 @@ import hashlib
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -27,6 +28,17 @@ LEDGER = os.path.join(STORE, "ledger.jsonl")
 MINT = os.path.join(STORE, "mint")           # authorization material (statements + sigs)
 NAMESPACE = "reticuli"                       # the ssh-keygen -Y signing namespace
 TOLERANCE = 2.0                 # comparable cost: 1/2 <= C3/C1 <= 2, unless the claim declares
+GATE_TIMEOUT = 300.0            # a gate's wall-clock ceiling (s); the record may declare its own
+
+
+def _gate_timeout(recipe: dict) -> float:
+    """A gate's time limit: the record's declared `[record] gate_timeout`, else
+    RETICULI_GATE_TIMEOUT, else the default. A hostile record cannot RAISE it
+    past the environment's ceiling — the smaller of the two wins."""
+    declared = recipe.get("record", {}).get("gate_timeout")
+    env = os.environ.get("RETICULI_GATE_TIMEOUT")
+    ceiling = float(env) if env else GATE_TIMEOUT
+    return min(float(declared), ceiling) if declared is not None else ceiling
 
 
 class ReticuliError(Exception):
@@ -56,6 +68,22 @@ def load_recipe(d: str) -> dict:
         return tomllib.load(f)
 
 
+def _safe(root: str, name: str) -> str:
+    """Join a recipe-declared path under `root`, refusing any that escapes it.
+    A record's own recipe is untrusted input: an absolute path, a `..` climb, or
+    a symlink whose target leaves the record would let the kernel read or write
+    outside the record *before* any gate sandbox is relevant. Every recipe path
+    (seed, output) crosses here, so confinement is one boundary, checked once per
+    use. Returns the plain join for safe names; raises for the rest."""
+    if os.path.isabs(name) or not name:
+        raise ReticuliError(f"unsafe recipe path (absolute or empty): {name!r}")
+    root_r = os.path.realpath(root)
+    full = os.path.realpath(os.path.join(root_r, name))
+    if full != root_r and not full.startswith(root_r + os.sep):
+        raise ReticuliError(f"unsafe recipe path (escapes the record root): {name!r}")
+    return os.path.join(root, name)
+
+
 # -- the claim: recipe + dry seeds + pinned verdicts (free outputs excluded) --
 
 
@@ -64,10 +92,10 @@ def claim(recipe: dict, d: str) -> str:
     value; the free implementation never enters it."""
     parts: dict[str, str] = {"recipe": json.dumps(recipe, sort_keys=True)}
     for seed in _seeds(recipe):
-        parts[f"seed:{seed}"] = _hf(os.path.join(d, seed))
+        parts[f"seed:{seed}"] = _hf(_safe(d, seed))
     for step in recipe.get("step", []):
         if step.get("class", "exact") != "free":          # a pinned verdict
-            parts[f"pin:{_out(step)}"] = _hf(os.path.join(d, _out(step)))
+            parts[f"pin:{_out(step)}"] = _hf(_safe(d, _out(step)))
     return _h(json.dumps(parts, sort_keys=True).encode())
 
 
@@ -200,15 +228,17 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
     os.makedirs(into, exist_ok=True)
     shutil.copyfile(os.path.join(d, RECIPE), os.path.join(into, RECIPE))
     for seed in _seeds(recipe):
-        _copy(seed_from.get(seed) or os.path.join(d, seed), os.path.join(into, seed))
+        _copy(seed_from.get(seed) or _safe(d, seed), _safe(into, seed))
     # component-supplied free code goes in first, so a producer can build on it
     for step in recipe.get("step", []):
         if step["kind"] == "produce" and _out(step) in produce_from:
-            _copy(produce_from[_out(step)], os.path.join(into, _out(step)))
+            _copy(produce_from[_out(step)], _safe(into, _out(step)))
     usage_path = os.path.join(into, STORE, "usage.json")
     os.makedirs(os.path.join(into, STORE), exist_ok=True)
+    timeout = _gate_timeout(recipe)
     for step in recipe.get("step", []):
         out = _out(step)
+        out_path = _safe(into, out)             # refuse an output name that escapes the room
         if step["kind"] == "produce" and out in produce_from:
             _ledger_add(into, {"event": "reuse", "output": out})
             continue
@@ -216,12 +246,12 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
                "RETICULI_OUTPUT": out, "RETICULI": "1"}
         t0 = time.monotonic()
         if step["kind"] == "gate":
-            r, jailed_as = _jailed(step["run"], into, env)
+            r, jailed_as = _jailed(step["run"], into, env, timeout=timeout)
         else:
             env["RETICULI_USAGE"] = usage_path
             r = subprocess.run(producer, shell=True, cwd=into, env=env,
                                capture_output=True, text=True, check=False)
-        if r.returncode != 0 or not os.path.isfile(os.path.join(into, out)):
+        if r.returncode != 0 or not os.path.isfile(out_path):
             raise ReticuliError(
                 f"redo failed at {out}: {(r.stderr or r.stdout).strip()[:200]}")
         entry = {"event": "gate" if step["kind"] == "gate" else "oracle",
@@ -279,16 +309,39 @@ def jail(cmd: str, room: str) -> tuple[list[str] | str, str]:
     return cmd, "none"
 
 
-def _jailed(cmd: str, room: str, env: dict) -> tuple[subprocess.CompletedProcess, str]:
-    """Run a gate in the jail. TMPDIR moves inside the room so well-behaved
-    temp use stays confined; the jail refuses the rest."""
+def _jailed(cmd: str, room: str, env: dict,
+            timeout: float | None = None) -> tuple[subprocess.CompletedProcess, str]:
+    """Run a gate in the jail, time-bounded. TMPDIR moves inside the room so
+    well-behaved temp use stays confined; the jail refuses the rest."""
     wrapped, status = jail(cmd, room)
     if isinstance(wrapped, list):
         tmp = os.path.join(os.path.realpath(room), STORE, "tmp")
         os.makedirs(tmp, exist_ok=True)
         env = {**env, "TMPDIR": tmp, "RETICULI_JAILED": status}
-    return subprocess.run(wrapped, shell=isinstance(wrapped, str), cwd=room, env=env,
-                          capture_output=True, text=True, check=False), status
+    return _run_bounded(wrapped, shell=isinstance(wrapped, str), cwd=room,
+                        env=env, timeout=timeout), status
+
+
+def _run_bounded(argv, *, shell: bool, cwd: str, env: dict,
+                 timeout: float | None) -> subprocess.CompletedProcess:
+    """subprocess.run with a wall-clock ceiling that kills the whole process
+    group (a gate that forks children cannot outlive the limit). A timeout is a
+    failed gate (returncode 124), not an exception — realize reports it as a
+    redo failure and audit as a verdict that did not reproduce."""
+    with subprocess.Popen(argv, shell=shell, cwd=cwd, env=env,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                          text=True, start_new_session=True) as p:
+        try:
+            out, err = p.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                p.kill()
+            p.communicate()
+            return subprocess.CompletedProcess(
+                argv, 124, "", f"gate exceeded the {timeout}s time limit")
+    return subprocess.CompletedProcess(argv, p.returncode, out, err)
 
 
 # -- the cost ledger: residue of the event, never part of the claim ----------
@@ -371,19 +424,21 @@ def audit(d: str) -> dict:
     try:
         shutil.copyfile(os.path.join(d, RECIPE), os.path.join(room, RECIPE))
         for seed in _seeds(recipe):
-            _copy(os.path.join(d, seed), os.path.join(room, seed))
+            _copy(_safe(d, seed), _safe(room, seed))
         for step in steps:
-            if step["kind"] == "produce" and os.path.isfile(os.path.join(d, _out(step))):
-                _copy(os.path.join(d, _out(step)), os.path.join(room, _out(step)))
+            if step["kind"] == "produce" and os.path.isfile(_safe(d, _out(step))):
+                _copy(_safe(d, _out(step)), _safe(room, _out(step)))
+        timeout = _gate_timeout(recipe)
         for step in steps:
             if step["kind"] != "gate":
                 continue
             out = _out(step)
-            r, jailed_as = _jailed(step["run"], room, {**os.environ, "RETICULI": "1"})
-            produced = os.path.join(room, out)
+            r, jailed_as = _jailed(step["run"], room, {**os.environ, "RETICULI": "1"},
+                                   timeout=timeout)
+            produced = _safe(room, out)
             reproduced = (r.returncode == 0 and os.path.isfile(produced)
-                          and os.path.isfile(os.path.join(d, out))
-                          and _hf(produced) == _hf(os.path.join(d, out)))
+                          and os.path.isfile(_safe(d, out))
+                          and _hf(produced) == _hf(_safe(d, out)))
             gates.append({"output": out, "ok": reproduced, "quarantine": jailed_as})
             ok = ok and reproduced
     finally:
@@ -401,7 +456,18 @@ def three_machine(m1: str, m2: str, m3: str) -> dict:
     self-contained — AND every machine's gates re-run clean against its own
     bytes (audit: a carried verdict does not survive), and, where both machines
     kept a ledger, the redo's cost is comparable within the claim's declared
-    tolerance. Root equality alone is identity; audit makes it evidence."""
+    tolerance. Root equality alone is identity; audit makes it evidence.
+
+    The three machines must be three distinct directories: one record handed in
+    thrice trivially "agrees with itself", which proves nothing, so identical
+    paths (by realpath, catching symlink and `.`/`..` aliases) are refused.
+    Independence beyond distinctness — that M3's bytes were produced, not copied
+    from M1 — cannot be shown from content and is reported as unestablished."""
+    real = {name: os.path.realpath(m) for name, m in (("M1", m1), ("M2", m2), ("M3", m3))}
+    if len(set(real.values())) < 3:
+        raise ReticuliError(
+            "three_machine needs three distinct machines; got aliased paths: "
+            + ", ".join(f"{n}={p}" for n, p in real.items()))
     roots = {name: verify(m)["root"] for name, m in (("M1", m1), ("M2", m2), ("M3", m3))}
     audited = {name: audit(m)["ok"] for name, m in (("M1", m1), ("M2", m2), ("M3", m3))}
     integrity = all(verify(m)["ok"] for m in (m1, m2, m3))
@@ -411,6 +477,8 @@ def three_machine(m1: str, m2: str, m3: str) -> dict:
     cost_ = _comparable(cost(m1), cost(m3), tol)
     return {"roots": roots, "integrity": integrity, "reuse": reuse,
             "equivalence": equivalence, "audited": audited, "cost": cost_,
+            "independence": "unestablished (distinct paths only; "
+                            "content cannot prove M3 was not copied from M1)",
             "satisfied": integrity and reuse and equivalence
             and all(audited.values()) and cost_["comparable"] is not False}
 
@@ -431,7 +499,7 @@ def freeze_dry(m1: str, m2: str, m3: str) -> dict:
 
 def _outputs(d: str) -> dict:
     recipe = load_recipe(d)
-    return {_out(s): _hf(os.path.join(d, _out(s))) for s in recipe.get("step", [])}
+    return {_out(s): _hf(_safe(d, _out(s))) for s in recipe.get("step", [])}
 
 
 # -- the mint: solid identity, bottom-anchored -------------------------------
@@ -444,10 +512,10 @@ def realization_digest(d: str) -> str:
     the component and are covered by folding the component's mint, so they are
     excluded here to avoid double-counting."""
     recipe = load_recipe(d)
-    own = [[_out(s), _hf(os.path.join(d, _out(s)))]
+    own = [[_out(s), _hf(_safe(d, _out(s)))]
            for s in recipe.get("step", [])
            if s["kind"] == "produce" and "from" not in s and s.get("class") == "free"
-           and os.path.isfile(os.path.join(d, _out(s)))]
+           and os.path.isfile(_safe(d, _out(s)))]
     return _h(json.dumps(sorted(own), sort_keys=True).encode())
 
 
