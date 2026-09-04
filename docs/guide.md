@@ -46,7 +46,7 @@ ret prove rec M2 M3                        # the invariant
 satisfied = true
 integrity = true               # every machine verifies fresh
 reuse = true                   # M2 carries M1's outputs byte-for-byte
-equivalence = true             # M3 redid it to the same root
+equivalence = true             # all three machines share one root
 audited = true                 # every machine's verdicts re-run clean (earned, not carried)
 cost = true                    # C3/C1 within tolerance (dropped when a machine is unmeasured)
 
@@ -80,10 +80,14 @@ A record moves through phases of matter:
 
 - **vapor** — a live session; a trace, nothing sealed.
 - **liquid** — condensed and sealed; a claim you can verify and share.
-- **solid** — freeze-dried: `ret prove --freeze-dry` stamps the record *proven*
-  once the three-machine test passes. Minting (below) is the separate human
-  layer on top: it does not change the phase, it records *who authorized* the
-  freeze — proven is a fact about the bytes, authorized is a fact about a person.
+- **solid** — authorized: the record carries a **mint** (below) — a keyholder's
+  signed, locally verifiable authorization of this exact crystal. Not a bit:
+  the phase demotes to liquid the moment the authorization stops verifying —
+  signature broken, review packet swapped, frozen bytes drifted. `ret prove
+  --freeze-dry` records a *proof* on the manifest instead: residue saying the
+  three-machine test passed then — readable, not re-verifiable (M2 and M3 are
+  gone), and never the phase. Proven is a fact about bytes at prove time;
+  authorized is a fact about a person; only the second stays checkable.
 
 Files are **dry** (given seeds, carried unchanged) or **wet** (produced). A dry
 seed is the archetype of a component: *`solid` is a record's view of itself;
@@ -155,7 +159,10 @@ The converse of quarantine: a keyholder's signed statement that *this*
 realization verified fresh on their machine — the root, every output's hash,
 the gates' quarantine record, the cost. `ret verify` alone never re-runs gates,
 so trust otherwise means redoing; an attestation lets a verifier trust a
-realization they didn't redo, anchored to a key instead.
+realization they didn't redo, anchored to a key instead. And it speaks for a
+REALIZATION, not just a claim: `--check` requires the signed output hashes to
+still be the bytes on disk, so a free redo after signing — same root, different
+crystal — refuses the old attestation; re-attest the new bytes instead.
 
 ```bash
 ret attest M3 --key ~/.ssh/id_ed25519 --as you@lab.gov   # sign (ssh-keygen -Y)
@@ -176,8 +183,9 @@ execution — proving *where* a gate ran, not just who vouches for it.
 
 `attest` says *a keyholder ran this and it verified*. **Minting** says something
 stronger and rarer: *a keyholder reviewed the packet and authorizes freezing
-this record* — the top of the trust ladder. It records who vouched; it does not
-itself stamp the phase (`prove --freeze-dry` does that). It is built on two ideas.
+this record* — the top of the trust ladder, and it is what **solid** means:
+the phase follows the verifiable authorization, never a manifest bit. It is
+built on two ideas.
 
 The **mint chain** binds solid identity bottom-up. A record's mint folds its
 claim root, its **realization digest** (a hash of its own free bytes — the
@@ -201,7 +209,11 @@ realization digest, the normalized recipe, the seed digests, the gate sources,
 the component chain, and a fresh audit. `ret mint <record> --key ~/.ssh/id --as
 you@lab.gov` then signs the chain root and the packet's digest with
 `ssh-keygen -Y`, under a key that lives outside any agent's authority; `--check`
-recomputes the chain and verifies the authorization.
+recomputes the chain and verifies the authorization — including that the stored
+packet still hashes to the signed digest (the reviewed bundle cannot be swapped
+after the fact) and reporting `proven`: whether a three-machine proof was
+recorded at ceremony time. Authorization and proof are separate rungs, and the
+signed statement says which you hold.
 
 Say exactly what this is: **accountable authorization after a defined
 ceremony** — a named keyholder is on record as having authorized this mint. It
@@ -239,6 +251,18 @@ payloads, it is promoted to a check instead of left to trust: the kernel's
 **stdlib-only, no-network** rule is the first such clause — every honest kernel
 satisfies it, a phone-home payload cannot. Where no property separates the two,
 no gate can help and the ladder is the honest answer.
+
+Said adversarially, in one breath: a Reticuli proof establishes that an
+explicitly identified predicate (the checks), under an explicitly identified
+execution boundary (the quarantine, with its backend on the ledger), was
+independently satisfied by a realization of the declared claim — and a mint
+establishes that a named keyholder authorized exactly the predicate and
+realization they reviewed. It does **not** say the claim is true, the checker
+adequate, the behavior safe off the checks' support, the redo epistemically
+independent, or the review diligent. Those live outside every hash. The
+irreducible human act is adopting the predicate — *these checks are an
+acceptable operational definition of my claim* — and the ceremony exists to
+make that act narrow, explicit, and accountable.
 
 ## Output
 
@@ -286,7 +310,7 @@ fresh README against `checks/docs_check.py`, and — because all of it is free a
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo prices every layer separately: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
-roots, inner to outer: `3da9a0d9…`, `844d6f8d…`, `b7610cbb…`, `c3b3e782…`,
+roots, inner to outer: `669636b2…`, `5e6aa4d0…`, `b7610cbb…`, `c3b3e782…`,
 `7a918dac…`, workshop `5c229b2e…`, vessel `e4e7da9a…`, whole `cc1a10e7…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
@@ -360,7 +384,7 @@ by the surface check; the wording is free water).
   `audit` re-runs the gates so the verdicts are re-earned, never carried.
 - **redo** (M3, liquid → solid): `realize` rebuilds the free code in a clean room
   (`--recursive` rehydrates the whole component DAG, bottom-up) · `prove` runs the
-  three-machine test (`--freeze-dry` mints M1 solid on success) · `attest` signs a
+  three-machine test (`--freeze-dry` records the proof on M1) · `attest` signs a
   realization with `ssh-keygen -Y` (`--check` verifies the signatures) · `ret mint`
   reviews the chain and the packet (no key) or authorizes it (`--key --as`; `--check`
   verifies).

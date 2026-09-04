@@ -9,6 +9,7 @@ verdict — refuses tampered statements, anchors identity to allowed signers).
 Layers on kernel-core; knows nothing of authoring or the CLI. Writes
 EXCHANGE_OK iff the layer conforms. Stdlib only, so it runs in any clean room.
 """
+import json
 import os
 import shutil
 import subprocess
@@ -132,6 +133,21 @@ def battery() -> None:
             f.write(f"checker@basin {keytype} {blob}\n")
         checked = attest.check(m3, signers)
         assert checked["ok"] and checked["attestations"][0]["verdict"] == "signed", "identity anchored"
+        # an attestation speaks for a REALIZATION, not just a claim: a free redo
+        # after signing keeps the root (that freedom is the basin) but is a
+        # different realization — the signed output hashes no longer match the
+        # disk, and the old attestation must refuse. Restore the exact bytes
+        # and it holds again.
+        with open(os.path.join(m3, "app.txt")) as f:
+            app_bytes = f.read()
+        with open(os.path.join(m3, "app.txt"), "w") as f:
+            f.write("a drifted implementation\n")
+        drifted = attest.check(m3)
+        assert not drifted["ok"] and drifted["attestations"][0]["drifted"], \
+            "a drifted realization refuses the old attestation"
+        with open(os.path.join(m3, "app.txt"), "w") as f:
+            f.write(app_bytes)
+        assert attest.check(m3)["ok"], "the frozen bytes restored, the attestation holds"
         st_path = os.path.join(m3, a["statement"])
         with open(st_path, "a") as f:
             f.write("\n")                                        # tamper the statement
@@ -165,6 +181,17 @@ def battery() -> None:
             f.write("one implementation, differently\n")          # a free redo of app
         assert registry.mint_root(app, ws) != app_m, "editing a rung's crystal moves its mint"
         assert registry.mint_root(lib, ws) == lib_m, "the floor's mint held (localization)"
+        # a chain root over an incomplete DAG is not a chain root: a declared
+        # component missing from the registry must refuse the fold, not elide.
+        lib_aside = os.path.join(d, "lib-aside")
+        shutil.move(lib, lib_aside)
+        try:
+            registry.mint_root(app, ws)
+            raise AssertionError("mint_root must refuse a missing declared component")
+        except kernel.ReticuliError:
+            pass
+        shutil.move(lib_aside, lib)
+        assert registry.mint_root(lib, ws) == lib_m, "restored, the fold holds again"
 
         # the mint ceremony: accountable authorization over the chain. Refuses a
         # record whose verdicts do not reproduce (audit), signs the chain root and
@@ -173,12 +200,33 @@ def battery() -> None:
         registry.rehydrate(app, "printf 'yet another implementation' > app.txt", mm, ws=ws)
         pkt = attest.review_packet(mm, ws=ws)
         assert pkt["mint"] and pkt["root"] and pkt["audit"]["ok"], "the review packet is assembled"
+        assert "proof" in pkt, "the packet carries proof status — the reviewer sees the ladder"
         minted = attest.mint(mm, key, "checker@basin", ws=ws)
         assert minted["ceremony"] == "RETICULI_CLAIM_BASIN_V1", "the ceremony is named"
         assert os.path.isfile(os.path.join(mm, minted["signature"])), "the mint is signed"
         assert attest.mint_check(mm, ws=ws)["ok"], "the mint verifies (chain recomputes, signature intact)"
         checked = attest.mint_check(mm, ws=ws, signers=signers)
         assert checked["authorizations"][0]["verdict"] == "authorized", "authorizer identity anchored"
+        row = checked["authorizations"][0]
+        assert row["packet_holds"], "the signed digest binds the stored review packet"
+        assert row["proven"] is False, \
+            "the statement says whether a three-machine proof existed (none here) — " \
+            "authorization must never be mistaken for proof"
+        assert kernel.phase(mm) == "solid", "a verifiable authorization is what solid means"
+        # the packet is what the keyholder reviewed: swap it or delete it and
+        # the mint must refuse — and the record is no longer solid.
+        ppath = os.path.join(mm, minted["packet"])
+        with open(ppath) as f:
+            packet_bytes = f.read()
+        with open(ppath, "w") as f:
+            f.write('{"audit": {"ok": true}, "note": "forged after the ceremony"}\n')
+        assert not attest.mint_check(mm, ws=ws)["ok"], "a forged review packet refuses"
+        assert kernel.phase(mm) == "liquid", "and demotes: the reviewed bundle is gone"
+        os.remove(ppath)
+        assert not attest.mint_check(mm, ws=ws)["ok"], "a missing review packet refuses"
+        with open(ppath, "w") as f:
+            f.write(packet_bytes)
+        assert attest.mint_check(mm, ws=ws)["ok"], "the exact packet restored, the mint holds"
         with open(os.path.join(mm, minted["statement"]), "a") as f:
             f.write("\n")                                          # tamper the mint statement
         assert not attest.mint_check(mm, ws=ws, signers=signers)["ok"], "a tampered mint refuses"
@@ -191,6 +239,16 @@ def battery() -> None:
             raise AssertionError("mint must refuse a record whose verdicts do not reproduce")
         except kernel.ReticuliError:
             pass
+
+        # the registry reports phase from the verifiable state, never from a
+        # manifest bit: injecting "proof" into a drawer record's manifest must
+        # not surface it as solid anywhere (records, deps, anatomy).
+        forged = kernel.read_manifest(app)
+        forged["proof"] = {"kind": "three-machine", "m2": "forged", "m3": "forged"}
+        with open(os.path.join(app, kernel.STORE, "manifest.json"), "w") as f:
+            json.dump(forged, f)
+        assert all(r["phase"] == "liquid" for r in registry.records(ws)), \
+            "an injected proof must not surface as solid in the registry"
     finally:
         shutil.rmtree(d, ignore_errors=True)
 

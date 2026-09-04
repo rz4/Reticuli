@@ -28,6 +28,7 @@ its own gate ([`surface_check.py`](surface_check.py)) certifies the CLI built
 over a conformant kernel, rung by rung.
 """
 import ast
+import hashlib
 import json
 import os
 import shutil
@@ -163,6 +164,21 @@ def battery() -> None:
         r = kernel.three_machine(m1, m2, m3)
         assert r["satisfied"] and len(set(r["roots"].values())) == 1, "three-machine"
 
+        # M2 is a machine, not a passenger: the invariant is ONE root across
+        # all three. A doctored M2 — byte-identical outputs under a different
+        # recipe (a different claim) — must fail the test, not ride through on
+        # byte-reuse. A kernel that compares only M1 and M3 passes above yet
+        # fails right here.
+        m2x = os.path.join(d, "m2x")
+        shutil.copytree(m1, m2x)
+        with open(os.path.join(m2x, "reticuli.toml"), "w") as f:
+            f.write(FIXTURE.replace("a greeting containing the word hello",
+                                    "any bytes at all"))
+        kernel.seal(m2x)
+        rx = kernel.three_machine(m1, m2x, m3)
+        assert rx["roots"]["M2"] != rx["roots"]["M1"], "the doctored M2 is a different claim"
+        assert not rx["satisfied"], "a different M2 claim must fail the three-machine test"
+
         # the root is the CLAIM: it is a function of the dry seeds (the check),
         # and independent of the free outputs (the implementation). Editing a
         # free output must keep the root; editing a seed must move it AND break
@@ -229,8 +245,57 @@ def battery() -> None:
         rf = kernel.three_machine(m1, m2, m3f)
         assert rf["equivalence"] and not rf["audited"]["M3"], "audit sees through the root"
         assert not rf["satisfied"], "a carried verdict does not prove"
-        assert not kernel.freeze_dry(m1, m2, m3f)["minted"], "and does not mint"
+        assert not kernel.freeze_dry(m1, m2, m3f)["proven"], "and does not record a proof"
         assert kernel.audit(m3)["ok"] and not kernel.audit(m3f)["ok"], "audit is the deep check"
+
+        # proven is NOT solid. A passing test records the proof as residue on
+        # the manifest — readable, not locally re-verifiable (M2 and M3 are
+        # gone) — and the record stays liquid: solid is a *verifiable*
+        # authorization, the mint ceremony's act, not a bit anyone can write.
+        fz = kernel.freeze_dry(m1, m2, m3)
+        assert fz["proven"], "a passing test records the proof"
+        assert kernel.read_manifest(m1).get("proof"), "the proof is residue on the manifest"
+        assert kernel.phase(m1) == "liquid", "proven is not solid"
+        sol = os.path.join(d, "sol")
+        shutil.copytree(m1, sol)
+        fake_manifest = kernel.read_manifest(sol)
+        fake_manifest["proof"] = {"kind": "three-machine", "m2": "forged", "m3": "forged"}
+        with open(os.path.join(sol, kernel.STORE, "manifest.json"), "w") as f:
+            json.dump(fake_manifest, f)
+        assert kernel.phase(sol) == "liquid", "an injected proof must not create a solid"
+        # nor does UNSIGNED-but-coherent mint material: solid requires an
+        # intact signature over a statement naming this root, whose packet
+        # digest binds and whose realization digest is current (minted()).
+        mdir = os.path.join(sol, kernel.MINT)
+        os.makedirs(mdir)
+        packet = {"root": kernel.verify(sol)["root"],
+                  "realization_digest": kernel.realization_digest(sol)}
+        with open(os.path.join(mdir, "x.packet.json"), "w") as f:
+            json.dump(packet, f)
+        stmt = {"root": packet["root"], "packet_digest": hashlib.sha256(
+            json.dumps(packet, sort_keys=True).encode()).hexdigest()}
+        with open(os.path.join(mdir, "x.mint.json"), "w") as f:
+            json.dump(stmt, f)
+        with open(os.path.join(mdir, "x.mint.json.sig"), "w") as f:
+            f.write("not a signature\n")
+        assert kernel.phase(sol) == "liquid", "solid requires an intact signature"
+        ekey = os.path.join(d, "ekey")
+        if shutil.which("ssh-keygen"):             # a host without ssh-keygen still gates the rest
+            subprocess.run(["ssh-keygen", "-t", "ed25519", "-N", "", "-q",
+                            "-f", ekey], capture_output=True, check=True)
+            os.remove(os.path.join(mdir, "x.mint.json.sig"))
+            subprocess.run(["ssh-keygen", "-Y", "sign", "-f", ekey, "-n", "reticuli",
+                            os.path.join(mdir, "x.mint.json")],
+                           capture_output=True, check=True)
+            assert kernel.phase(sol) == "solid", "an intact, coherent authorization is solid"
+            with open(os.path.join(sol, "g.txt")) as f:
+                g_bytes = f.read()
+            with open(os.path.join(sol, "g.txt"), "w") as f:
+                f.write("hello, but drifted after the mint\n")     # free redo post-mint
+            assert kernel.phase(sol) == "liquid", "the mint froze the crystal: drift demotes"
+            with open(os.path.join(sol, "g.txt"), "w") as f:
+                f.write(g_bytes)
+            assert kernel.phase(sol) == "solid", "the frozen bytes restored, solid again"
 
         # cost: the redo's ledger accounts the oracle call — residue, outside
         # the root (m1 has no ledger, m3 does, and they share a root above)

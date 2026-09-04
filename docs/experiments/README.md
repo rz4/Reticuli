@@ -44,8 +44,8 @@ Series in the grid (`python3 scripts/sweep.py` prints the plan and estimates):
   against the committed tree: what the walls forced, what drifted, and the
   carving agenda it produced.
 - `attack-review-triage.md` — an external adversarial review's attack
-  catalog, battery-measured against HEAD: 6/6 named attacks land; triage and
-  fix classes.
+  catalog, battery-measured against HEAD: 6/6 named attacks landed, then the
+  carve flipped all six to walls (solid is now a verifiable authorization).
 - `pre-audit-roots/` — retired data measured against roots the audit fix re-minted;
   kept for the record, **not** for analysis.
 

@@ -177,11 +177,14 @@ def _r_mint_check(r: dict) -> None:
     toml(("mint", {"name": r["name"], "mint": short(r["mint"]), "authorized": r["ok"]}))
     print()
     table([{"identity": a["identity"], "verdict": a["verdict"],
-            "chain_holds": a["chain_holds"], "ceremony": a["ceremony"]}
+            "chain_holds": a["chain_holds"], "packet_holds": a.get("packet_holds"),
+            "proven": a.get("proven"), "ceremony": a["ceremony"]}
            for a in r["authorizations"]] or
-          [{"identity": "(none)", "verdict": "", "chain_holds": None, "ceremony": ""}],
+          [{"identity": "(none)", "verdict": "", "chain_holds": None,
+            "packet_holds": None, "proven": None, "ceremony": ""}],
           ("identity", "identity"), ("verdict", "verdict"),
-          ("chain_holds", "chain_holds"), ("ceremony", "ceremony"))
+          ("chain_holds", "chain_holds"), ("packet_holds", "packet_holds"),
+          ("proven", "proven"), ("ceremony", "ceremony"))
 
 
 def _r_export(r: dict) -> None:
@@ -197,7 +200,7 @@ def _r_prove(r: dict) -> None:
     toml(("prove", {"satisfied": r["satisfied"], "integrity": r["integrity"],
                     "reuse": r["reuse"], "equivalence": r["equivalence"],
                     "audited": all(r.get("audited", {}).values()) or False,
-                    "cost": c.get("comparable"), "minted_solid": r.get("minted")}),
+                    "cost": c.get("comparable"), "proven": r.get("proven")}),
          ("cost", {k: c.get(k) for k in ("unit", "c1", "c3", "ratio", "tolerance", "note")}))
     print()
     table([{"machine": m, "root": short(h)} for m, h in r["roots"].items()],
@@ -349,7 +352,7 @@ def main(argv: list[str] | None = None) -> int:
                    help="DAG-aware: also rehydrate component dependencies, bottom-up")
     q = add("prove")
     q.add_argument("m1"); q.add_argument("m2"); q.add_argument("m3")
-    q.add_argument("--freeze-dry", action="store_true", help="promote M1 to solid on success")
+    q.add_argument("--freeze-dry", action="store_true", help="record the three-machine proof on M1 (residue; solid is the mint ceremony's)")
     q = add("attest")
     q.add_argument("record")
     q.add_argument("--key", default=None, metavar="SSH_KEY")
@@ -411,7 +414,7 @@ def main(argv: list[str] | None = None) -> int:
             return emit(fn(args.record, args.producer, args.into), j, _r_realize)
         if args.cmd == "prove":
             r = (kernel.freeze_dry if args.freeze_dry else kernel.three_machine)(args.m1, args.m2, args.m3)
-            r.setdefault("minted", None)
+            r.setdefault("proven", None)
             emit(r, j, _r_prove)
             return 0 if r["satisfied"] else 1
         if args.cmd == "pack":

@@ -47,7 +47,7 @@ def test_a_fabricated_m3_shares_the_root_but_does_not_prove(tmp_path):
     assert not kernel.audit(fake)["ok"], "audit can"
     r = kernel.three_machine(m1, m2, fake)
     assert r["equivalence"] and not r["audited"]["M3"] and not r["satisfied"]
-    assert not kernel.freeze_dry(m1, m2, fake)["minted"]
+    assert not kernel.freeze_dry(m1, m2, fake)["proven"]
     assert kernel.phase(m1) == "liquid"
 
 

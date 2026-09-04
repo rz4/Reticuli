@@ -19,8 +19,8 @@ import subprocess
 from . import kernel
 
 ATTEST = os.path.join(kernel.STORE, "attest")
-MINT = os.path.join(kernel.STORE, "mint")
-NAMESPACE = "reticuli"
+MINT = kernel.MINT
+NAMESPACE = kernel.NAMESPACE
 STATEMENT_TYPE = "https://in-toto.io/Statement/v1"
 PREDICATE_TYPE = "https://github.com/rz4/reticuli/attest/v1"
 MINT_TYPE = "https://github.com/rz4/reticuli/mint/v1"
@@ -101,8 +101,12 @@ def attest(d: str, key: str, identity: str) -> dict:
 def check(d: str, signers: str | None = None) -> dict:
     """Verify this record's attestations. With an allowed-signers file the
     signer's identity is verified; without one, only that each signature is
-    intact for the bytes it covers ("intact", signer untrusted). Either way the
-    statement must name this record's current root."""
+    intact for the bytes it covers ("intact", signer untrusted). The statement
+    must name this record's current root AND its signed output hashes must
+    still be the bytes on disk — an attestation speaks for a REALIZATION, not
+    just a claim; free bytes are outside the root, so a free redo after signing
+    keeps the root but is a different realization, and the old attestation
+    must refuse (re-attest the new bytes instead)."""
     v = kernel.verify(d)
     results = []
     base = os.path.join(d, ATTEST)
@@ -115,6 +119,9 @@ def check(d: str, signers: str | None = None) -> dict:
         st = json.loads(raw)
         identity = st.get("predicate", {}).get("identity", "")
         roots = {dg for s in st.get("subject", []) for dg in s.get("digest", {}).values()}
+        drifted = [o for o, hsh in st.get("predicate", {}).get("outputs", {}).items()
+                   if not os.path.isfile(os.path.join(d, o))
+                   or kernel._hf(os.path.join(d, o)) != hsh]
         if signers:
             r = _sh(["ssh-keygen", "-Y", "verify", "-f", os.path.expanduser(signers),
                      "-I", identity, "-n", NAMESPACE, "-s", path + ".sig"], stdin=raw)
@@ -124,9 +131,10 @@ def check(d: str, signers: str | None = None) -> dict:
                      "-s", path + ".sig"], stdin=raw)
             verdict = "intact" if r.returncode == 0 else "invalid"
         results.append({"identity": identity, "verdict": verdict,
-                        "root_match": v["root"] in roots,
+                        "root_match": v["root"] in roots, "drifted": drifted,
                         "when": st.get("predicate", {}).get("when"),
-                        "ok": verdict in ("signed", "intact") and v["root"] in roots})
+                        "ok": verdict in ("signed", "intact") and v["root"] in roots
+                        and not drifted})
     return {"name": v["name"], "root": v["root"], "fresh": v["ok"],
             "attestations": results,
             "ok": v["ok"] and bool(results) and all(x["ok"] for x in results)}
@@ -156,6 +164,10 @@ def review_packet(d: str, ws: str | None = None, prior: str | None = None) -> di
         "gates": [s["run"] for s in recipe.get("step", []) if s.get("kind") == "gate"],
         "components": m.get("components", []),
         "audit": {"ok": a["ok"], "gates": a["gates"]},
+        # honesty about the ladder: whether a three-machine proof was recorded
+        # (residue — readable, not locally re-verifiable). The reviewer sees it,
+        # the signature binds it: a mint can never be mistaken for a proof.
+        "proof": m.get("proof"),
     }
     if prior is not None:
         packet["diff"] = {"prior_mint": prior, "moved": prior != packet["mint"]}
@@ -189,6 +201,7 @@ def mint(d: str, key: str, identity: str, ws: str | None = None) -> dict:
     statement = {"_type": MINT_TYPE, "ceremony": CEREMONY, "identity": identity,
                  "root": packet["root"], "mint": packet["mint"],
                  "packet_digest": _packet_digest(packet),
+                 "proven": bool(packet.get("proof")),
                  "when": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds")}
     with open(spath, "w", encoding="utf-8") as f:
         json.dump(statement, f, indent=2, sort_keys=True)
@@ -206,7 +219,12 @@ def mint(d: str, key: str, identity: str, ws: str | None = None) -> dict:
 def mint_check(d: str, ws: str | None = None, signers: str | None = None) -> dict:
     """Verify a record's mint authorizations. Recomputes the chain root (portable,
     content-only) and confirms each signed statement still names it with an intact
-    signature — with a signers file the authorizer's identity is verified too."""
+    signature AND that the stored review packet still hashes to the signed packet
+    digest — the packet is what the keyholder reviewed; unbound, it could be
+    swapped after the fact. With a signers file the authorizer's identity is
+    verified too. Each row reports `proven`: whether the statement says a
+    three-machine proof was recorded at ceremony time — authorization and proof
+    are separate rungs, and the ceremony never conflates them."""
     from . import registry
     current = registry.mint_root(d, ws)
     results = []
@@ -219,6 +237,12 @@ def mint_check(d: str, ws: str | None = None, signers: str | None = None) -> dic
             raw = f.read()
         st = json.loads(raw)
         identity = st.get("identity", "")
+        try:
+            packet_holds = (_packet_digest(kernel._read(path[: -len(".mint.json")]
+                                                        + ".packet.json"))
+                            == st.get("packet_digest"))
+        except (OSError, ValueError):
+            packet_holds = False
         if signers:
             r = _sh(["ssh-keygen", "-Y", "verify", "-f", os.path.expanduser(signers),
                      "-I", identity, "-n", NAMESPACE, "-s", path + ".sig"], stdin=raw)
@@ -229,7 +253,9 @@ def mint_check(d: str, ws: str | None = None, signers: str | None = None) -> dic
             verdict = "intact" if r.returncode == 0 else "invalid"
         matches = st.get("mint") == current
         results.append({"identity": identity, "ceremony": st.get("ceremony"),
-                        "chain_holds": matches, "verdict": verdict,
-                        "ok": verdict in ("authorized", "intact") and matches})
+                        "chain_holds": matches, "packet_holds": packet_holds,
+                        "proven": st.get("proven"), "verdict": verdict,
+                        "ok": verdict in ("authorized", "intact") and matches
+                        and packet_holds})
     return {"name": kernel.read_manifest(d)["name"], "mint": current,
             "authorizations": results, "ok": bool(results) and all(x["ok"] for x in results)}

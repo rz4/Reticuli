@@ -9,6 +9,7 @@ from .kernel import (  # noqa: F401
     ReticuliError,
     claim,
     freeze_dry,
+    minted,
     phase,
     realize,
     seal,

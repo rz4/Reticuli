@@ -84,7 +84,7 @@ def test_cost_out_of_tolerance_fails_the_test(tmp_path):
     r = kernel.three_machine(m1, m2, m3)
     assert r["equivalence"] and r["cost"]["comparable"] is False   # same root, incomparable cost
     assert not r["satisfied"]
-    assert not kernel.freeze_dry(m1, m2, m3)["minted"]
+    assert not kernel.freeze_dry(m1, m2, m3)["proven"]
 
 
 def test_the_claim_declares_its_own_tolerance(tmp_path):

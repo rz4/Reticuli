@@ -68,13 +68,14 @@ def test_three_machine_is_root_equality(tmp_path):
     assert len(set(r["roots"].values())) == 1     # all three share one root
 
 
-def test_freeze_dry_promotes_to_solid(tmp_path):
+def test_freeze_dry_records_the_proof_but_solid_is_the_ceremonys(tmp_path):
     m1 = _mk(str(tmp_path / "m1"), "hello\n")
     kernel.seal(m1)
     m2 = str(tmp_path / "m2"); shutil.copytree(m1, m2)
     m3 = str(tmp_path / "m3"); kernel.realize(m1, "printf 'hello!\\n' > greeting.txt", m3)
-    assert kernel.freeze_dry(m1, m2, m3)["minted"]
-    assert kernel.phase(m1) == "solid"
+    assert kernel.freeze_dry(m1, m2, m3)["proven"]
+    assert kernel.read_manifest(m1).get("proof"), "the proof is residue on the manifest"
+    assert kernel.phase(m1) == "liquid", "proven is not solid: authorization is the mint ceremony"
 
 
 def test_verify_detects_a_tampered_verdict(tmp_path):

@@ -29,7 +29,7 @@ def records(ws: str) -> list[dict]:
                 continue
             m = kernel.read_manifest(rec)
             found.append({"name": m["name"], "root": m["root"],
-                          "phase": "solid" if m.get("proof") else "liquid",
+                          "phase": kernel.phase(rec),
                           "drawer": drawer,
                           "path": os.path.relpath(rec, ws).replace(os.sep, "/")})
     return found
@@ -70,7 +70,7 @@ def pull(component: str, into: str = ".") -> dict:
         raise kernel.ReticuliError(f"pull: no record in {component}")
     m = kernel.read_manifest(src)
     name = m["name"]
-    drawer = "solid" if m.get("proof") else "liquid"
+    drawer = kernel.phase(src)        # solid only if the authorization verifies
     dst = os.path.join(os.path.abspath(into), kernel.STORE, drawer, name)
     if os.path.exists(dst):
         raise kernel.ReticuliError(f"pull: '{name}' is already in the registry ({drawer}/{name})")
@@ -167,7 +167,14 @@ def mint_root(record: str, ws: str | None = None) -> str:
     m = kernel.read_manifest(record)
     by_root = {r["root"]: os.path.join(ws, r["path"]) for r in records(ws)}
     comp_roots = {link["root"] for link in m.get("components", [])}
-    comp_mints = [mint_root(by_root[cr], ws) for cr in sorted(comp_roots) if cr in by_root]
+    missing = sorted(cr for cr in comp_roots if cr not in by_root)
+    if missing:
+        # a chain root over an incomplete DAG is not a chain root: a declared
+        # component that cannot be resolved refuses the fold, never elides
+        raise kernel.ReticuliError(
+            "mint_root: declared component(s) not in the registry: "
+            + ", ".join(cr[:12] + "…" for cr in missing))
+    comp_mints = [mint_root(by_root[cr], ws) for cr in sorted(comp_roots)]
     return kernel.mint_node(m["root"], kernel.realization_digest(record), comp_mints)
 
 
@@ -189,7 +196,7 @@ def anatomy(record: str, ws: str | None = None) -> dict:
         for link in m.get("components", []):
             groups.setdefault((link["component"], link["root"]), []).append(link["input"])
         n = {"name": m["name"], "root": m["root"],
-             "phase": "solid" if m.get("proof") else "liquid",
+             "phase": kernel.phase(d),
              "seeds": kernel._seeds(recipe),
              "free": [kernel._out(s) for s in steps if s["kind"] == "produce"
                       and s.get("class") == "free" and kernel._out(s) not in supplied],
@@ -216,7 +223,7 @@ def deps(ws: str) -> dict:
         m = kernel.read_manifest(ws)
         if m["root"] not in {r["root"] for r in recs}:
             recs = [{"name": m["name"], "root": m["root"], "drawer": ".", "path": ".",
-                     "phase": "solid" if m.get("proof") else "liquid"}] + recs
+                     "phase": kernel.phase(ws)}] + recs
     roots = {r["root"] for r in recs}
     nodes = []
     for r in recs:

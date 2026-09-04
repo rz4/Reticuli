@@ -24,6 +24,8 @@ import tomllib
 STORE = ".reticuli"
 RECIPE = "reticuli.toml"
 LEDGER = os.path.join(STORE, "ledger.jsonl")
+MINT = os.path.join(STORE, "mint")           # authorization material (statements + sigs)
+NAMESPACE = "reticuli"                       # the ssh-keygen -Y signing namespace
 TOLERANCE = 2.0                 # comparable cost: 1/2 <= C3/C1 <= 2, unless the claim declares
 
 
@@ -70,11 +72,62 @@ def claim(recipe: dict, d: str) -> str:
 
 
 def phase(d: str) -> str:
-    """vapor (no record) · liquid (sealed) · solid (freeze-dried, proven)."""
+    """vapor (no record) · liquid (sealed) · solid (carries a coherent, intact
+    mint authorization — see minted()). A `proof` on the manifest is residue
+    about the past (recorded by freeze_dry), never phase: it is metadata
+    outside the root, so a hand-written proof must not create a solid."""
     m = os.path.join(d, STORE, "manifest.json")
     if not os.path.isfile(m):
         return "vapor"
-    return "solid" if _read(m).get("proof") else "liquid"
+    return "solid" if minted(d)["ok"] else "liquid"
+
+
+def minted(d: str) -> dict:
+    """The kernel-local mint test: solid means at least one authorization whose
+    signature is INTACT (ssh-keygen -Y check-novalidate) over a statement that
+    names this record's sealed root, whose signed packet digest matches the
+    stored review packet, and whose packet's realization digest still describes
+    the free bytes on disk — the mint froze this crystal, and a drifted crystal
+    is not it. WHO signed (allowed signers) and whether the cross-component
+    chain still folds are the exchange stratum's questions (attest.mint_check);
+    this test needs no registry and no trust anchor."""
+    base = os.path.join(d, MINT)
+    names = (sorted(n for n in os.listdir(base) if n.endswith(".mint.json"))
+             if os.path.isdir(base) else [])
+    if not names:
+        return {"ok": False, "statements": []}
+    root = _read(os.path.join(d, STORE, "manifest.json"))["root"]
+    digest = realization_digest(d)
+    out = []
+    for name in names:
+        path, why = os.path.join(base, name), []
+        try:
+            st = _read(path)
+        except (OSError, ValueError):
+            out.append({"statement": name, "ok": False, "why": ["unreadable"]})
+            continue
+        if st.get("root") != root:
+            why.append("statement names a different root")
+        try:
+            packet = _read(path[: -len(".mint.json")] + ".packet.json")
+            if _h(json.dumps(packet, sort_keys=True).encode()) != st.get("packet_digest"):
+                why.append("stored packet does not match the signed digest")
+            elif packet.get("realization_digest") != digest:
+                why.append("realization drifted since the mint")
+        except (OSError, ValueError):
+            why.append("review packet missing or unreadable")
+        try:
+            with open(path, "rb") as f:
+                raw = f.read()
+            r = subprocess.run(["ssh-keygen", "-Y", "check-novalidate",
+                                "-n", NAMESPACE, "-s", path + ".sig"],
+                               input=raw, capture_output=True, check=False)
+            if r.returncode != 0:
+                why.append("signature not intact")
+        except OSError:
+            why.append("signature not checkable")
+        out.append({"statement": name, "ok": not why, "why": why})
+    return {"ok": any(x["ok"] for x in out), "statements": out}
 
 
 # -- seal / verify: identity ------------------------------------------------
@@ -353,7 +406,7 @@ def three_machine(m1: str, m2: str, m3: str) -> dict:
     audited = {name: audit(m)["ok"] for name, m in (("M1", m1), ("M2", m2), ("M3", m3))}
     integrity = all(verify(m)["ok"] for m in (m1, m2, m3))
     reuse = _outputs(m2) == _outputs(m1)          # M2 carries M1's outputs, byte-for-byte
-    equivalence = roots["M3"] == roots["M1"]       # M3 redid it to the same claim
+    equivalence = len(set(roots.values())) == 1    # ONE claim across all three machines
     tol = float(load_recipe(m1).get("record", {}).get("tolerance", TOLERANCE))
     cost_ = _comparable(cost(m1), cost(m3), tol)
     return {"roots": roots, "integrity": integrity, "reuse": reuse,
@@ -363,13 +416,16 @@ def three_machine(m1: str, m2: str, m3: str) -> dict:
 
 
 def freeze_dry(m1: str, m2: str, m3: str) -> dict:
-    """Prove, then promote: on a passing three-machine test, stamp M1 solid."""
+    """Prove, then record: on a passing three-machine test, seal the proof onto
+    M1 as residue — a fact about bytes at prove time, readable but not locally
+    re-verifiable (M2 and M3 are gone). It does NOT make the record solid:
+    solid is a verifiable authorization, the mint ceremony's act."""
     result = three_machine(m1, m2, m3)
-    result["minted"] = False
+    result["proven"] = False
     if result["satisfied"]:
         seal(m1, proof={"kind": "three-machine",
                         "m2": result["roots"]["M2"], "m3": result["roots"]["M3"]})
-        result["minted"] = True
+        result["proven"] = True
     return result
 
 

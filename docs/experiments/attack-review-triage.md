@@ -108,3 +108,43 @@ guide's honesty contract.
 
 Measured 2026-09-04. Fixes not yet applied — each is its own deliberate
 re-mint with specimen validation (the battery above is the specimen set).
+
+## Carve executed (2026-09-04): 6/6 flip to WALL
+
+All four forced fixes and both fork decisions carved in one deliberate
+re-mint; the battery re-run refuses every attack, controls intact.
+
+- **Equivalence is the root set** — `three_machine` now requires one root
+  across all three machines; the doctored-M2 clause lives in the kernel claim.
+- **Attestations pin the realization** — `attest.check` compares the signed
+  output hashes to the disk; drift refuses, exact restoration re-earns. Clause
+  in exchange.
+- **The packet is bound** — `mint_check` re-hashes the stored review packet
+  against the signed digest; forged or missing refuses, and the record demotes
+  from solid. Clause in exchange.
+- **The fold refuses elision** — `mint_root` raises on a declared component
+  missing from the registry, exactly as `rehydrate` always did. Clause in
+  exchange.
+- **Fork 1 — solid is a verifiable authorization.** `kernel.phase` = solid iff
+  `kernel.minted()` holds: an intact signature (`ssh-keygen -Y
+  check-novalidate`) over a statement naming the sealed root, whose packet
+  digest binds the stored packet, whose realization digest still describes the
+  bytes on disk. An injected `proof`, unsigned-but-coherent mint material, and
+  post-mint drift all leave the record liquid; the exact frozen bytes restored
+  make it solid again — measured in the kernel clause with an ephemeral key.
+  `freeze_dry` now *records the proof* (result key `proven`, residue on the
+  manifest) and never flips phase; registry reporting (records/pull/anatomy/
+  deps) follows `kernel.phase`, never the manifest bit. Signer *identity* and
+  cross-component chain remain `attest.mint_check`'s (exchange).
+- **Fork 2 — the ceremony carries proof status.** The review packet includes
+  the recorded `proof` (or null) and the signed statement carries
+  `proven: bool` — bound by the packet digest, surfaced by `mint --check` —
+  so an authorization can never be mistaken for a three-machine proof.
+
+Localization: kernel-core `3da9a0d9…` → `669636b2…` and exchange
+`844d6f8d…` → `5e6aa4d0…` (the two rungs whose claims changed); authoring
+through vessel and the whole root `cc1a10e7…` held. Bench suite 48-pass,
+byte-copy rehearsal satisfied/audited on all three machines at the new
+claims, stub refused at the genesis gate. The guide now states the solid
+semantics, the drift rule, and the adversarial honesty contract (what a
+proof establishes — and the five things it does not say).
