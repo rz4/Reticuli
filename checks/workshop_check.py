@@ -15,6 +15,7 @@ checks; this gate keeps the bench alive and honest in between. One ambient
 dependency is admitted: pytest on the host python. Writes WORKSHOP_OK iff the
 bench conforms. Runs wherever the verdict runs (inside a jail included).
 """
+import ast
 import os
 import py_compile
 import shutil
@@ -25,6 +26,45 @@ import tempfile
 SCRIPTS = ["scripts/selfrecord.py", "scripts/probe.py", "scripts/sweep.py",
            "scripts/envelope.py", "scripts/producer_claude.py",
            "scripts/producer_claude_agentic.py", "scripts/producer_openai.py"]
+
+# import-safety: a tool's module body may only DEFINE — imports, constants, defs,
+# the `if __name__ == "__main__"` guard, the docstring, and the sys.path bootstrap.
+# All *work* belongs in main(). A producer runs the machine unjailed at realize
+# time; the least it owes is a side-effect-free import, so a poisoned producer
+# cannot exfiltrate merely by being imported (round two, workshop payload). This
+# is a partial wall by design — it removes the import-time attack surface; malice
+# on the invoked path is the ladder's problem, not a gate's.
+_DEFINING = (ast.Import, ast.ImportFrom, ast.Assign, ast.AnnAssign,
+             ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+
+
+def _is_main_guard(node) -> bool:
+    return (isinstance(node, ast.If) and isinstance(node.test, ast.Compare)
+            and isinstance(node.test.left, ast.Name) and node.test.left.id == "__name__")
+
+
+def _is_path_bootstrap(node) -> bool:
+    """The one benign top-level call: sys.path.insert/append for in-tree imports."""
+    if not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)):
+        return False
+    f = node.value.func
+    return (isinstance(f, ast.Attribute) and f.attr in ("insert", "append")
+            and isinstance(f.value, ast.Attribute) and f.value.attr == "path"
+            and isinstance(f.value.value, ast.Name) and f.value.value.id == "sys")
+
+
+def _import_offender(path: str) -> str | None:
+    """The first top-level statement that does WORK, or None if the module only
+    defines. A docstring, the main guard, and the path bootstrap are permitted."""
+    with open(path, encoding="utf-8") as f:
+        body = ast.parse(f.read()).body
+    for node in body:
+        if isinstance(node, _DEFINING) or _is_main_guard(node) or _is_path_bootstrap(node):
+            continue
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+            continue                                          # module docstring
+        return ast.dump(node)[:70]
+    return None
 
 
 def _pytest(cwd: str) -> int:
@@ -51,10 +91,13 @@ def battery() -> None:
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
-    # the tools: present, sound, and the sweep plans
+    # the tools: present, sound, import-safe, and the sweep plans
     for s in SCRIPTS:
         assert os.path.isfile(s), f"missing tool: {s}"
         py_compile.compile(s, doraise=True)
+        offender = _import_offender(s)
+        assert offender is None, \
+            f"{s} does work at import (top-level {offender}); confine it to main()"
     r = subprocess.run([sys.executable, "scripts/sweep.py"],
                        capture_output=True, text=True, check=False)
     assert r.returncode == 0 and "sweep plan" in r.stdout, "the sweep must plan"

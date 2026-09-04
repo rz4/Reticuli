@@ -242,7 +242,7 @@ root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo prices every layer separately: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
 roots, inner to outer: `89651ed8…`, `9ee4b5be…`, `b7610cbb…`, `c3b3e782…`,
-`e88c86e4…`, workshop `95be11f4…`, vessel `14309559…`, whole `cc1a10e7…`.
+`e88c86e4…`, workshop `5c229b2e…`, vessel `e4e7da9a…`, whole `cc1a10e7…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
 and its pinned verdict, contact to leaf.

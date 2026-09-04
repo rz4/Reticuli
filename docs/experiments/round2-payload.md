@@ -52,11 +52,19 @@ a producer can write a **backdoor into the code it generates** — output that i
 itself a basin-valid realization, passing every downstream gate. No gate
 catches that; it is a payload *inside* the basin.
 
-- **Partial wall (a real, admissible clause):** import each producer under the
-  jail during the workshop gate and assert it makes no out-of-room write and
-  opens no non-allowlisted socket at load/dry-run. This catches *this* payload
-  (the load-time exfil writes outside the room) and naive load-time malice. It
-  requires making the producers import-safe (top-level work moved into `main`).
+- **Partial wall (added).** The producers were refactored to be *import-safe* —
+  all work moved into `main()`, so importing a producer has no side effects — and
+  `workshop_check` now asserts every tool's module body only *defines* (imports,
+  constants, defs, the `__main__` guard, the `sys.path` bootstrap). A top-level
+  statement that does work is rejected. This removes the import-time attack
+  surface entirely: the specimen's top-level exfil call is flagged (honest tools
+  admitted, `_import_offender` = None for all seven; the payload's `_sp.run(...)`
+  named). It is a *partial* wall by design — it forces all behavior onto the
+  invoked path; it does not vouch for what happens there. (Harness note: the full
+  workshop gate cannot be exercised from a bare `cp` of the drawer — its suite
+  includes `test_repo_is_a_fresh_layered_self_record`, which only holds at the
+  real repo root or under a proper recursive rehydration. The clause was
+  validated in isolation and integrated at the root via the re-mint.)
 - **Irreducible core (ladder-owned):** exfil over the legitimate API channel,
   malice on the real (paid, keyed) execution path the gate can't run, and
   backdoors in basin-valid generated output. No property separates these from
@@ -75,11 +83,11 @@ path this project ships on. Lands the vessel root, `vessel_check` passes (it
 parses `[project]`, never builds). But every honest vessel is a plain
 hatchling declaration with **no** build hooks, so the payload separates.
 
-→ Clause candidate: `vessel_check` asserts `build-backend == "hatchling.build"`,
-no `[tool.hatch.build.hooks]`, and no `setup.py`/`setup.cfg`. Nearly free today
-(the package is deliberately zero-build), with a small cost: it forecloses
-future legitimate build customization. A trust-model judgment, held for the
-user rather than auto-minted.
+→ Clause added: `vessel_check` asserts `build-backend == "hatchling.build"`, no
+`[tool.hatch.build.hooks]`, and no `setup.py`/`setup.cfg` — rejecting both a
+build-hook and a `setup.py` payload, admitting the committed vessel. Nearly free
+today (the package is deliberately zero-build); the small cost is foreclosing
+future build customization, which a deliberate re-mint would restore.
 
 ## The synthesis: separability tracks capability
 
@@ -88,9 +96,9 @@ realizations require:
 
 | stratum | honest capability | payload capability | separable? | answer |
 |---|---|---|---|---|
-| kernel | none dangerous | network | **yes** | clause (added) |
-| vessel | none at build | build-time code | **yes** | clause (candidate) |
-| workshop | network + subprocess | the same | **no** (core) | ladder |
+| kernel | none dangerous | network | **yes** | clause added (stdlib/no-network) |
+| vessel | none at build | build-time code | **yes** | clause added (no build hooks / setup.py) |
+| workshop | network + subprocess | the same | **partly** | import-safety wall added + ladder for the core |
 
 Where honest realizations need no dangerous capability, a clause is free and
 closes the channel. Where honest realizations need the exact capability the
@@ -102,7 +110,10 @@ accountable.
 
 ## Standing
 
-Payloads 1–3 measured; the reviewer's independent attempt against the frozen
-export remains outstanding. Clause decisions surfaced: kernel (done), vessel
-(candidate), workshop jail-at-import (candidate, needs import-safe producers).
-Specimens under `specimens/round2/` (gitignored).
+Payloads 1–3 measured; all three admissible clauses now minted — kernel
+(stdlib/no-network), vessel (no build hooks / setup.py), workshop (import-safety
+of the tools). The producers were made import-safe (work in `main()`) as the
+prerequisite for the workshop clause. What remains is genuinely ladder-owned and
+un-clausable: a producer's conduct on its invoked path, and the reviewer's
+independent attempt against the frozen export. Specimens under
+`specimens/round2/` (gitignored).
