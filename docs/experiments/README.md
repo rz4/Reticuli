@@ -140,6 +140,16 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   checks moved to `checks/` — every new clause rejects the capstone specimen,
   the committed tree passes all eight gates, and the re-rehearsed
   three-machine test holds at the new whole root `cc1a10e7…`.
+- **The third live rehydration (2026-09-04).** First run against the *hardened*
+  claims (the attack-review carve). Both carved rungs landed live — a fresh
+  sonnet reinvented the mint ceremony and the exchange walls and sealed
+  kernel-core and exchange at their committed roots — but the run then FAILED
+  at workshop: the regrown pytest suite passes unjailed and fails jailed (two
+  quarantine tests hard-assert a backend that jail-inheritance changes). The
+  jail-seam reopened one rung out from where it was first found, on free test
+  water, on a rung the carve never touched. 5/8 sealed, \$15.78 / 388k.
+  Full account in [rehydration-3-census.md](rehydration-3-census.md); cost
+  scorecard in [rehydration-3-prediction.md](rehydration-3-prediction.md).
 - **The second live rehydration (2026-09-04).** A live sonnet model regrew all
   eight rungs against the *carved* claims (stricter than the capstone faced) —
   byte-different free code throughout — landing 8/8 at the committed roots, and

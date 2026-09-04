@@ -53,3 +53,50 @@ concentrated in two rungs:
   story, or \$8+ if the agent thrashes on signature/digest canonicalization).
 
 Actuals and the score go below after the run.
+
+## Actuals (2026-09-04)
+
+The run did **not** land 8/8: 5 rungs sealed at the committed roots, workshop
+FAILED the jailed gate (the jail-seam trap on free test water — full account in
+[rehydration-3-census.md](rehydration-3-census.md)), vessel and reticuli
+unreached. Both HARDENED rungs (kernel-core, exchange) landed.
+
+| rung | pred $ | act $ | pred tok | act tok | note |
+|---|---|---|---|---|---|
+| kernel-core | 5.0 | **1.56** | 130k | 54k | 3× under — worst miss; the ceremony was CHEAPER than the pre-carve kernel |
+| exchange | 2.6 | **3.90** | 80k | 120k | over — the carve cost landed HERE, not the kernel |
+| authoring | 1.6 | 1.48 | 50k | 46k | nailed (unchanged claim) |
+| agents | 0.6 | 0.52 | 15k | 11k | nailed (unchanged claim) |
+| surface | 1.6 | 1.58 | 55k | 44k | nailed (unchanged claim) |
+| workshop | 5.5 | 6.74* | 100k | 110k | *iterated to the budget edge and still FAILED the jailed gate |
+| vessel | 0.6 | — | 10k | — | unreached |
+| reticuli | 1.3 | — | 26k | — | unreached |
+| **total** | **19.0** | **15.78** | **470k** | **388k** | spent on 5.x rungs, not 8 |
+
+## Score
+
+- **"Lands 8/8": WRONG.** 5/8. The run aborted at workshop on a correctness
+  gate failure — a failure MODE I did not predict at all (I only modeled budget
+  death and cost).
+- **The named risk was on the wrong rung.** I bet kernel-core was the likeliest
+  death (~20%), "must debug ssh-keygen through the check." Reality: kernel-core
+  was the cheapest surprise (\$1.56, 3× under) and sailed through; the carve's
+  worked keygen/sign/drift/restore cycle in the check functioned as a
+  *specification*, not a wall — the agent read it and built to it. The death
+  came at workshop, on an UNCHANGED rung, via the jail-seam.
+- **"Cost bottom-weighted, kernel #2": WRONG, and instructively.** The carve
+  cost did not fall on the deepest rung; it fell on **exchange** (\$3.90 vs
+  \$2.60), whose walls (drift, packet binding, elision) are trial-and-error
+  contracts, while the kernel's ceremony taught its own shape.
+- **The control prediction: RIGHT, three-for-three.** Every byte-unchanged
+  claim that completed repeated its run-2 cost within ±10% (authoring
+  1.48 vs 1.62, agents 0.52 vs 0.56, surface 1.58 vs 1.63). "Cost tracks the
+  claim, not the run" held on every rung it could be tested on.
+
+**Takeaway for the paper:** the hardened claims are reproducible live — both
+carved rungs landed at their committed roots for a fresh model. But
+reproducibility of the whole repo is gated by the jail-seam at workshop: a
+producer that iterates unjailed cannot see the jailed verdict environment, and
+its free test water can encode an assertion that only holds unjailed. The
+seam is a reproducibility gap, not a security hole (an over-strict test never
+admits a payload), and it is the sharpest open item the live runs have found.
