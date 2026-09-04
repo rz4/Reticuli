@@ -189,6 +189,33 @@ def battery() -> None:
         vs = kernel.verify(s)
         assert not vs["ok"] and vs["recomputed"] != r_seed, "editing a dry seed moves the claim"
 
+        # the mint: solid identity, bottom-anchored. mint_node folds a rung's
+        # claim root, its realization digest, and the mints beneath it, so the
+        # bottom is the most significant digit. The realization digest is the
+        # FREE crystal the root ignores — editing a free output moves the digest
+        # (and so the mint) though the claim root holds. This is the invariant;
+        # the DAG fold that composes it bottom-up is the exchange layer's.
+        m0 = kernel.mint_node("R", "D", [])
+        assert kernel.mint_node("R", "D", []) == m0, "mint_node is deterministic"
+        assert kernel.mint_node("R", "D2", []) != m0, "the realization digest binds the mint"
+        assert kernel.mint_node("R2", "D", []) != m0, "the claim root binds the mint"
+        assert kernel.mint_node("R", "D", ["x"]) != m0, "a component's mint binds the mint above it"
+        ms = os.path.join(d, "mint-seeded")
+        os.makedirs(ms)
+        with open(os.path.join(ms, "reticuli.toml"), "w") as f:
+            f.write(SEEDED)
+        with open(os.path.join(ms, "spec.txt"), "w") as f:
+            f.write("criteria v1\n")
+        with open(os.path.join(ms, "impl.txt"), "w") as f:
+            f.write("PASS implementation one\n")
+        subprocess.run("grep -q PASS impl.txt && printf v > V", shell=True, cwd=ms, check=True)
+        kernel.seal(ms)
+        r_before, dg_before = kernel.verify(ms)["root"], kernel.realization_digest(ms)
+        with open(os.path.join(ms, "impl.txt"), "w") as f:     # a different free crystal
+            f.write("PASS implementation two, wholly other\n")
+        assert kernel.verify(ms)["root"] == r_before, "a free redo keeps the claim root"
+        assert kernel.realization_digest(ms) != dg_before, "but the mint's digest tracks the crystal"
+
         # soundness: the verdicts must be EARNED, not carried. Root equality is
         # identity; audit re-runs the gates against the bytes present, so a
         # fabricated M3 — M1 copied, free output scribbled over, gate failing —

@@ -30,7 +30,7 @@ from reticuli import cli
 SECTIONS = ("session (vapor):", "author (vapor -> liquid, M1):",
             "transfer (liquid, M2):", "redo (liquid -> solid, M3):", "compose:")
 LISTED = {"init", "hooks", "status", "run", "condense", "verify", "export",
-          "import", "audit", "realize", "prove", "attest", "pack", "pull",
+          "import", "audit", "realize", "prove", "attest", "mint", "pack", "pull",
           "tree", "records"}
 
 
@@ -118,6 +118,15 @@ def battery() -> None:
         assert code == 0, "attest signs a realization"
         code, out = _run(["attest", m3, "--check"])
         assert code == 0 and "attested" in out, "attest --check verifies the signature"
+
+        # the mint ceremony at the surface: no key reviews the chain + packet,
+        # a key authorizes it, --check verifies the authorization
+        code, out = _run(["mint", m3])
+        assert code == 0 and "mint" in out, "mint (no key) emits the review packet"
+        code, out = _run(["mint", m3, "--key", key, "--as", "you@lab"])
+        assert code == 0 and "ceremony" in out, "mint --key authorizes the chain"
+        code, out = _run(["mint", m3, "--check"])
+        assert code == 0 and "authorized = true" in out, "mint --check verifies the authorization"
 
         code, out = _run(["records", ws])
         assert code == 0 and "answer" in out, "the drawer renders"

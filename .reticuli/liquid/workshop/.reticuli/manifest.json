@@ -4,73 +4,73 @@
       "component": "surface",
       "input": "reticuli/__init__.py",
       "output": "reticuli/__init__.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/kernel.py",
       "output": "reticuli/kernel.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/registry.py",
       "output": "reticuli/registry.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/transfer.py",
       "output": "reticuli/transfer.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/attest.py",
       "output": "reticuli/attest.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/render.py",
       "output": "reticuli/render.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/condense.py",
       "output": "reticuli/condense.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/feedback.py",
       "output": "reticuli/feedback.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/pack.py",
       "output": "reticuli/pack.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/hooks.py",
       "output": "reticuli/hooks.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/cli.py",
       "output": "reticuli/cli.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     },
     {
       "component": "surface",
       "input": "reticuli/__main__.py",
       "output": "reticuli/__main__.py",
-      "root": "e88c86e4617de22b246ceb6ad5fa6b7b8fa84e6b3e15b348df94b4d441f6e12d"
+      "root": "7a918dace8be572ebd358d0e472af0d35b20d23d22319f66e31333616964a732"
     }
   ],
   "name": "workshop",

@@ -4,31 +4,31 @@
       "component": "exchange",
       "input": "reticuli/__init__.py",
       "output": "reticuli/__init__.py",
-      "root": "9ee4b5be23750081230de3e3b34c587371eb7177daff62773bbdcb8cd554c874"
+      "root": "844d6f8d60fd1d65160662d4a7cb6d2200bdb007cfd73b41d27c91d6e0b7644a"
     },
     {
       "component": "exchange",
       "input": "reticuli/kernel.py",
       "output": "reticuli/kernel.py",
-      "root": "9ee4b5be23750081230de3e3b34c587371eb7177daff62773bbdcb8cd554c874"
+      "root": "844d6f8d60fd1d65160662d4a7cb6d2200bdb007cfd73b41d27c91d6e0b7644a"
     },
     {
       "component": "exchange",
       "input": "reticuli/registry.py",
       "output": "reticuli/registry.py",
-      "root": "9ee4b5be23750081230de3e3b34c587371eb7177daff62773bbdcb8cd554c874"
+      "root": "844d6f8d60fd1d65160662d4a7cb6d2200bdb007cfd73b41d27c91d6e0b7644a"
     },
     {
       "component": "exchange",
       "input": "reticuli/transfer.py",
       "output": "reticuli/transfer.py",
-      "root": "9ee4b5be23750081230de3e3b34c587371eb7177daff62773bbdcb8cd554c874"
+      "root": "844d6f8d60fd1d65160662d4a7cb6d2200bdb007cfd73b41d27c91d6e0b7644a"
     },
     {
       "component": "exchange",
       "input": "reticuli/attest.py",
       "output": "reticuli/attest.py",
-      "root": "9ee4b5be23750081230de3e3b34c587371eb7177daff62773bbdcb8cd554c874"
+      "root": "844d6f8d60fd1d65160662d4a7cb6d2200bdb007cfd73b41d27c91d6e0b7644a"
     }
   ],
   "name": "authoring",

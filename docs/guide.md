@@ -166,6 +166,44 @@ without a signers file reports signatures as `intact` (the bytes are covered;
 the signer is your problem). What remains open beyond this is witnessed
 execution — proving *where* a gate ran, not just who vouches for it.
 
+## Minting: accountable authorization after a defined ceremony
+
+`attest` says *a keyholder ran this and it verified*. **Minting** says something
+stronger and rarer: *a keyholder reviewed the packet and authorizes this record
+as solid* — the top of the trust ladder. It is built on two ideas.
+
+The **mint chain** binds solid identity bottom-up. A record's mint folds its
+claim root, its **realization digest** (a hash of its own free bytes — the
+chosen crystal the root ignores), and the mints of every component beneath it:
+
+```
+mint = hash( root · realization_digest · mints_below )
+```
+
+The kernel's mint is the genesis — the most significant digit. A change at any
+rung moves that rung's mint and every mint above it, never one below, so the
+lowest mint that moved names the floor a change entered on. This is why a
+liquid record leaves the mint uncomputed: while the implementation is free, the
+crystal is not yet chosen. Minting is where the bytes freeze — a solid is one
+crystal out of the basin, and the chain detects any later disturbance to it,
+including a payload an upper layer smuggles into a lower layer's free code.
+
+The **review packet** (`ret mint <record>`, no key) is the canonical bundle a
+keyholder reviews before authorizing: the claim root, the chain root, the
+realization digest, the normalized recipe, the seed digests, the gate sources,
+the component chain, and a fresh audit. `ret mint <record> --key ~/.ssh/id --as
+you@lab.gov` then signs the chain root and the packet's digest with
+`ssh-keygen -Y`, under a key that lives outside any agent's authority; `--check`
+recomputes the chain and verifies the authorization.
+
+Say exactly what this is: **accountable authorization after a defined
+ceremony** — a named keyholder is on record as having authorized this mint. It
+is non-repudiable authorization, not proof the review was diligent; the gates
+prove the claim, the ceremony records who vouched for freezing it. `mint`
+refuses a record whose verdicts do not reproduce from its own bytes (audit),
+and the mint travels with the record, like an attestation, never entering the
+root.
+
 ## What a root promises (and what it doesn't)
 
 `root = hash(recipe + seeds + verdicts)` pins the **claim** — these bytes
@@ -241,8 +279,8 @@ fresh README against `checks/docs_check.py`, and — because all of it is free a
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo prices every layer separately: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
-roots, inner to outer: `89651ed8…`, `9ee4b5be…`, `b7610cbb…`, `c3b3e782…`,
-`e88c86e4…`, workshop `5c229b2e…`, vessel `e4e7da9a…`, whole `cc1a10e7…`.
+roots, inner to outer: `fca67672…`, `844d6f8d…`, `b7610cbb…`, `c3b3e782…`,
+`7a918dac…`, workshop `5c229b2e…`, vessel `e4e7da9a…`, whole `cc1a10e7…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
 and its pinned verdict, contact to leaf.
@@ -316,7 +354,9 @@ by the surface check; the wording is free water).
 - **redo** (M3, liquid → solid): `realize` rebuilds the free code in a clean room
   (`--recursive` rehydrates the whole component DAG, bottom-up) · `prove` runs the
   three-machine test (`--freeze-dry` mints M1 solid on success) · `attest` signs a
-  realization with `ssh-keygen -Y` (`--check` verifies the signatures).
+  realization with `ssh-keygen -Y` (`--check` verifies the signatures) · `ret mint`
+  reviews the chain and the packet (no key) or authorizes it (`--key --as`; `--check`
+  verifies).
 - **compose**: `pack` seals a project directory as a self-record · `pull` brings
   a record in as a dependency · `tree` shows a session's dry/wet plus its
   drawer's dependency graph, or a sealed record's anatomy · `records` lists the

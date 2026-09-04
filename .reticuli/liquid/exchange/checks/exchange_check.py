@@ -152,6 +152,45 @@ def battery() -> None:
             raise AssertionError("attest must refuse a broken record")
         except kernel.ReticuliError:
             pass
+
+        # the mint chain: solid identity folds bottom-up over the DAG, and
+        # localizes — a change at a rung moves its mint and every mint above,
+        # never one below (the lowest mint that moves names the floor).
+        lib_m = registry.mint_root(lib, ws)
+        app_m = registry.mint_root(app, ws)
+        assert app_m == kernel.mint_node(kernel.verify(app)["root"],
+                                         kernel.realization_digest(app), [lib_m]), \
+            "app's mint folds lib's mint (bottom-up)"
+        with open(os.path.join(app, "app.txt"), "w") as f:
+            f.write("one implementation, differently\n")          # a free redo of app
+        assert registry.mint_root(app, ws) != app_m, "editing a rung's crystal moves its mint"
+        assert registry.mint_root(lib, ws) == lib_m, "the floor's mint held (localization)"
+
+        # the mint ceremony: accountable authorization over the chain. Refuses a
+        # record whose verdicts do not reproduce (audit), signs the chain root and
+        # the review packet, and verifies against a recomputed chain.
+        mm = os.path.join(d, "mm")                                 # a fresh, clean realization
+        registry.rehydrate(app, "printf 'yet another implementation' > app.txt", mm, ws=ws)
+        pkt = attest.review_packet(mm, ws=ws)
+        assert pkt["mint"] and pkt["root"] and pkt["audit"]["ok"], "the review packet is assembled"
+        minted = attest.mint(mm, key, "checker@basin", ws=ws)
+        assert minted["ceremony"] == "RETICULI_CLAIM_BASIN_V1", "the ceremony is named"
+        assert os.path.isfile(os.path.join(mm, minted["signature"])), "the mint is signed"
+        assert attest.mint_check(mm, ws=ws)["ok"], "the mint verifies (chain recomputes, signature intact)"
+        checked = attest.mint_check(mm, ws=ws, signers=signers)
+        assert checked["authorizations"][0]["verdict"] == "authorized", "authorizer identity anchored"
+        with open(os.path.join(mm, minted["statement"]), "a") as f:
+            f.write("\n")                                          # tamper the mint statement
+        assert not attest.mint_check(mm, ws=ws, signers=signers)["ok"], "a tampered mint refuses"
+        broke = os.path.join(d, "broke")
+        registry.rehydrate(app, "printf 'a broken implementation' > app.txt", broke, ws=ws)
+        with open(os.path.join(broke, "V"), "w") as f:
+            f.write("carried, not earned")
+        try:
+            attest.mint(broke, key, "checker@basin", ws=ws)
+            raise AssertionError("mint must refuse a record whose verdicts do not reproduce")
+        except kernel.ReticuliError:
+            pass
     finally:
         shutil.rmtree(d, ignore_errors=True)
 

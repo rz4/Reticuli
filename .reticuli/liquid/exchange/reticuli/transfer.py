@@ -26,9 +26,10 @@ def export(d: str, tar_path: str) -> dict:
     rels = [kernel.RECIPE, os.path.join(kernel.STORE, "manifest.json")]
     rels += kernel._seeds(recipe)
     rels += [s["output"] for s in recipe.get("step", [])]
-    att = os.path.join(d, kernel.STORE, "attest")
-    if os.path.isdir(att):
-        rels += [os.path.join(kernel.STORE, "attest", f) for f in sorted(os.listdir(att))]
+    for sub in ("attest", "mint"):     # signed residue about the claim travels with it
+        box = os.path.join(d, kernel.STORE, sub)
+        if os.path.isdir(box):
+            rels += [os.path.join(kernel.STORE, sub, f) for f in sorted(os.listdir(box))]
     members = []
     for rel in sorted(set(rels)):
         full = os.path.join(d, rel)

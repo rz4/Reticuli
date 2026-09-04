@@ -156,6 +156,21 @@ def rehydrate(record: str, producer: str, into: str, ws: str | None = None) -> d
     return result
 
 
+def mint_root(record: str, ws: str | None = None) -> str:
+    """The chain root: fold this record's mint over its components', bottom-up
+    (leaf first), via kernel.mint_node. Solid identity binds the whole DAG — the
+    kernel's mint is the genesis, and a change at any rung moves its mint and
+    every mint above it, never one below. This composes the invariant's fold; it
+    does not sign — authorization is the mint ceremony's job (attest.mint)."""
+    record = os.path.abspath(record)
+    ws = os.path.abspath(ws) if ws else _registry_of(record)
+    m = kernel.read_manifest(record)
+    by_root = {r["root"]: os.path.join(ws, r["path"]) for r in records(ws)}
+    comp_roots = {link["root"] for link in m.get("components", [])}
+    comp_mints = [mint_root(by_root[cr], ws) for cr in sorted(comp_roots) if cr in by_root]
+    return kernel.mint_node(m["root"], kernel.realization_digest(record), comp_mints)
+
+
 def anatomy(record: str, ws: str | None = None) -> dict:
     """The record lens: the chain of rungs, leaf-ward. Each rung shows its dry
     seeds (the claim), its own free stratum, the files its component supplies,

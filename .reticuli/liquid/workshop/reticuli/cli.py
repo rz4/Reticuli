@@ -158,6 +158,32 @@ def _r_pull(r: dict) -> None:
                    "materialized": r["materialized"]}))
 
 
+def _r_review(r: dict) -> None:
+    toml(("review", {"name": r["name"], "root": short(r["root"]), "mint": short(r["mint"]),
+                     "realization": short(r["realization_digest"]),
+                     "fresh": r["fresh"], "audit": r["audit"]["ok"],
+                     "gates": len(r["gates"]), "components": len(r["components"])}))
+    print("# review the packet, then authorize: ret mint <rec> --key <ssh_key> --as you@lab")
+
+
+def _r_mint(r: dict) -> None:
+    toml(("mint", {"name": r["name"], "root": short(r["root"]), "mint": short(r["mint"]),
+                   "identity": r["identity"], "ceremony": r["ceremony"],
+                   "statement": r["statement"], "signature": r["signature"]}))
+    print("# accountable authorization recorded — commit the mint/ pair to travel with the record")
+
+
+def _r_mint_check(r: dict) -> None:
+    toml(("mint", {"name": r["name"], "mint": short(r["mint"]), "authorized": r["ok"]}))
+    print()
+    table([{"identity": a["identity"], "verdict": a["verdict"],
+            "chain_holds": a["chain_holds"], "ceremony": a["ceremony"]}
+           for a in r["authorizations"]] or
+          [{"identity": "(none)", "verdict": "", "chain_holds": None, "ceremony": ""}],
+          ("identity", "identity"), ("verdict", "verdict"),
+          ("chain_holds", "chain_holds"), ("ceremony", "ceremony"))
+
+
 def _r_export(r: dict) -> None:
     toml(("export", {"tar": r["tar"], "members": r["members"]}))
 
@@ -269,6 +295,7 @@ redo (liquid -> solid, M3):
     realize     rebuild free outputs with --producer in a clean room; seal
     prove       three-machine test over M1 M2 M3 (--freeze-dry: mint on pass)
     attest      sign with ssh-keygen -Y (--check: verify signatures)
+    mint        review the chain and packet (no key), or authorize it (--key --as)
 
 compose:
     pack        seal a project directory as a record (code free, checks claimed)
@@ -329,6 +356,12 @@ def main(argv: list[str] | None = None) -> int:
     q.add_argument("--as", dest="identity", default=None, metavar="IDENTITY")
     q.add_argument("--check", action="store_true")
     q.add_argument("--signers", default=None, metavar="ALLOWED_SIGNERS")
+    q = add("mint")
+    q.add_argument("record")
+    q.add_argument("--key", default=None, metavar="SSH_KEY")
+    q.add_argument("--as", dest="identity", default=None, metavar="IDENTITY")
+    q.add_argument("--check", action="store_true")
+    q.add_argument("--signers", default=None, metavar="ALLOWED_SIGNERS")
     # -- compose
     q = add("pack")
     q.add_argument("name")
@@ -347,7 +380,7 @@ def main(argv: list[str] | None = None) -> int:
     q.add_argument("-C", "--workspace", default=None)
 
     for name in ("verify", "audit", "realize", "prove", "condense", "pack", "records",
-                 "pull", "export", "import", "status", "tree", "hooks", "attest"):
+                 "pull", "export", "import", "status", "tree", "hooks", "attest", "mint"):
         sub.choices[name].add_argument("--json", action="store_true")
 
     args = p.parse_args(argv)
@@ -398,6 +431,14 @@ def main(argv: list[str] | None = None) -> int:
                 print("ret: attest needs --key and --as (or --check)", file=sys.stderr)
                 return 2
             return emit(attest_mod.attest(args.record, args.key, args.identity), j, _r_attest)
+        if args.cmd == "mint":
+            if args.check:
+                r = attest_mod.mint_check(args.record)
+                emit(r, j, _r_mint_check)
+                return 0 if r["ok"] else 1
+            if not args.key or not args.identity:      # review, don't authorize
+                return emit(attest_mod.review_packet(args.record), j, _r_review)
+            return emit(attest_mod.mint(args.record, args.key, args.identity), j, _r_mint)
         if args.cmd == "export":
             return emit(transfer_mod.export(args.record, args.tar), j, _r_export)
         if args.cmd == "import":

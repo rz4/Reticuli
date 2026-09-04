@@ -374,6 +374,33 @@ def _outputs(d: str) -> dict:
     return {_out(s): _hf(os.path.join(d, _out(s))) for s in recipe.get("step", [])}
 
 
+# -- the mint: solid identity, bottom-anchored -------------------------------
+
+
+def realization_digest(d: str) -> str:
+    """The chosen crystal: a hash of this record's OWN free bytes — every free
+    produce output not supplied by a component (`from`). The root ignores these
+    (that freedom is the basin); the mint freezes them. `from` outputs belong to
+    the component and are covered by folding the component's mint, so they are
+    excluded here to avoid double-counting."""
+    recipe = load_recipe(d)
+    own = [[_out(s), _hf(os.path.join(d, _out(s)))]
+           for s in recipe.get("step", [])
+           if s["kind"] == "produce" and "from" not in s and s.get("class") == "free"
+           and os.path.isfile(os.path.join(d, _out(s)))]
+    return _h(json.dumps(sorted(own), sort_keys=True).encode())
+
+
+def mint_node(root: str, digest: str, component_mints: list[str]) -> str:
+    """THE FOLD. A rung's mint binds its claim root, its realization digest (the
+    frozen bytes the root ignores), and the mints of everything beneath it. The
+    kernel's mint is the genesis — the most significant digit — and a disturbance
+    at any height moves that rung's mint and every mint above it, never one below:
+    the lowest mint that moved names the floor the change entered on. Liquid
+    records leave this uncomputed; minting is where bytes freeze."""
+    return _h(json.dumps([root, digest, sorted(component_mints)], sort_keys=True).encode())
+
+
 # -- small io helpers -------------------------------------------------------
 
 
