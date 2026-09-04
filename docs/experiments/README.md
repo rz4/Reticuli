@@ -43,6 +43,11 @@ Series in the grid (`python3 scripts/sweep.py` prints the plan and estimates):
 - `capstone-census.md` — the full divergence census of the capstone's M3
   against the committed tree: what the walls forced, what drifted, and the
   carving agenda it produced.
+- `attack-review-2-triage.md` — the review's second pass: six deeper attacks
+  (prove M1 M1 M1, recipe path escape, quarantine secret-leak, no resource
+  bounds, forged-proof->signed proven, any-key->solid), 6/6 measured to land;
+  triage separates three concrete bugs from the proof/authorization lattice
+  decision. Nothing carved yet.
 - `attack-review-triage.md` — an external adversarial review's attack
   catalog, battery-measured against HEAD: 6/6 named attacks landed, then the
   carve flipped all six to walls (solid is now a verifiable authorization).
