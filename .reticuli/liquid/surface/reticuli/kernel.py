@@ -138,6 +138,10 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
     seed_from = seed_from or {}
     produce_from = produce_from or {}
     recipe = load_recipe(d)
+    # absolute, because the producer runs with cwd=into: a relative RETICULI_USAGE
+    # would resolve against the producer's cwd, not ours, and the redo's cost
+    # (tokens/usd the producer reports) would be written where we never read it.
+    into = os.path.abspath(into)
     if os.path.exists(os.path.join(into, RECIPE)) or (os.path.exists(into) and not exist_ok):
         raise ReticuliError(f"target exists: {into}")
     os.makedirs(into, exist_ok=True)

@@ -236,6 +236,30 @@ def battery() -> None:
         assert kernel.cost(m3)["calls"] == 1, "cost totals the ledger"
         assert kernel.cost(m1) is None, "no event, no cost"
         assert r["cost"]["comparable"] is None, "unmeasured is reported, not failed"
+
+        # a producer runs with cwd=into and reports its cost through
+        # RETICULI_USAGE; that cost must reach the ledger even when `into` is
+        # RELATIVE — realize resolves the usage path absolutely, or the redo's
+        # tokens/usd (the cost envelope) vanish silently.
+        usrc = os.path.join(d, "usrc")
+        os.makedirs(usrc)
+        with open(os.path.join(usrc, "reticuli.toml"), "w") as f:
+            f.write(FIXTURE)
+        prod = os.path.join(d, "p.py")
+        with open(prod, "w") as f:
+            f.write("import os, json\n"
+                    "open(os.environ['RETICULI_OUTPUT'], 'w').write('hello\\n')\n"
+                    "u = os.environ.get('RETICULI_USAGE')\n"
+                    "open(u, 'w').write(json.dumps({'tokens': 7, 'usd': 0.02})) if u else None\n")
+        cwd0 = os.getcwd()
+        os.chdir(d)
+        try:
+            kernel.realize(usrc, f"{sys.executable} {prod}", "relout")   # relative into
+        finally:
+            os.chdir(cwd0)
+        uc = kernel.cost(os.path.join(d, "relout"))
+        assert uc and uc.get("tokens") == 7 and uc.get("usd") == 0.02, \
+            "producer-reported cost reaches the ledger (relative into)"
         with open(os.path.join(m1, kernel.LEDGER), "w") as f:
             f.write('{"event": "oracle", "calls": 4}\n')       # a 4-call original
         rr = kernel.three_machine(m1, m2, m3)                  # vs the 1-call redo
