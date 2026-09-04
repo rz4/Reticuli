@@ -145,6 +145,15 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   checks moved to `checks/` — every new clause rejects the capstone specimen,
   the committed tree passes all eight gates, and the re-rehearsed
   three-machine test holds at the new whole root `cc1a10e7…`.
+- **The fourth live rehydration (2026-09-04).** First run against the round-B
+  hardened claims. FAILED at the genesis: the regenerated kernel named the #3b
+  jail-token path env-var `RETICULI_JAIL_REF` while the committed bootstrapping
+  kernel sets `RETICULI_JAIL_TOKEN`, so the in-room kernel re-applied a jail
+  inside the outer one (`sandbox_apply: Operation not permitted`). A
+  basin-narrowing regression — the env-var name is free water that #3b's token
+  silently required to agree across the bootstrap boundary — invisible to
+  byte-copy and the committed self-test, caught only by live regeneration, for
+  \$1.55. Full account in [rehydration-4-census.md](rehydration-4-census.md).
 - **The third live rehydration (2026-09-04).** First run against the *hardened*
   claims (the attack-review carve). Both carved rungs landed live — a fresh
   sonnet reinvented the mint ceremony and the exchange walls and sealed

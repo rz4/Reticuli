@@ -61,3 +61,27 @@ workshop, vessel, reticuli).
   land — that's the round-B claim most likely to defeat a blind producer.
 
 Actuals and the score go below after the run.
+
+## Actuals (2026-09-04)
+
+**Failed at the genesis — did NOT complete.** kernel-core regenerated for
+**\$1.55 / 57k tokens** and then its gate failed to run: `sandbox-exec:
+sandbox_apply: Operation not permitted` — a jail nested. Root cause: round B's
+#3b token uses a second env-var name (`_JAIL_REF`) that is free water; the
+regenerated kernel named it `RETICULI_JAIL_REF` while the committed bootstrapping
+kernel sets `RETICULI_JAIL_TOKEN`, so the in-room kernel didn't recognize the
+outer jail and re-applied one. Full account:
+[rehydration-4-census.md](rehydration-4-census.md).
+
+## Score
+
+- **The bet (kernel-core + exchange land): LOST** — kernel-core failed to land;
+  exchange never reached. But it lost to a regression I introduced (an
+  un-narrated handshake name), not to the ceremony complexity I feared.
+- **Cost instinct: won** — \$1.55 vs a \$3.5 bet; the narrated ceremony
+  regenerated cheaply, right at run 3's price.
+- **Predicted death rung: wrong** — I bet workshop (~55%); it died six rungs
+  earlier, at the genesis, on a failure mode I did not list.
+- **The instrument earned its keep:** it caught a basin narrowing invisible to
+  byte-copy and the committed self-test — the strongest single result of the
+  live-rehydration program.
