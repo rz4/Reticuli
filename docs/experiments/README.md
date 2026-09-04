@@ -144,7 +144,8 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   \$15.79, 406k tokens, 41 calls, 67 min. Paired with a cost prediction
   committed *before* the run (\$19/500k): ~20% over in aggregate but inside the
   band, workshop dollar-nailed from no prior data, kernel-core 2× under — cost
-  is bottom-weighted. See [rehydration-2-prediction.md](rehydration-2-prediction.md).
+  is bottom-weighted. See [rehydration-2-prediction.md](rehydration-2-prediction.md);
+  divergence census in [rehydration-2-census.md](rehydration-2-census.md).
 - **Round two — payloads across three strata (2026-09-03).** One crafted
   payload per stratum, each root-invisible, gate-blind, and audit-clean; what
   differs is *separability*. **Kernel** (phone-home via `urllib`): separable —
