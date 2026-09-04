@@ -26,13 +26,14 @@ and compares what the redo cost.
 pip install "git+https://github.com/rz4/reticuli"
 
 ret init && ret hooks                   # a session; Claude Code traces itself
-ret run "python3 checker.py"            # author a gate -> VERIFIED
+# the agent writes solver.py and check.py; the trace fills in
+ret run "python3 check.py && printf ok > VERIFIED"   # author the gate
 ret condense --accept VERIFIED --into M1        # M1: the sealed claim
 ret export M1 claim.tar                         # the record travels by content
 ret import claim.tar M2                         # M2: verified from bytes alone
-ret realize M1 --producer "$MODEL" --into M3    # M3: independent redo, any model
-ret prove M1 M2 M3                      # three machines, one root
-ret attest M3 --key ~/.ssh/id_ed25519 --as you@lab.gov    # sign it for others
+ret realize M1 --producer "python3 redo.py" --into M3   # M3: independent redo, your model
+ret prove M1 M2 M3                      # three machines, one root -> satisfied = true
+ret mint M1 --key ~/.ssh/id --as you@lab.gov    # authorize it: signed, accountable
 ```
 
 ## Why

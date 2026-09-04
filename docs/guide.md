@@ -32,20 +32,23 @@ A full session, and what `ret prove` prints:
 ```bash
 ret init                                   # git-native: ignores history, marks bytes binary
 ret hooks                                  # wire Claude Code: prompts/writes/reads/runs -> the trace
-# ... write a checker.py and some code (the agent's work is traced) ...
-ret run "python checker.py"                # author a gate (produces VERIFIED)
+# ... the agent writes check.py and some code (its work is traced) ...
+ret run "python check.py && printf ok > VERIFIED"   # author a gate — the command NAMES its output,
+                                           #   so condense can see it (a gate that doesn't is invisible)
 ret condense --accept VERIFIED --into rec  # draft a record and certify it cold
-ret realize rec --producer "$YOUR_MODEL" --into M3   # an independent redo
+ret export rec claim.tar && ret import claim.tar M2  # M2: a byte-reuse, verified on import
+ret realize rec --producer "python3 redo.py" --into M3   # M3: an independent redo (your model, a command)
 ret prove rec M2 M3                        # the invariant
 ```
 
 ```toml
 [prove]
 satisfied = true
-integrity = true
-reuse = true
-equivalence = true
-cost = true
+integrity = true               # every machine verifies fresh
+reuse = true                   # M2 carries M1's outputs byte-for-byte
+equivalence = true             # M3 redid it to the same root
+audited = true                 # every machine's verdicts re-run clean (earned, not carried)
+cost = true                    # C3/C1 within tolerance (dropped when a machine is unmeasured)
 
 [cost]
 unit = "calls"
@@ -55,9 +58,9 @@ ratio = 1.0
 tolerance = 2.0
 
    machine  root
-0  M1       c124ba320206…
-1  M2       c124ba320206…      # three implementations, one root
-2  M3       c124ba320206…
+0  M1       2dcd519bdbd2…
+1  M2       2dcd519bdbd2…      # three implementations, one root
+2  M3       2dcd519bdbd2…
 ```
 
 ## The agent handshake
@@ -77,7 +80,10 @@ A record moves through phases of matter:
 
 - **vapor** — a live session; a trace, nothing sealed.
 - **liquid** — condensed and sealed; a claim you can verify and share.
-- **solid** — freeze-dried: it survived the three-machine test; portable.
+- **solid** — freeze-dried: `ret prove --freeze-dry` stamps the record *proven*
+  once the three-machine test passes. Minting (below) is the separate human
+  layer on top: it does not change the phase, it records *who authorized* the
+  freeze — proven is a fact about the bytes, authorized is a fact about a person.
 
 Files are **dry** (given seeds, carried unchanged) or **wet** (produced). A dry
 seed is the archetype of a component: *`solid` is a record's view of itself;
@@ -169,8 +175,9 @@ execution — proving *where* a gate ran, not just who vouches for it.
 ## Minting: accountable authorization after a defined ceremony
 
 `attest` says *a keyholder ran this and it verified*. **Minting** says something
-stronger and rarer: *a keyholder reviewed the packet and authorizes this record
-as solid* — the top of the trust ladder. It is built on two ideas.
+stronger and rarer: *a keyholder reviewed the packet and authorizes freezing
+this record* — the top of the trust ladder. It records who vouched; it does not
+itself stamp the phase (`prove --freeze-dry` does that). It is built on two ideas.
 
 The **mint chain** binds solid identity bottom-up. A record's mint folds its
 claim root, its **realization digest** (a hash of its own free bytes — the
