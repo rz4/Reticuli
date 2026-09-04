@@ -85,3 +85,25 @@ enough, a producer reverse-engineers the rationale and writes it down.
    moved mint) — the difference is only whether an upper rung's digest
    describes its own work or also its inheritance. Weak candidate; the
    divergence rule doesn't clearly demand it.
+
+## Carve executed (2026-09-04)
+
+Candidate 1 promoted: one assert in the kernel claim's mint block —
+`mint_node(R, D, ["a", "b"]) == mint_node(R, D, ["b", "a"])` ("the fold binds
+the SET of mints below — enumeration order is not claim"). Discipline held:
+
+- **The clause rejects the specimen** for exactly the measured dimension: the
+  rehydration-2 kernel-core room passes its old claim (control), fails the new
+  one at the commutativity assert and nothing else; the committed kernel passes.
+- **Localization held on the re-mint**: only the kernel-core root moved
+  (`a3548eec…` → `3da9a0d9…`); exchange through vessel and the whole root
+  `cc1a10e7…` did not — the change's entire footprint is the clause, the
+  kernel-core manifest, and exchange's pinned component pointer. The floor is
+  named: kernel-core.
+- **Both controls and the rehearsal hold at the new claim**: byte-copy
+  recursively regrows the full chain (kernel-core sealed at `3da9a0d9…` with
+  the clause in-room) and `ret prove` is satisfied/audited on all three
+  machines at `cc1a10e7…`; a stub producer is refused by the kernel gate at the
+  genesis rung.
+
+Candidate 2 (digest from-exclusion) deliberately left free, as argued above.

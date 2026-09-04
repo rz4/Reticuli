@@ -200,6 +200,8 @@ def battery() -> None:
         assert kernel.mint_node("R", "D2", []) != m0, "the realization digest binds the mint"
         assert kernel.mint_node("R2", "D", []) != m0, "the claim root binds the mint"
         assert kernel.mint_node("R", "D", ["x"]) != m0, "a component's mint binds the mint above it"
+        assert kernel.mint_node("R", "D", ["a", "b"]) == kernel.mint_node("R", "D", ["b", "a"]), \
+            "the fold binds the SET of mints below — enumeration order is not claim"
         ms = os.path.join(d, "mint-seeded")
         os.makedirs(ms)
         with open(os.path.join(ms, "reticuli.toml"), "w") as f:
