@@ -137,6 +137,14 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   checks moved to `checks/` — every new clause rejects the capstone specimen,
   the committed tree passes all eight gates, and the re-rehearsed
   three-machine test holds at the new whole root `cc1a10e7…`.
+- **The second live rehydration (2026-09-04).** A live sonnet model regrew all
+  eight rungs against the *carved* claims (stricter than the capstone faced) —
+  byte-different free code throughout — landing 8/8 at the committed roots, and
+  the redo passes the three-machine test (`satisfied=true`, audited). Cost:
+  \$15.79, 406k tokens, 41 calls, 67 min. Paired with a cost prediction
+  committed *before* the run (\$19/500k): ~20% over in aggregate but inside the
+  band, workshop dollar-nailed from no prior data, kernel-core 2× under — cost
+  is bottom-weighted. See [rehydration-2-prediction.md](rehydration-2-prediction.md).
 - **Round two — payloads across three strata (2026-09-03).** One crafted
   payload per stratum, each root-invisible, gate-blind, and audit-clean; what
   differs is *separability*. **Kernel** (phone-home via `urllib`): separable —

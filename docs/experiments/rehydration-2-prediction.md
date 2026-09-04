@@ -40,6 +40,43 @@ death — so they are the least certain.
 
 Actuals and the score go below after the run.
 
-## Actuals (filled after the run)
+## Actuals (2026-09-04)
 
-_pending_
+**Landed 8/8** at the committed roots; the live M3 passes the three-machine test
+(`ret prove . M2 M3` → satisfied/integrity/reuse/equivalence/audited all true).
+**Total: \$15.79, 405,608 tokens, 41 calls, 67 min wall-clock.**
+
+| rung | pred \$ | act \$ | pred tok | act tok | calls | note |
+|---|---|---|---|---|---|---|
+| kernel-core | 1.6 | **3.02** | 55k | 89k | 2 | 2× under — worst miss; the genesis is heaviest |
+| exchange | 2.1 | 1.72 | 75k | 62k | 3 | over; the mint chain was cheaper than feared |
+| authoring | 1.85 | 1.62 | 55k | 52k | 4 | close |
+| agents | 0.7 | 0.56 | 20k | 15k | 1 | close; clean one-shot |
+| surface | 1.85 | 1.63 | 55k | 55k | 2 | tokens nailed |
+| workshop | 5.5 | **5.37** | 120k | 98k | 22 | **nailed the \$** (2% off) — the no-data rung; 22 calls of iteration |
+| vessel | 1.5 | 0.55 | 45k | 8k | 5 | 3× over — declarative, far cheaper |
+| reticuli | 1.5 | 1.31 | 30k | 26k | 2 | close |
+| **total** | **19.0** | **15.79** | **500k** | **406k** | **41** | ~20% over, inside the \$14–26 band |
+
+## Score
+
+- **8/8 landed: correct.** No budget deaths (predicted 0). Both correct.
+- **Total \$ and tokens: inside the predicted ranges**, ~19–20% high — a
+  conservative overbet.
+- **Best call: workshop** — the rung with *no prior data*, predicted from the
+  capstone's \$5-death alone, came in at \$5.37 vs \$5.5 (2% off) and was the
+  dominant single cost exactly as called.
+- **Worst call: kernel-core** — 2× under. The deepest rung is the heaviest, not
+  the lightest: cost concentrates at the bottom of the abyss, the same place the
+  significance does. I systematically overtaxed the outer/handshake rungs
+  (agents, vessel, surface all came in under) and undertaxed the genesis.
+- **Two real misses beyond dollars:** iteration count (predicted "1–2 retries";
+  actual 41 calls, workshop alone 22 — the agentic producer iterates hard per
+  rung), and wall-clock (predicted 25–45 min; actual 67).
+
+**Takeaway for the paper:** against the *carved* claims — stricter than the
+capstone faced — a live model still lands 8/8 and the redo passes the
+three-machine test, for ~\$16. The tightening did not push the basin out of
+reach; it made the deepest rung heavier and left the outer rungs cheap. Cost is
+bottom-weighted, and the workshop stratum remains the fragile, iteration-hungry
+one.
