@@ -190,10 +190,38 @@ byte-copy three-machine rehearsal satisfied/audited at the new claims, stub
 refused at the genesis. The guide states the scrubbed environment, the
 verifier-relative solid, and the one remaining jail limit (host-file reads).
 
+## #3b walked back (2026-09-04): the token broke self-hosting; bare-env restored
+
+The fourth live rehydration ([rehydration-4-census.md](rehydration-4-census.md))
+died at the genesis: round B's #3b token used a **second env-var name**
+(`_JAIL_REF`) that is free water, and a regenerated kernel named it
+`RETICULI_JAIL_REF` while the committed bootstrapping kernel sets
+`RETICULI_JAIL_TOKEN` — so the in-room kernel didn't recognize the outer jail and
+re-applied one (`sandbox_apply: Operation not permitted`). The token narrowed the
+kernel basin along a non-separating dimension (a name), violating the divergence
+rule, and made the self-hosted jail handshake fail under independent
+regeneration.
+
+Per the user's decision, **#3b reverted to bare-env inheritance**: `jail()`
+inherits on the presence of the single, well-known `RETICULI_JAILED`; the token
+file and the second name are gone; `kernel_check._rejail` sets the bare signal,
+so the check no longer *teaches* a producer to build a token. **#3a's env-scrub
+is kept** — it is behavior-separating and bootstrap-robust, and it already blocks
+the real threat (a record's gate injecting the signal, now scrubbed). The
+residual is the outer-environment footgun (a wrapper exporting `RETICULI_JAILED`),
+documented in the guide, not a record-borne attack. Net: **#3b is a documented
+limit again, not a wall — the trade the user chose, buying back self-hosting.**
+
+Localization: kernel-core `e03676b7…` → `2ec592de…`; exchange (`39546fe6…`) and
+all rungs above, plus the whole root `cc1a10e7…`, unchanged.
+
 ## Status
 
-Rounds one and two fully carved and rehearsed (2026-09-04). Every concrete
-attack the two reviews named is a wall; what remains is genuinely outside the
+Rounds one and two carved (2026-09-04), with #3b subsequently reverted after a
+live rehydration proved its token narrowed the basin. Every *concrete* attack
+the reviews named is a wall except #3b, which is now a documented footgun (the
+env-scrub keeps its real teeth). What else remains is genuinely outside the
 hashes (checker adequacy, epistemic independence, host-file read-isolation),
-named in the guide's honesty contract and here. The architecture is at the end
-the reviewer anticipated: the code now enforces the meaning it discovered.
+named in the guide's honesty contract. The live instrument's lesson: a hardening
+clause is only real if it survives an independent regeneration — the basin, not
+just the committed bytes, is what must hold.

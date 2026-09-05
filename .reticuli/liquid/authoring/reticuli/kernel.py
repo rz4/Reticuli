@@ -14,7 +14,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import secrets
 import shutil
 import signal
 import subprocess
@@ -34,22 +33,23 @@ GATE_TIMEOUT = 300.0            # a gate's wall-clock ceiling (s); the record ma
 # so a hostile gate cannot read an inherited credential (an API key, a token)
 # and write it into its room to exfiltrate at export. Producers are NOT scrubbed
 # (they are your command). The record's own RETICULI_* and a room-local HOME/
-# TMPDIR are added on top; the internal jail signal below can never be inherited.
+# TMPDIR are added on top. RETICULI_JAILED (the inherited-jail signal) is not in
+# the allowlist, so a record's gate can never inject it — only our own _jailed,
+# below, sets it, and it is a single, well-known name any conforming kernel
+# reads, so the self-hosted jail handshake survives an independent regeneration.
 _ENV_PASS = ("PATH", "LANG", "LC_ALL", "LC_CTYPE", "TZ", "SYSTEMROOT")
-_JAILED = "RETICULI_JAILED"          # internal: the per-run token (never set this yourself)
-_JAIL_REF = "RETICULI_JAIL_TOKEN"    # internal: absolute path to the token's file
+_JAILED = "RETICULI_JAILED"          # the inherited-jail signal (internal; never set this yourself)
 
 
 def _gate_env(extra: dict) -> dict:
     """A scrubbed base environment for a record's gate: a minimal host allowlist
-    plus the caller's `extra`. The ambient jail signal is dropped so an outer
-    environment cannot spoof 'already jailed'; _jailed re-adds a fresh, verified
-    token only when it truly wraps."""
+    plus the caller's `extra`. RETICULI_JAILED is not in the allowlist, so an
+    ambient value cannot ride in through a record; _jailed sets it only when it
+    truly wraps."""
     env = {k: os.environ[k] for k in _ENV_PASS if k in os.environ}
     env.setdefault("PATH", os.defpath)
     env.update(extra)
     env.pop(_JAILED, None)
-    env.pop(_JAIL_REF, None)
     return env
 
 
@@ -345,7 +345,7 @@ def jail(cmd: str, room: str) -> tuple[list[str] | str, str]:
     mode = os.environ.get("RETICULI_QUARANTINE", "auto")
     if mode == "off":
         return cmd, "off"
-    if _inside_our_jail():                    # jails don't nest; the outer one holds
+    if os.environ.get(_JAILED):               # jails don't nest; the outer one holds
         return cmd, "inherited"
     room = os.path.realpath(room)
     if sys.platform == "darwin":
@@ -360,44 +360,22 @@ def jail(cmd: str, room: str) -> tuple[list[str] | str, str]:
     return cmd, "none"
 
 
-def _inside_our_jail() -> bool:
-    """True iff THIS process is inside a jail WE applied — proven by a per-run
-    token that `_jailed` both set in the (scrubbed) child environment and wrote
-    to a file at the absolute path the environment names. A bare `RETICULI_JAILED`
-    (an outer footgun, or a record trying to switch quarantine off) names no
-    such file and is ignored; a record's gate can't inject one because the gate
-    environment is scrubbed. The token is unguessable per run, so a stale value
-    from a previous run does not match either."""
-    tok = os.environ.get(_JAILED)
-    ref = os.environ.get(_JAIL_REF)
-    if not tok or not ref:
-        return False
-    try:
-        with open(ref, encoding="utf-8") as f:
-            return f.read() == tok
-    except OSError:
-        return False
-
-
 def _jailed(cmd: str, room: str, env: dict,
             timeout: float | None = None) -> tuple[subprocess.CompletedProcess, str]:
     """Run a gate in the jail, time-bounded, with a scrubbed environment. TMPDIR
     and HOME move inside the room so well-behaved temp/home use stays confined;
-    the jail refuses the rest. When we truly wrap, we mint a per-run token (in
-    the child env and a file at an absolute path) so a nested kernel recognizes
-    THIS jail — and only this one — as inherited."""
+    the jail refuses the rest. When we wrap, we set the inherited-jail signal
+    (RETICULI_JAILED) in the child env so a nested kernel does not re-apply a
+    jail — a single well-known name, so an independently regenerated kernel
+    reads the same handshake and the self-host does not nest."""
     wrapped, status = jail(cmd, room)
-    if isinstance(wrapped, list):            # we wrapped: fresh token + room-local tmp/home
+    if isinstance(wrapped, list):            # we wrapped: room-local tmp/home + the signal
         tmp = os.path.join(os.path.realpath(room), STORE, "tmp")
         os.makedirs(tmp, exist_ok=True)
-        token = secrets.token_hex(16)
-        ref = os.path.join(tmp, "jail.token")
-        with open(ref, "w", encoding="utf-8") as f:
-            f.write(token)
-        env = {**env, "TMPDIR": tmp, "HOME": tmp, _JAILED: token, _JAIL_REF: ref}
+        env = {**env, "TMPDIR": tmp, "HOME": tmp, _JAILED: status}
     elif status == "inherited":              # carry the outer jail's context forward
         env = {**env, **{k: os.environ[k]
-                         for k in ("TMPDIR", "HOME", _JAILED, _JAIL_REF)
+                         for k in ("TMPDIR", "HOME", _JAILED)
                          if k in os.environ}}
     return _run_bounded(wrapped, shell=isinstance(wrapped, str), cwd=room,
                         env=env, timeout=timeout), status

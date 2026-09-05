@@ -109,33 +109,27 @@ class = "validated"
 
 def _rejail() -> None:
     """Judge in the verdict's environment: if the host has a jail and we are not
-    already inside one, re-exec this check under it. We mint the per-run jail
-    token the kernel now requires (kernel._inside_our_jail): a bare env flag is
-    no longer trusted, so we write the token to a file and name it in the env,
-    exactly as kernel._jailed does — a conformant kernel then inherits, never
-    re-applies."""
-    if kernel._inside_our_jail():
+    already inside one, re-exec this check under it, setting the inherited-jail
+    signal (a single well-known name) so a conformant kernel inherits rather than
+    re-applies. Jails do not nest."""
+    if os.environ.get(kernel._JAILED):
         return                                       # already judged inside a jail
     cwd = os.path.realpath(os.getcwd())
     tmp = os.path.join(cwd, ".kc-tmp")
     os.makedirs(tmp, exist_ok=True)
-    token = os.urandom(16).hex()
-    ref = os.path.join(tmp, "jail.token")
-    with open(ref, "w", encoding="utf-8") as f:
-        f.write(token)
-    env = {**os.environ, "TMPDIR": tmp, "HOME": tmp,
-           kernel._JAILED: token, kernel._JAIL_REF: ref}
+    env = {**os.environ, "TMPDIR": tmp, "HOME": tmp}
     argv = None
     if sys.platform == "darwin" and shutil.which("sandbox-exec"):
         profile = ('(version 1)(allow default)(deny network*)(deny file-write*)'
                    f'(allow file-write* (subpath "{cwd}") (subpath "/dev"))')
-        argv = ["sandbox-exec", "-p", profile]
+        argv, env[kernel._JAILED] = ["sandbox-exec", "-p", profile], "seatbelt"
     elif shutil.which("bwrap") and subprocess.run(
             ["bwrap", "--ro-bind", "/", "/", "--unshare-net", "true"],
             capture_output=True, check=False).returncode == 0:
         argv = ["bwrap", "--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev",
                 "--proc", "/proc", "--bind", cwd, cwd, "--unshare-net",
                 "--die-with-parent"]
+        env[kernel._JAILED] = "bubblewrap"
     if argv:
         os.execvpe(argv[0], argv + [sys.executable, os.path.abspath(__file__)], env)
 

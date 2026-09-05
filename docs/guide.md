@@ -166,18 +166,23 @@ so a record cannot make the kernel read or write outside itself. And a gate runs
 with a **scrubbed environment** — only a small host allowlist (PATH, locale) plus
 a room-local HOME/TMPDIR, never your inherited secrets — so a hostile gate cannot
 read an API key from the environment and write it into its room to exfiltrate at
-export. (Producers are not scrubbed: a producer is *your* command.) The
-inherited-jail signal is an unforgeable per-run token, written to a file and
-named in the scrubbed environment, so an ambient `RETICULI_JAILED` cannot switch
-quarantine off. The jail protects *you* from a record; speaking to *others* is
-attestation's job, below.
+export. (Producers are not scrubbed: a producer is *your* command.) Because the
+scrub keeps `RETICULI_JAILED` out of a gate's environment, a *record* can never
+inject the inherited-jail signal. That signal is a single well-known name —
+deliberately not a per-kernel token: the self-hosted jail handshake runs between
+the bootstrapping kernel and an *independently regenerated* one, so the name
+must be something any conforming kernel reads the same way — not a per-kernel
+token whose incidental naming would have to agree across that boundary. The jail
+protects *you* from a record; speaking to *others* is attestation's job, below.
 
-One limit the jail does **not** close, stated plainly: the sandbox is
+Two limits the jail does **not** close, stated plainly. The sandbox is
 write-isolated, not fully read-isolated — a gate can still *read* host files it
 has filesystem permission to (the environment leak is closed; arbitrary host
-*reads* are not). Full read-minimization (bind only what a gate needs) is a
-larger change tracked in the experiments' attack triage; the network is denied
-throughout, so a read cannot leave except through the record's own room.
+*reads* are not); the network is denied throughout, so a read cannot leave
+except through the record's own room. And the inherited-jail signal, being a
+plain name, is honored if an *outer* environment sets `RETICULI_JAILED` before
+`ret realize` runs — a footgun for a wrapper that exports it, not a record-borne
+attack (the scrub blocks records). Both are tracked in the attack triage.
 
 ## Attestation
 
@@ -343,7 +348,7 @@ fresh README against `checks/docs_check.py`, and — because all of it is free a
 root is the claim — **lands on the same roots, rung by rung.** Each rung pays
 its own ledger, so a recursive redo prices every layer separately: what
 the invariant costs to regrow vs. what the volatile handshakes cost. Today's
-roots, inner to outer: `e03676b7…`, `39546fe6…`, `b7610cbb…`, `c3b3e782…`,
+roots, inner to outer: `2ec592de…`, `39546fe6…`, `b7610cbb…`, `c3b3e782…`,
 `7a918dac…`, workshop `5c229b2e…`, vessel `e4e7da9a…`, whole `cc1a10e7…`.
 `ret tree .` draws the whole anatomy —
 each rung's seed (the claim), its free stratum, what its component supplies,
