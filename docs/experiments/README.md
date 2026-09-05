@@ -82,12 +82,15 @@ check — a deliberate re-mint — and leave the test as the bench copy.
 
 ## Known limits (state these with any result)
 
-- **Self-referential** (largely addressed) — the eight-rung runs are Reticuli
-  reproducing itself, but the first non-self specimen has now landed: an external
-  library (tomli) packed and regrown from its tests alone, three-machine proven
-  ([external-tomli.md](external-tomli.md)). Remaining gap: that specimen is
-  public (likely in-training), so epistemic independence is weaker than the test
-  sees — the sharper next specimen is code the model has not seen.
+- **Self-referential** (addressed) — beyond the eight-rung self-runs, two
+  non-self specimens have landed: an external public library (tomli, three-machine
+  proven, [external-tomli.md](external-tomli.md)) and — the independence test —
+  an **unseen** library authored fresh with invented semantics
+  ([unseen-quirkcalc.md](unseen-quirkcalc.md)), reconstructed from its tests alone
+  (99.89% differential-fuzz agreement with the reference, the 0.11% being exactly
+  where the spec was silent). Genuine reconstruction, not recall, on code that
+  was not in training. Remaining independence gap: cross-vendor producers (a
+  second model family) — still Claude-only.
 - **Claude-family only** until a working OpenAI key is supplied.
 - **`audit` assumes gates are deterministic and hermetic.** A nondeterministic
   gate fails audit loudly (the right direction), but such a gate is not a valid
