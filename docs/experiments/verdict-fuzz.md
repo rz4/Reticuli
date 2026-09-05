@@ -151,11 +151,29 @@ complementary direction (file honest, record drifted) was already pinned by the
 post-mint `g.txt` edit. Editing the seed moved only kernel-core
 (`b2f5b117` → `498e426a`); the other seven held.
 
-**Still a decision, not a patch.** Finding 1 (roots are implementation-relative,
-so records don't travel) is the identity fork: making the root an interchange
-currency needs a golden-vector clause that trades away enormous honest width —
-a design call for its own sitting. Finding 6 (three-machine surface, zero
-divergence) needed nothing.
+**Finding 1 decided and carved (2026-09-05).** The root is an **interchange
+currency**, not a private serial number: the canonical hash-preimage layout is
+now pinned in `kernel_check` (a serialization spec plus a six-vector golden
+battery), so every conformant kernel computes the same root hex for the same
+record — a record travels, and a *rehydrated* kernel can verify what the
+committed one sealed. The decision was forced by the project's own method:
+**the rehydrated Reticuli is the test**, and until this pin a regrown kernel
+computed a different canon (`claim()` gave `a2ec25f2…` where committed gave
+`0c1f4da0…`) and read committed-sealed records as tampered — so "regrown onto
+the same roots" was really "the committed kernel sealed the regrown code," never
+the regrown kernel agreeing. The pin freezes the *current* format (committed's
+roots do not churn), so it is a one-way commitment to today's serialization.
+Teeth: the fresh and kcval draws both fail the battery (different canon). Seed
+edit moved only kernel-core (`498e426a` → `19bab9d5`); the other seven held.
+
+Golden vectors alone would not be rehydration-compatible — a hash cannot be
+reversed, so a regrown kernel cannot match the hex blind. The spec in the seed
+is what lets the agentic loop converge: it runs `kernel_check`, sees "your root
+is X, want Y," and iterates its `claim()` until the bytes agree. The vectors are
+counterexamples; the loop is CEGIS. Whether the spec is precise enough for an
+*independent* regrowth to converge is the live test (below/pending).
+
+**Finding 6** (three-machine surface, zero divergence) needed nothing.
 
 ## Live validation — the basin holds the carve, not just the committed bytes
 

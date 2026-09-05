@@ -106,6 +106,55 @@ run = "grep -q PASS impl.txt && printf v > V"
 class = "validated"
 '''
 
+# THE CANONICAL ROOT SERIALIZATION — the interchange spec that lets records
+# TRAVEL between independent implementations of the kernel. Without it, each
+# conformant kernel is free to lay out the hash preimage its own way, so two
+# kernels compute DIFFERENT roots for the same record and each reads the other's
+# records as tampered (verify recomputes a root that will not match the stored
+# one). That breaks the deepest self-test: a REHYDRATED kernel, used AS the
+# kernel, cannot verify the repo. So the preimage layout is pinned here, and the
+# golden vectors below are its conformance check — a regrown kernel iterates its
+# `claim()` against them until the bytes agree.
+#
+# root(recipe, record) is the lowercase hex sha256 of
+#     json.dumps(parts, sort_keys=True).encode("utf-8")
+# with DEFAULT separators (", " and ": " — not compact), where `parts` is:
+#     "recipe"        -> json.dumps(parsed_recipe, sort_keys=True)   (default separators)
+#     "seed:<path>"   -> sha256(seed file bytes).hexdigest()   for each [record].inputs path
+#     "pin:<output>"  -> sha256(output file bytes).hexdigest()  for each NON-free step's output
+# Free outputs never enter the preimage (that freedom is the basin). `<path>` and
+# `<output>` are the names exactly as written in the recipe. A kernel that sorts
+# keys, uses default JSON separators, hashes raw file bytes, and names the parts
+# this way reproduces every GOLDEN root below; any other layout diverges and is
+# not conformant. (This pins the VALUE, closing the width that the behavioral
+# clauses — root moves on a seed edit, holds on a free edit — leave open.)
+GOLDEN = [
+    ("v1-minimal",
+     '[record]\nname = "fx"\n\n[[step]]\nkind = "produce"\noutput = "g.txt"\nclass = "free"\nrequest = "x"\n\n[[step]]\nkind = "gate"\noutput = "V"\nclass = "validated"\nrun = "printf v > V"\n',
+     {"V": "v"},
+     "6b137e60a31a4ceeb3991618a008c7be8627a63b29c9ed32a792c28ea869c152"),
+    ("v2-one-seed",
+     '[record]\nname = "seeded"\ninputs = ["spec.txt"]\n\n[[step]]\nkind = "produce"\noutput = "impl.txt"\nclass = "free"\nrequest = "x"\n\n[[step]]\nkind = "gate"\noutput = "V"\nclass = "validated"\nrun = "printf v > V"\n',
+     {"spec.txt": "acceptance criteria: v1\n", "V": "v"},
+     "9378c37832b8791c531aec932d5e5db9dbb197db9636f16110f860c30f0391ee"),
+    ("v3-two-seeds",
+     '[record]\nname = "two"\ninputs = ["a.txt", "b.txt"]\n\n[[step]]\nkind = "gate"\noutput = "V"\nclass = "validated"\nrun = "printf v > V"\n',
+     {"a.txt": "alpha\n", "b.txt": "beta\n", "V": "v"},
+     "4a7db23d7afc98136e84e8bce2936ce1c11ab0c43168ec7a232fab22b90268e7"),
+    ("v4-unicode",
+     '[record]\nname = "café"\ninputs = ["u.txt"]\n\n[[step]]\nkind = "gate"\noutput = "V"\nclass = "validated"\nrun = "printf v > V"\n',
+     {"u.txt": "café ☕ naïve\n", "V": "v"},
+     "9419b2f604db56b7271466e574313b7be9d27e164d86acfad62213929556a6b1"),
+    ("v5-two-pins",
+     '[record]\nname = "pins"\n\n[[step]]\nkind = "gate"\noutput = "A"\nclass = "validated"\nrun = "printf a > A"\n\n[[step]]\nkind = "gate"\noutput = "B"\nclass = "validated"\nrun = "printf b > B"\n',
+     {"A": "a", "B": "b"},
+     "cf93ca18a9855ace24679843a49f9c26118e836d4f09f91678393f7f536c463b"),
+    ("v6-record-extras",
+     '[record]\nname = "extras"\ngate_timeout = 60\ntolerance = 3.0\ninputs = ["s.txt"]\n\n[[step]]\nkind = "produce"\noutput = "impl.txt"\nclass = "free"\nrequest = "x"\n\n[[step]]\nkind = "gate"\noutput = "V"\nclass = "validated"\nrun = "printf v > V"\n',
+     {"s.txt": "seed\n", "V": "v"},
+     "817839e78bf6f8bef686f3252ae4323433f9fcb68cc0bd968c29d11918d625db"),
+]
+
 
 def _rejail() -> None:
     """Judge in the verdict's environment: if the host has a jail and we are not
@@ -350,6 +399,28 @@ def battery() -> None:
             f.write("acceptance criteria: v2 (stricter)\n")
         vs = kernel.verify(s)
         assert not vs["ok"] and vs["recomputed"] != r_seed, "editing a dry seed moves the claim"
+
+        # the root is an INTERCHANGE CURRENCY, not a private serial number: the
+        # canonical serialization (documented at GOLDEN above) is pinned so every
+        # conformant kernel computes the SAME root hex for the same record, and a
+        # record travels — a rehydrated kernel can verify what the committed one
+        # sealed. The behavioral clauses above pin how the root MOVES; these pin
+        # its VALUE. A kernel free to choose its own preimage layout passes every
+        # clause above yet computes a different hex here, so its records read as
+        # tampered to everyone else; the golden vectors are what a regrown kernel
+        # iterates against until its bytes agree.
+        for gname, grecipe, gfiles, groot in GOLDEN:
+            gd = os.path.join(d, "golden-" + gname)
+            os.makedirs(gd)
+            with open(os.path.join(gd, "reticuli.toml"), "w", encoding="utf-8") as f:
+                f.write(grecipe)
+            for fn, content in gfiles.items():
+                with open(os.path.join(gd, fn), "w", encoding="utf-8") as f:
+                    f.write(content)
+            got = kernel.claim(kernel.load_recipe(gd), gd)
+            assert got == groot, (
+                f"canonical root mismatch for {gname}: the record must hash to the "
+                f"pinned value so records travel between kernels; got {got}, want {groot}")
 
         # the mint: solid identity, bottom-anchored. mint_node folds a rung's
         # claim root, its realization digest, and the mints beneath it, so the
