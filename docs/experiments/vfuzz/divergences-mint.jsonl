@@ -1,0 +1,31 @@
+{"case": "s06-seed-deleted@i", "class": "structural", "kernel": "kernel_mint", "field": "audit", "committed": "EXC:FileNotFoundError", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s06-seed-deleted@i", "class": "structural", "kernel": "kernel_mint", "field": "claim", "committed": "EXC:FileNotFoundError", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s06-seed-deleted@i", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s06-seed-deleted@i", "class": "structural", "kernel": "kernel_mint", "field": "verify", "committed": "EXC:FileNotFoundError", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s08-manifest-deleted@i", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "vapor", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s15-seed-escapes-dotdot@i", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s16-seed-absolute@i", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s17-seed-symlink-out@i", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s06-seed-deleted@n", "class": "structural", "kernel": "kernel_mint", "field": "audit", "committed": "EXC:FileNotFoundError", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s06-seed-deleted@n", "class": "structural", "kernel": "kernel_mint", "field": "claim", "committed": "EXC:FileNotFoundError", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s06-seed-deleted@n", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s06-seed-deleted@n", "class": "structural", "kernel": "kernel_mint", "field": "verify", "committed": "EXC:FileNotFoundError", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s08-manifest-deleted@n", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "vapor", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s15-seed-escapes-dotdot@n", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s16-seed-absolute@n", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s17-seed-symlink-out@n", "class": "structural", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "r-flip-001-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "r-flip-009-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "r-flip-013-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "r-flip-022-manifest.json@n", "class": "random-flip", "kernel": "kernel_mint", "field": "audit", "committed": "EXC:ReticuliError", "draw": false, "stakes": "SHAPE"}
+{"case": "r-flip-022-manifest.json@n", "class": "random-flip", "kernel": "kernel_mint", "field": "phase", "committed": "EXC:ReticuliError", "draw": "liquid", "stakes": "SHAPE"}
+{"case": "r-flip-022-manifest.json@n", "class": "random-flip", "kernel": "kernel_mint", "field": "verify", "committed": "EXC:ReticuliError", "draw": {"ok": false, "root_eq_claim": false, "move_detected": true}, "stakes": "SHAPE"}
+{"case": "r-flip-024-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "r-flip-028-manifest.json@n", "class": "random-flip", "kernel": "kernel_mint", "field": "audit", "committed": true, "draw": false, "stakes": "REFUSES"}
+{"case": "r-flip-028-manifest.json@n", "class": "random-flip", "kernel": "kernel_mint", "field": "verify", "committed": {"ok": true, "root_eq_claim": true, "move_detected": null}, "draw": {"ok": false, "root_eq_claim": false, "move_detected": true}, "stakes": "REFUSES"}
+{"case": "r-flip-029-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "r-flip-030-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "r-flip-032-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "audit", "committed": "EXC:ReticuliError", "draw": false, "stakes": "SHAPE"}
+{"case": "r-flip-032-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "claim", "committed": "EXC:ReticuliError", "draw": "HEX", "stakes": "ACCEPTS"}
+{"case": "r-flip-032-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "rdigest", "committed": "EXC:ReticuliError", "draw": "HEX", "stakes": "ACCEPTS"}
+{"case": "r-flip-032-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_mint", "field": "verify", "committed": "EXC:ReticuliError", "draw": {"ok": false, "root_eq_claim": false, "move_detected": true}, "stakes": "SHAPE"}

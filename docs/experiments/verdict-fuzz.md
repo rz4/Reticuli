@@ -195,10 +195,27 @@ Teeth are pointed: the `kernel_currency` draw — which already *agrees on the
 root* — fails precisely at `rd1-one-free`, exactly the residual gap. Editing the
 seed moved only kernel-core (`19bab9d5` → `712d4976`); the other seven held.
 
-Still open, low stakes: two `s18` rows where the regrown kernel's `audit` is more
-permissive than committed on a *free output* symlinked out of the record (seed
-symlinks are pinned by finding 3; free-output symlinks in `audit` are an unpinned
-edge) — a candidate micro-carve, since a free output is never hashed.
+*Live-validated (2026-09-05).* A second independent rehydration (sonnet-5,
+`$3.30`, 970 lines different from committed) converged on **both** canonical
+serializations at once: root agree, realization digest agree (`81a409f2…`), and
+— the decisive test — a record the **committed** kernel minted verifies as
+**`solid` under the regrown kernel**. Mints travel between independent kernels;
+cross-implementation *solid* holds. Re-fuzzing committed vs this regrown kernel:
+divergences `84 → 31`, `rdigest 28 → 1` (the lone survivor a byte-flip artifact).
+The regrown kernel even chose the same mint directory (`.reticuli/mint`)
+independently, so the unpinned mint *location* happened to agree here too.
+
+The residual `31` are now almost entirely **refusal-discipline SHAPE**: on an
+*already-damaged* record (a deleted or path-escaping seed, a corrupt recipe)
+committed's `phase` returns `"liquid"`/`"vapor"` while the regrown kernel
+*raises* `ReticuliError`. Both agree the record is **not solid** — nothing is
+blessed — they differ only in how they voice the refusal. It exposes a small
+inconsistency in *committed* worth its own micro-carve: `phase` does not call the
+path-confinement boundary, so it answers `"liquid"` about a seed-escaping record
+that its own `verify` would refuse. Two classes remain, both low-stakes and
+neither on an honest record: this `phase`-vs-`verify` refusal consistency, and
+the earlier free-output symlink in `audit` (a free output is never hashed).
+Data: `divergences-mint.jsonl`.
 
 **Finding 6** (three-machine surface, zero divergence) needed nothing.
 
