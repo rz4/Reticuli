@@ -123,6 +123,13 @@ request = "supplied by the vessel component"
 
 [[step]]
 kind = "produce"
+output = "scripts/producer_openai_agentic.py"
+class = "free"
+from = "vessel"
+request = "supplied by the vessel component"
+
+[[step]]
+kind = "produce"
 output = "scripts/selfrecord.py"
 class = "free"
 from = "vessel"
