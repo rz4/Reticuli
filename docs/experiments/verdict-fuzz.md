@@ -170,8 +170,30 @@ Golden vectors alone would not be rehydration-compatible — a hash cannot be
 reversed, so a regrown kernel cannot match the hex blind. The spec in the seed
 is what lets the agentic loop converge: it runs `kernel_check`, sees "your root
 is X, want Y," and iterates its `claim()` until the bytes agree. The vectors are
-counterexamples; the loop is CEGIS. Whether the spec is precise enough for an
-*independent* regrowth to converge is the live test (below/pending).
+counterexamples; the loop is CEGIS.
+
+*Live-validated (2026-09-05).* An independent kernel-core rehydration (sonnet-5,
+`$2.59`, ~14 min) — 971 lines different from committed — **converged on the
+canonical serialization**: the regrown kernel's `claim()` computes `0c1f4da0…`
+where committed does (they **agree**), it computes `19bab9d5…` for the committed
+kernel-core drawer, and — the exact thing that failed before the carve — it
+**verifies a committed-sealed record as `ok = True`**. Records travel between two
+independent kernels. The spec-plus-vectors form is sufficient; the pinned-
+reference-function fallback is not needed. Re-fuzzing committed vs this regrown
+kernel: divergences `126 → 84`, and **every pristine-record verify/audit/claim
+divergence is gone** (`divergences-currency.jsonl`).
+
+What the carve did *not* close, honestly: the **realization digest** — the free
+crystal a mint binds — is still implementation-relative (28 residual `rdigest`
+divergences), because only `claim()` (the root) was pinned. So *records* travel
+but *mints* do not yet: a mint bound to one kernel's realization digest will not
+verify under another. Extending the currency to `realization_digest` (the same
+spec-plus-vectors technique) is the follow-on if minted records must travel — a
+separate decision, since it is the cross-party *solid* question. Also surfaced:
+two `s18` rows where the regrown kernel's `audit` is more permissive than
+committed on a *free output* symlinked out of the record (seed symlinks are
+pinned by finding 3; free-output symlinks in `audit` are an unpinned edge) — a
+candidate micro-carve, low stakes (a free output is never hashed).
 
 **Finding 6** (three-machine surface, zero divergence) needed nothing.
 
