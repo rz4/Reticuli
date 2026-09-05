@@ -40,6 +40,10 @@ Series in the grid (`python3 scripts/sweep.py` prints the plan and estimates):
 
 - `../reflection_profile.jsonl` — the live index, one row per cell (committed).
 - `specimens/<series>/<layer>.tar` — the actual regrown code, re-auditable (gitignored).
+- `cage-tightening.md` — the CEGIS loop in miniature: pin the two gaps the
+  cross-vendor fuzz found, re-run both vendors; the targets close, but a fresh
+  draw exposes a third gap — convergence is asymptotic, and the fuzz (not the
+  passing tests) is what catches an internally-inconsistent reconstruction.
 - `capstone-census.md` — the full divergence census of the capstone's M3
   against the committed tree: what the walls forced, what drifted, and the
   carving agenda it produced.
