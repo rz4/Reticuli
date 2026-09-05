@@ -110,6 +110,7 @@ convergence measured, exactly as the program intends.
 ## Status
 
 Measured and fixed 2026-09-04. The regression was a basin narrowing that only
-live regeneration revealed; the fix is validated by live regeneration. A full
-8-rung run against the widened claims remains available, but is expected to hit
-the still-open workshop jail-seam (run 3's finding, orthogonal to this).
+live regeneration revealed; the fix is validated by live regeneration. The
+workshop jail-seam (run 3's finding) has since been carved too
+([rehydration-3-census.md](rehydration-3-census.md)), so a full 8-rung run
+against the widened claims no longer has a known blocker.

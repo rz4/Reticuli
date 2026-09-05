@@ -103,8 +103,35 @@ ever fails honest producers, never admits a bad one), so this is hardening for
 convergence" loop the README describes, and it is the user's decision whether
 to carve it now or bank it as a known limit.
 
+## Carve executed (2026-09-04): the workshop re-jails
+
+Option 1 from the decision above, chosen after the round-B revert made a
+bare-env re-jail bootstrap-safe. `checks/workshop_check.py` now carries a
+`_rejail()` mirroring the kernel check's: when the host has a jail and we are
+not already inside one, it re-execs the whole check under a real sandbox with
+the single well-known `RETICULI_JAILED` set. The producer's own gate-run
+(`python3 checks/workshop_check.py`, previously unjailed) is thereby made equal
+to the verdict's environment — the suite runs jailed during iteration, so a
+jail-fragile suite fails *in front of the producer*, not only at the final gate.
+
+Discipline held:
+
+- **The specimen is rejected for exactly its reason.** Run 3's regrown
+  `test_quarantine.py` (hard-asserts `backend == "seatbelt"`) passes UNJAILED
+  (5/5 — why the producer shipped it) and FAILS via the jailed workshop check
+  (`exit 1`, the suite returns nonzero because the ambient backend is
+  "inherited"). Our committed jail-tolerant suite passes both ways.
+- **Localization**: only the workshop root moved (`5c229b2e…` → `27e30a1b…`);
+  every other rung and the whole root `cc1a10e7…` unchanged.
+- **Rehearsal**: byte-copy three-machine `satisfied`/`audited` at the new claim;
+  bench 48-pass; ruff clean.
+
+The seam that killed run 3 is now a wall — the workshop basin requires a
+jail-tolerant suite, enforced by running the verdict's environment during
+iteration. Note it is still one ambient dependency (pytest) and a
+capability-bounded claim, exactly as the header says.
+
 ## Status
 
-Measured 2026-09-04. M3 left exactly as produced — not fixed, not re-run to
-force a pass: the honest result is 5/8 landed with a reproducible workshop
-jail-seam failure. Both hardened rungs landed live.
+Measured 2026-09-04, seam carved the same day. Both hardened rungs landed live;
+the workshop jail-seam that blocked completion is closed and specimen-validated.

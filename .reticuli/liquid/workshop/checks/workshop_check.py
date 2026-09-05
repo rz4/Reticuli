@@ -13,7 +13,18 @@ suite. All of it is free water under a claim about PROPERTIES, not bytes:
 Knowledge discovered on the bench is ratified by promotion into the rung
 checks; this gate keeps the bench alive and honest in between. One ambient
 dependency is admitted: pytest on the host python. Writes WORKSHOP_OK iff the
-bench conforms. Runs wherever the verdict runs (inside a jail included).
+bench conforms.
+
+THE EXECUTION CONTRACT: the authoritative workshop gate runs JAILED (realize
+jails every gate), so the suite's quarantine tests see the inherited-jail
+condition (RETICULI_JAILED set → kernel.jail returns "inherited", not a wrapping
+backend). A producer iterating UNJAILED tests a different environment and could
+ship a suite that passes unjailed but fails jailed — the jail-seam, caught live
+in run 3, where a regrown test hard-asserted backend=="seatbelt" and died under
+the verdict's jail. So this check re-execs itself under the host jail when run
+bare, setting the single well-known RETICULI_JAILED signal: the producer's test
+environment is made equal to the verdict's, and a jail-fragile suite fails here,
+visibly, during iteration rather than only at the final gate.
 """
 import ast
 import os
@@ -22,6 +33,36 @@ import shutil
 import subprocess
 import sys
 import tempfile
+
+_JAILED = "RETICULI_JAILED"          # the inherited-jail signal (a single well-known name)
+
+
+def _rejail() -> None:
+    """Judge the bench in the verdict's environment: if the host has a jail and
+    we are not already inside one, re-exec this check under it with RETICULI_JAILED
+    set, so the suite runs jailed whether the producer or the verdict invokes it.
+    A single well-known name, so an independently regenerated kernel reads the
+    same handshake (see rehydration 4). Jails do not nest."""
+    if os.environ.get(_JAILED):
+        return                                       # already judged inside a jail
+    cwd = os.path.realpath(os.getcwd())
+    tmp = os.path.join(cwd, ".ws-tmp")
+    os.makedirs(tmp, exist_ok=True)
+    env = {**os.environ, "TMPDIR": tmp, "HOME": tmp}
+    argv = None
+    if sys.platform == "darwin" and shutil.which("sandbox-exec"):
+        profile = ('(version 1)(allow default)(deny network*)(deny file-write*)'
+                   f'(allow file-write* (subpath "{cwd}") (subpath "/dev"))')
+        argv, env[_JAILED] = ["sandbox-exec", "-p", profile], "seatbelt"
+    elif shutil.which("bwrap") and subprocess.run(
+            ["bwrap", "--ro-bind", "/", "/", "--unshare-net", "true"],
+            capture_output=True, check=False).returncode == 0:
+        argv = ["bwrap", "--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev",
+                "--proc", "/proc", "--bind", cwd, cwd, "--unshare-net",
+                "--die-with-parent"]
+        env[_JAILED] = "bubblewrap"
+    if argv:
+        os.execvpe(argv[0], argv + [sys.executable, os.path.abspath(__file__)], env)
 
 SCRIPTS = ["scripts/selfrecord.py", "scripts/probe.py", "scripts/sweep.py",
            "scripts/envelope.py", "scripts/producer_claude.py",
@@ -104,6 +145,7 @@ def battery() -> None:
 
 
 if __name__ == "__main__":
+    _rejail()
     battery()
     with open("WORKSHOP_OK", "w") as f:
         f.write("workshop-ok\n")
