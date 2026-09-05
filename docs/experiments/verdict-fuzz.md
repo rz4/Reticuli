@@ -183,17 +183,22 @@ reference-function fallback is not needed. Re-fuzzing committed vs this regrown
 kernel: divergences `126 → 84`, and **every pristine-record verify/audit/claim
 divergence is gone** (`divergences-currency.jsonl`).
 
-What the carve did *not* close, honestly: the **realization digest** — the free
-crystal a mint binds — is still implementation-relative (28 residual `rdigest`
-divergences), because only `claim()` (the root) was pinned. So *records* travel
-but *mints* do not yet: a mint bound to one kernel's realization digest will not
-verify under another. Extending the currency to `realization_digest` (the same
-spec-plus-vectors technique) is the follow-on if minted records must travel — a
-separate decision, since it is the cross-party *solid* question. Also surfaced:
-two `s18` rows where the regrown kernel's `audit` is more permissive than
-committed on a *free output* symlinked out of the record (seed symlinks are
-pinned by finding 3; free-output symlinks in `audit` are an unpinned edge) — a
-candidate micro-carve, low stakes (a free output is never hashed).
+What the root carve did not close, and the follow-on carve that did: the
+**realization digest** — the free crystal a mint binds — was still
+implementation-relative after the root pin (28 residual `rdigest` divergences),
+so *records* travelled but *mints* did not (a mint bound to one kernel's digest
+would not verify under another). The currency was then **extended to
+`realization_digest`** (2026-09-05) with the same spec-plus-vectors technique: a
+preimage spec plus a six-vector `RD_GOLDEN` battery (one free output, two, an
+absent-and-omitted free output, a `from`-excluded output, unicode, and none).
+Teeth are pointed: the `kernel_currency` draw — which already *agrees on the
+root* — fails precisely at `rd1-one-free`, exactly the residual gap. Editing the
+seed moved only kernel-core (`19bab9d5` → `712d4976`); the other seven held.
+
+Still open, low stakes: two `s18` rows where the regrown kernel's `audit` is more
+permissive than committed on a *free output* symlinked out of the record (seed
+symlinks are pinned by finding 3; free-output symlinks in `audit` are an unpinned
+edge) — a candidate micro-carve, since a free output is never hashed.
 
 **Finding 6** (three-machine surface, zero divergence) needed nothing.
 

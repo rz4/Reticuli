@@ -155,6 +155,50 @@ GOLDEN = [
      "817839e78bf6f8bef686f3252ae4323433f9fcb68cc0bd968c29d11918d625db"),
 ]
 
+# THE CANONICAL REALIZATION-DIGEST SERIALIZATION — the same interchange pin, one
+# layer out. The root is the CLAIM (what travels for verify); the realization
+# digest is the FREE CRYSTAL a MINT binds — the free bytes the root ignores,
+# frozen at authorization. If the digest is implementation-relative, a mint made
+# by one kernel will not verify under another: records travel but mints do not.
+# So its preimage is pinned here too, with its own golden battery.
+#
+# realization_digest(record) is the lowercase hex sha256 of
+#     json.dumps(sorted(own), sort_keys=True).encode("utf-8")   (default separators)
+# where `own` is a list of two-element lists
+#     [output_name, sha256(output file bytes).hexdigest()]
+# one for each step that is kind="produce", carries NO "from" (a `from` output
+# belongs to a component and is covered by folding that component's mint), has
+# class="free", AND whose output file is present on disk; the list SORTED
+# ascending. An absent free output is omitted; a record with no such outputs
+# digests the empty list (sha256 of "[]"). Non-free (pinned) and component
+# (`from`) outputs never enter it. Reproduce these RD_GOLDEN digests exactly.
+RD_GOLDEN = [
+    ("rd1-one-free",
+     '[record]\nname = "a"\n\n[[step]]\nkind = "produce"\noutput = "g.txt"\nclass = "free"\nrequest = "x"\n\n[[step]]\nkind = "gate"\noutput = "V"\nclass = "validated"\nrun = "printf v > V"\n',
+     {"g.txt": "hello\n", "V": "v"},
+     "64ebf69715290d4694644abe15162c52046919ccace6b9352192648e7d733804"),
+    ("rd2-two-free",
+     '[record]\nname = "b"\n\n[[step]]\nkind = "produce"\noutput = "a.py"\nclass = "free"\nrequest = "x"\n\n[[step]]\nkind = "produce"\noutput = "b.py"\nclass = "free"\nrequest = "y"\n',
+     {"a.py": "print(1)\n", "b.py": "print(2)\n"},
+     "b540ad3bb9547b45529f5d4f4aeb87d5cdd2f2ed90792256506dba6aec3b93db"),
+    ("rd3-absent-free-omitted",
+     '[record]\nname = "c"\n\n[[step]]\nkind = "produce"\noutput = "present.txt"\nclass = "free"\nrequest = "x"\n\n[[step]]\nkind = "produce"\noutput = "absent.txt"\nclass = "free"\nrequest = "y"\n',
+     {"present.txt": "here\n"},
+     "489de2b990255044569a0189530a415431827fa21c6782c47d049267021a1e99"),
+    ("rd4-from-excluded",
+     '[record]\nname = "d"\n\n[[step]]\nkind = "produce"\noutput = "base.py"\nclass = "free"\nfrom = "comp"\nrequest = "x"\n\n[[step]]\nkind = "produce"\noutput = "mine.py"\nclass = "free"\nrequest = "y"\n',
+     {"base.py": "SUPPLIED\n", "mine.py": "MINE\n"},
+     "b7aab24b4cfdda50695cd3984b10d31299f45a7d2594fcab49d625fff5eadf85"),
+    ("rd5-unicode",
+     '[record]\nname = "e"\n\n[[step]]\nkind = "produce"\noutput = "u.txt"\nclass = "free"\nrequest = "x"\n',
+     {"u.txt": "café ☕ naïve\n"},
+     "e2a6976a9b816de92aea13bcf80a48b47585155e5953258e9542d96ae1664134"),
+    ("rd6-no-free",
+     '[record]\nname = "f"\n\n[[step]]\nkind = "gate"\noutput = "V"\nclass = "validated"\nrun = "printf v > V"\n',
+     {"V": "v"},
+     "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"),
+]
+
 
 def _rejail() -> None:
     """Judge in the verdict's environment: if the host has a jail and we are not
@@ -421,6 +465,27 @@ def battery() -> None:
             assert got == groot, (
                 f"canonical root mismatch for {gname}: the record must hash to the "
                 f"pinned value so records travel between kernels; got {got}, want {groot}")
+
+        # the realization digest is a currency too, so MINTS travel: a mint binds
+        # this digest, and if two kernels compute it differently, a mint made by
+        # one will not verify under another. Pin its canonical serialization (see
+        # RD_GOLDEN above) the same way as the root. A kernel free to choose its
+        # own digest layout passes the mint clauses below (which check only that
+        # the digest MOVES with the free crystal) yet computes a different value
+        # here, so its mints are unportable.
+        for gname, grecipe, gfiles, gdigest in RD_GOLDEN:
+            rd = os.path.join(d, "rd-" + gname)
+            os.makedirs(rd)
+            with open(os.path.join(rd, "reticuli.toml"), "w", encoding="utf-8") as f:
+                f.write(grecipe)
+            for fn, content in gfiles.items():
+                with open(os.path.join(rd, fn), "w", encoding="utf-8") as f:
+                    f.write(content)
+            got = kernel.realization_digest(rd)
+            assert got == gdigest, (
+                f"canonical realization-digest mismatch for {gname}: the mint's "
+                f"crystal must hash to the pinned value so mints travel between "
+                f"kernels; got {got}, want {gdigest}")
 
         # the mint: solid identity, bottom-anchored. mint_node folds a rung's
         # claim root, its realization digest, and the mints beneath it, so the
