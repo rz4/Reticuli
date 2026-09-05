@@ -82,8 +82,12 @@ check — a deliberate re-mint — and leave the test as the bench copy.
 
 ## Known limits (state these with any result)
 
-- **Self-referential** — eight rungs of Reticuli reproducing itself. External
-  validity needs a non-self specimen (a real outside project).
+- **Self-referential** (largely addressed) — the eight-rung runs are Reticuli
+  reproducing itself, but the first non-self specimen has now landed: an external
+  library (tomli) packed and regrown from its tests alone, three-machine proven
+  ([external-tomli.md](external-tomli.md)). Remaining gap: that specimen is
+  public (likely in-training), so epistemic independence is weaker than the test
+  sees — the sharper next specimen is code the model has not seen.
 - **Claude-family only** until a working OpenAI key is supplied.
 - **`audit` assumes gates are deterministic and hermetic.** A nondeterministic
   gate fails audit loudly (the right direction), but such a gate is not a valid
