@@ -99,7 +99,8 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   mapped a spec gap the Claude run had silently guessed past. Remaining
   independence limits are structural (shared LLM training lineage; the
   environment/substrate boundary), not experimental.
-- **Claude-family only** until a working OpenAI key is supplied.
+- **Two vendors, both Claude and OpenAI** (via the science-cloud LiteLLM
+  gateway); more families would further strengthen cross-vendor independence.
 - **`audit` assumes gates are deterministic and hermetic.** A nondeterministic
   gate fails audit loudly (the right direction), but such a gate is not a valid
   claim; quarantine helps enforce hermeticity.
