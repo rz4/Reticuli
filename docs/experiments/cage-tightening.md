@@ -67,8 +67,50 @@ differential fuzz is a machine for finding the behaviors a test suite forgot to
 specify, and it keeps finding them until the spec is complete. For a real
 codebase, "complete" is the horizon you move toward, not a place you arrive.
 
+## Round three — the loop converges
+
+v3 (75 tests) pinned the third gap in *both* orderings (`~` tighter than `*`/`/`
+whether `~` is on the left or the right — v2 had only pinned it on the left,
+which is the asymmetry Claude v2 fell into). Both vendors re-ran; both landed at
+root `df6311f3`. The full three-round convergence, each vendor's fresh draw
+fuzzed against the reference over 20,000 random expressions:
+
+| round | tests | claude | openai |
+|---|---|---|---|
+| v1 | 59 | 99.89% | 96.12% |
+| v2 | 69 | 98.06% | 100.00% |
+| v3 | 75 | **100.00%** | **100.00%** |
+
+Zero residual disagreements for either vendor at v3. Sixteen tests, added in two
+rounds strictly in response to fuzz counterexamples, drove two **independent**
+reconstructions to exact agreement with the reference everywhere the fuzz probes.
+The non-monotonic dip at v2/claude is the signature of the method, not a flaw:
+each round is a fresh draw, so closing two gaps can expose a third, and the loop
+runs until the draws stop diverging.
+
+## What converged, and what "converged" honestly means
+
+- **The CEGIS loop terminated (empirically).** fuzz → pin → re-fuzz, three
+  rounds, ended with both vendors at 100% over 20k random inputs. For a grammar
+  this small the spec is now, to the resolution of the fuzz, complete.
+- **"100% over 20k random exprs" is strong evidence, not proof.** The fuzz is a
+  sampler; a rarer region could still hide. One did earlier — a `/0`-evaluation-
+  order edge (`15 / 0` inside a `?`/max branch) showed at ~1-in-60k in round two
+  and did not surface in the v3 sample. Convergence here means "no divergence
+  found," which is the honest ceiling of differential testing. Proof would need
+  a formal spec (the gate-as-proof-checker rung on the reach ladder).
+- **The reference is the canonical implementation** (authored with the language),
+  so "agrees with reference" = "implements quirkcalc as defined." Two vendors now
+  do, from the tests alone.
+
+The whole exhibit, in one line: an invented language, reconstructed by two
+independent vendors from its tests, was driven to cross-vendor behavioral
+identity by three rounds of differential-fuzz-guided test authoring — the cage
+tightened until the basin, on everything measured, collapsed to a point.
+
 ## Status
 
-Measured 2026-09-05. Targeted gaps closed for both vendors; the loop continues
-(next counterexample identified). Specimen and its versions live in scratch; this
-is the residue.
+Measured 2026-09-05. Loop converged (both vendors 100% over 20k at v3, root
+`df6311f3`); the one known rarer edge (`/0` ordering) remains below the fuzz's
+resolution and is noted, not closed. Specimen versions live in scratch; this is
+the residue.
