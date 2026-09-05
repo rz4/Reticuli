@@ -66,7 +66,8 @@ def _rejail() -> None:
 
 SCRIPTS = ["scripts/selfrecord.py", "scripts/probe.py", "scripts/sweep.py",
            "scripts/envelope.py", "scripts/producer_claude.py",
-           "scripts/producer_claude_agentic.py", "scripts/producer_openai.py"]
+           "scripts/producer_claude_agentic.py", "scripts/producer_openai.py",
+           "scripts/producer_openai_agentic.py"]
 
 # import-safety: a tool's module body may only DEFINE — imports, constants, defs,
 # the `if __name__ == "__main__"` guard, the docstring, and the sys.path bootstrap.

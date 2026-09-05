@@ -89,8 +89,12 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   ([unseen-quirkcalc.md](unseen-quirkcalc.md)), reconstructed from its tests alone
   (99.89% differential-fuzz agreement with the reference, the 0.11% being exactly
   where the spec was silent). Genuine reconstruction, not recall, on code that
-  was not in training. Remaining independence gap: cross-vendor producers (a
-  second model family) — still Claude-only.
+  was not in training. And the **cross-vendor** axis is now closed: OpenAI's
+  gpt-5 regrew the same spec through a new agentic OpenAI producer, three-machine
+  proven ([cross-vendor-openai.md](cross-vendor-openai.md)) — and its divergences
+  mapped a spec gap the Claude run had silently guessed past. Remaining
+  independence limits are structural (shared LLM training lineage; the
+  environment/substrate boundary), not experimental.
 - **Claude-family only** until a working OpenAI key is supplied.
 - **`audit` assumes gates are deterministic and hermetic.** A nondeterministic
   gate fails audit loudly (the right direction), but such a gate is not a valid

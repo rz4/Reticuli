@@ -69,8 +69,9 @@ The gate runs `{gate['run'] if gate else ''}` and must create `{gate['output'] i
 The record's files are {produce} (each reconstructed the same way).
 Standard library only. Correct over clever. Write `{out}` now.{present_text}"""
 
+    base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
     req = urllib.request.Request(
-        "https://api.openai.com/v1/chat/completions",
+        base + "/chat/completions",
         data=json.dumps({"model": model,
                          "messages": [{"role": "user", "content": prompt}]}).encode(),
         headers={"Content-Type": "application/json",

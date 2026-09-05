@@ -118,6 +118,12 @@ request = "regenerate scripts/producer_openai.py to pass the gate"
 
 [[step]]
 kind = "produce"
+output = "scripts/producer_openai_agentic.py"
+class = "free"
+request = "regenerate scripts/producer_openai_agentic.py to pass the gate"
+
+[[step]]
+kind = "produce"
 output = "scripts/selfrecord.py"
 class = "free"
 request = "regenerate scripts/selfrecord.py to pass the gate"
