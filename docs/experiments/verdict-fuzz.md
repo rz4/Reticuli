@@ -346,6 +346,18 @@ and 2) — everything between and above held, the whole root included. All three
 holes reproduced before and are closed after; checks pass bare and jailed, 48
 tests green.
 
+*Regeneration-validated (2026-09-05).* A recursive rehydration of the authoring
+rung (sonnet-5, `$2.18` for the authoring stratum) regrew kernel-core → exchange
+→ authoring leaf-first; **all three landed at their committed roots**
+(`7c31e5a3`, `39546fe6`, `e4f720ae`). The regrown kernel (1018 lines different
+from committed) grew `run_gate` and used it; the regrown condense and pack call
+`_jailed` **zero** times and route through `run_gate` instead. A fresh authoring
+draw *independently adopted the single-entry-point architecture* — the AST clause
+forbids `_jailed`, so the agentic loop iterated until condense/pack complied. The
+architectural contract is expressible from the check alone, and regeneration
+reproduces it: the reviewer's three holes are closed in the basin, not merely in
+the committed bytes.
+
 ## Status
 
 Measured 2026-09-05 against kernel-core `2ec592de`; three findings carved the
