@@ -239,6 +239,74 @@ def battery() -> None:
         except kernel.ReticuliError:
             pass
 
+        # confinement covers SYMLINKS, not only `..` and absolute names: a seed
+        # that is a symlink whose target leaves the record must be refused, or the
+        # kernel reads outside the record through a name that looks local. A
+        # lexical _safe (normpath, never realpath) passes the `..`/absolute cases
+        # above yet FOLLOWS this link — exactly the exfil-by-symlink payload class
+        # a live draw fell into, so the boundary must resolve links before judging.
+        sesc = os.path.join(d, "symesc")
+        os.makedirs(sesc)
+        with open(os.path.join(d, "sym-outside.txt"), "w") as f:
+            f.write("reached only by following a symlink out of the record\n")
+        os.symlink(os.path.join(d, "sym-outside.txt"), os.path.join(sesc, "spec.txt"))
+        with open(os.path.join(sesc, "reticuli.toml"), "w") as f:
+            f.write('[record]\nname = "symesc"\ninputs = ["spec.txt"]\n\n'
+                    '[[step]]\nkind = "gate"\noutput = "V"\n'
+                    'run = "printf v > V"\nclass = "validated"\n')
+        try:
+            kernel.claim(kernel.load_recipe(sesc), sesc)
+            raise AssertionError("claim must refuse a seed symlinked out of the record")
+        except kernel.ReticuliError:
+            pass
+
+        # hostile record bytes are REFUSED, never crashed on and never shrugged
+        # past: a corrupt manifest or recipe must raise the kernel's own
+        # ReticuliError, not leak a raw UnicodeDecodeError / JSONDecodeError /
+        # TOMLDecodeError, and phase() must not answer "liquid" about a manifest it
+        # cannot even parse. A verifier facing a damaged record refuses in band; it
+        # neither throws an uncaught exception nor blesses the wreckage.
+        badm = os.path.join(d, "hostile-manifest")
+        os.makedirs(badm)
+        with open(os.path.join(badm, "reticuli.toml"), "w") as f:
+            f.write(FIXTURE)
+        with open(os.path.join(badm, "g.txt"), "w") as f:
+            f.write("hello, world\n")
+        subprocess.run("grep -qi hello g.txt && printf v > V", shell=True, cwd=badm, check=True)
+        kernel.seal(badm)
+        assert kernel.verify(badm)["ok"], "the record is sound before corruption"
+        with open(os.path.join(badm, kernel.STORE, "manifest.json"), "wb") as f:
+            f.write(b"\xff\xfe not json \x00 at all")
+        for fn in (kernel.verify, kernel.phase, kernel.audit):
+            try:
+                fn(badm)
+                raise AssertionError(f"{fn.__name__} must refuse a corrupt manifest")
+            except kernel.ReticuliError:
+                pass
+        badr = os.path.join(d, "hostile-recipe")
+        os.makedirs(badr)
+        with open(os.path.join(badr, "reticuli.toml"), "w") as f:
+            f.write(FIXTURE)
+        with open(os.path.join(badr, "g.txt"), "w") as f:
+            f.write("hello, world\n")
+        subprocess.run("grep -qi hello g.txt && printf v > V", shell=True, cwd=badr, check=True)
+        kernel.seal(badr)
+        with open(os.path.join(badr, "reticuli.toml"), "w") as f:
+            f.write("[[[ this is not valid TOML at all")
+        for fn in (kernel.load_recipe, kernel.verify, kernel.audit):
+            try:
+                fn(badr)
+                raise AssertionError(f"{fn.__name__} must refuse a corrupt recipe")
+            except kernel.ReticuliError:
+                pass
+        with open(os.path.join(badr, "reticuli.toml"), "w") as f:   # parses, but no [record] name
+            f.write("[record]\n")
+        try:
+            kernel.load_recipe(badr)
+            raise AssertionError("load_recipe must refuse a recipe with no [record] name")
+        except kernel.ReticuliError:
+            pass
+
         # resource bound: a gate has a wall-clock ceiling (declarable, capped by
         # the environment), so a hostile or broken gate cannot hang the verifier.
         # A `sleep` gate under a 1s ceiling is killed — a failed redo, not a hang.
@@ -325,6 +393,30 @@ def battery() -> None:
         assert not rf["satisfied"], "a carried verdict does not prove"
         assert not kernel.freeze_dry(m1, m2, m3f)["proof_recorded"], "and records no proof"
         assert kernel.audit(m3)["ok"] and not kernel.audit(m3f)["ok"], "audit is the deep check"
+
+        # audit is CLAIM-deep, not gate-shallow. The fabricated M3 above breaks
+        # the GATE; this breaks the CLAIM while the gate stays green: edit a dry
+        # SEED after sealing (the acceptance criteria change, the root no longer
+        # recomputes) but leave the implementation that satisfies the old gate
+        # untouched. audit must reject this silent spec-substitution — a kernel
+        # that only re-runs the gates, never re-checking the claim still holds,
+        # passes the fabricated-M3 case yet blesses a swapped claim.
+        sub = os.path.join(d, "subst")
+        os.makedirs(sub)
+        with open(os.path.join(sub, "reticuli.toml"), "w") as f:
+            f.write(SEEDED)
+        with open(os.path.join(sub, "spec.txt"), "w") as f:
+            f.write("acceptance criteria: v1\n")
+        with open(os.path.join(sub, "impl.txt"), "w") as f:
+            f.write("PASS — satisfies the gate\n")
+        subprocess.run("grep -q PASS impl.txt && printf v > V", shell=True, cwd=sub, check=True)
+        kernel.seal(sub)
+        assert kernel.audit(sub)["ok"], "the honest seeded record audits clean"
+        with open(os.path.join(sub, "spec.txt"), "w") as f:   # swap the CLAIM, gate stays green
+            f.write("acceptance criteria: v2 (substituted after sealing)\n")
+        assert not kernel.verify(sub)["ok"], "a seed edit breaks the sealed root"
+        assert not kernel.audit(sub)["ok"], \
+            "audit rejects a broken claim even when the gate still passes"
 
         # SOLID = AUTHORIZED (by a trusted signer) AND PROVEN (a recorded proof).
         # freeze_dry records the proof as residue; that alone is not solid. A

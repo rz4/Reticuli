@@ -86,8 +86,28 @@ def _seeds(recipe: dict) -> list[str]:
 
 
 def load_recipe(d: str) -> dict:
-    with open(os.path.join(d, RECIPE), "rb") as f:
-        return tomllib.load(f)
+    """Parse the record's recipe, refusing hostile bytes with a ReticuliError
+    rather than leaking a raw TOML/OS crash, and validating the minimal shape the
+    kernel relies on: a [record] table with a name, every step a table with a
+    kind (produce/gate steps naming an output, a gate a run). A record's own
+    recipe is untrusted input — malformed is refused here, not crashed on
+    downstream where the failure is a bare KeyError with no reason attached."""
+    try:
+        with open(os.path.join(d, RECIPE), "rb") as f:
+            recipe = tomllib.load(f)
+    except (OSError, ValueError) as e:
+        raise ReticuliError(f"unreadable recipe in {d}: {e}") from e
+    rec = recipe.get("record")
+    if not isinstance(rec, dict) or not isinstance(rec.get("name"), str):
+        raise ReticuliError(f"malformed recipe in {d} ([record] name required)")
+    for step in recipe.get("step", []):
+        if not isinstance(step, dict) or "kind" not in step:
+            raise ReticuliError(f"malformed recipe step in {d} (a step needs a kind)")
+        if step["kind"] in ("produce", "gate") and "output" not in step:
+            raise ReticuliError(f"malformed {step['kind']} step in {d} (an output is required)")
+        if step["kind"] == "gate" and "run" not in step:
+            raise ReticuliError(f"malformed gate step in {d} (a run is required)")
+    return recipe
 
 
 def _safe(root: str, name: str) -> str:
@@ -142,6 +162,7 @@ def phase(d: str) -> str:
     m = os.path.join(d, STORE, "manifest.json")
     if not os.path.isfile(m):
         return "vapor"
+    read_manifest(d)     # a present-but-corrupt manifest is refused, never a silent "liquid"
     return "solid" if minted(d)["ok"] else "liquid"
 
 
@@ -164,7 +185,7 @@ def minted(d: str, signers: str | None = None) -> dict:
              if os.path.isdir(base) else [])
     if not names:
         return {"ok": False, "statements": [], "signers": signers}
-    root = _read(os.path.join(d, STORE, "manifest.json"))["root"]
+    root = read_manifest(d)["root"]
     digest = realization_digest(d)
     out = []
     for name in names:
@@ -226,7 +247,19 @@ def seal(d: str, proof: dict | None = None, components: list | None = None) -> d
 
 
 def read_manifest(d: str) -> dict:
-    return _read(os.path.join(d, STORE, "manifest.json"))
+    """Read the record's manifest, refusing hostile bytes with a ReticuliError
+    rather than a raw parse crash: a corrupt or malformed manifest is a damaged
+    record, not a verifier bug. The manifest is pure identity — name + root
+    (+ optional proof/components) — so both must be present as strings."""
+    path = os.path.join(d, STORE, "manifest.json")
+    try:
+        m = _read(path)
+    except (OSError, ValueError) as e:
+        raise ReticuliError(f"unreadable manifest in {d}: {e}") from e
+    if not isinstance(m, dict) or not isinstance(m.get("name"), str) \
+            or not isinstance(m.get("root"), str):
+        raise ReticuliError(f"malformed manifest in {d} (name and root required)")
+    return m
 
 
 def verify(d: str) -> dict:
@@ -236,7 +269,7 @@ def verify(d: str) -> dict:
     if phase(d) == "vapor":
         raise ReticuliError(f"no record in {d} (seal first)")
     recipe = load_recipe(d)
-    manifest = _read(os.path.join(d, STORE, "manifest.json"))
+    manifest = read_manifest(d)
     got = claim(recipe, d)
     return {"name": manifest["name"], "root": manifest["root"],
             "recomputed": got, "ok": got == manifest["root"],

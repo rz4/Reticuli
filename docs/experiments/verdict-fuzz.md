@@ -119,9 +119,42 @@ judges records *built by the committed kernel* (interop) or *self-sealed*
 (native) — a third direction, draw-built records judged by committed, was not
 run.
 
+## Carved (2026-09-05)
+
+Three of the six findings were promoted to `kernel_check` clauses the same day,
+in stakes order, per the plain-English agenda:
+
+- **Finding 2 (audit is claim-deep).** New clause: a record whose dry *seed* is
+  edited after sealing — the claim broken, the gate still green — must fail
+  `audit`. Both draws blessed it; an honest kernel folds claim integrity in.
+- **Finding 3 (symlink confinement).** New clause: a seed that is a symlink
+  whose target leaves the record is refused by `claim`. `_safe` must resolve
+  links, not judge lexically — the exfil-by-symlink payload class.
+- **Finding 5 (hostile-bytes discipline).** Fixed the committed kernel first
+  (it was an offender): `load_recipe` and `read_manifest` now refuse malformed
+  recipe/manifest bytes with `ReticuliError` instead of leaking a raw
+  `TOMLDecodeError`/`JSONDecodeError`, and `phase` no longer answers "liquid"
+  about a manifest it cannot parse. New clause pins all three.
+
+Editing the `kernel_check` seed moved **only** the kernel-core root
+(`2ec592de` → `b2f5b117`); the other seven held — localization confirmed live.
+The check passes bare and jailed; the 48-test suite is green.
+
+**Not carved — these are decisions, not patches.** Finding 1 (roots are
+implementation-relative, so records don't travel) is the identity fork: making
+the root an interchange currency needs a golden-vector clause that trades away
+enormous honest width — a design call for its own sitting. Finding 4 (a draw
+calls a forged packet solid because it recomputes the packet from live state
+rather than reading the file) is the authoritative-vs-residue decision about
+what the packet file *is*; decide, then pin. Finding 6 (three-machine surface,
+zero divergence) needed nothing.
+
 ## Status
 
-Measured 2026-09-05. Nothing carved; the agenda above awaits triage. The
-specimen kernels live in session scratch (identified here by digest) and are
-regenerable by any kernel-core rehydration; the harness takes kernel paths as
-arguments and runs against any draw.
+Measured 2026-09-05 against kernel-core `2ec592de`; three findings carved the
+same day (kernel-core now `b2f5b117`). The two regrown specimens are of the
+*pre-carve* claim, so re-running the harness with the current committed kernel
+is a cross-claim comparison; the clean re-measurement is a fresh kernel-core
+rehydration of `b2f5b117` fuzzed against committed — expected to show the three
+carved classes gone. The harness takes kernel paths as arguments and runs
+against any draw.
