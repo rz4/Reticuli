@@ -89,8 +89,27 @@ so at the genesis, for \$1.55. The fix decision (make the inheritance signal
 bootstrap-robust, most simply by reverting #3b's token to the single narrated
 `RETICULI_JAILED` signal and keeping #3a's scrub) is the next step.
 
+## Fix validated live (2026-09-04)
+
+#3b was reverted to bare-env inheritance (single `RETICULI_JAILED`, no token;
+#3a's scrub kept), which moved kernel-core to `2ec592de…`. The fix was then
+**validated by the same instrument**: a targeted live rehydration of kernel-core
+alone (the rung that died) with a fresh sonnet producer **landed at the exact
+committed root `2ec592de…`, `verify` fresh, for \$1.69 / 60k tokens**. The
+regenerated kernel (400 lines vs our 607, byte-different) reads the inherited
+signal with **only `RETICULI_JAILED`** — no second name, no token file. With the
+token removed from the check, the producer built the bootstrap-robust handshake
+on its own. The genesis that failed in this run now self-hosts under live
+regeneration.
+
+The loop, closed: the live instrument found a hidden basin-narrowing claim, the
+claim was widened (the token removed), and the same instrument confirmed an
+independent kernel now lands. Realization debt detected → paid into the claim →
+convergence measured, exactly as the program intends.
+
 ## Status
 
-Measured 2026-09-04. M3 left as produced. The committed repo still self-hosts
-via byte-copy (both sides committed), so nothing is broken *in place* — the
-regression is a basin narrowing that only live regeneration reveals.
+Measured and fixed 2026-09-04. The regression was a basin narrowing that only
+live regeneration revealed; the fix is validated by live regeneration. A full
+8-rung run against the widened claims remains available, but is expected to hit
+the still-open workshop jail-seam (run 3's finding, orthogonal to this).
