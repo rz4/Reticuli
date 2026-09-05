@@ -477,6 +477,32 @@ def battery() -> None:
                 shutil.copytree(m1, sol_o)
                 _hand_mint(sol_o, "stranger@elsewhere", other, include_proof=True)
                 assert kernel.phase(sol_o) == "liquid", "an untrusted signer is not solid to you"
+
+                # the stored packet FILE is authoritative, not disposable residue.
+                # The signed statement binds the packet by digest, so the review
+                # bundle on disk — what a human opens to see WHAT was authorized —
+                # must match the signature. Swapping the packet file must demote,
+                # even though the live record is untouched. A kernel that
+                # RECONSTRUCTS the packet from current state and never reads the
+                # file calls a forged packet solid (the reviewable artifact could
+                # then be anything); solidity must verify the file, not just the
+                # record. (Drift — the file honest but the record changed — is the
+                # complementary direction, pinned by the g.txt edit above.)
+                mint_dir = os.path.join(sol, kernel.MINT)
+                pfile = next(f for f in sorted(os.listdir(mint_dir))
+                             if f.endswith(".packet.json"))
+                ppath = os.path.join(mint_dir, pfile)
+                with open(ppath) as f:
+                    honest_packet = f.read()
+                tampered = json.loads(honest_packet)
+                tampered["root"] = "f" * 64                # swap the stored packet
+                with open(ppath, "w") as f:
+                    json.dump(tampered, f, sort_keys=True)
+                assert kernel.phase(sol) == "liquid", \
+                    "a stored packet not matching the signed digest is not solid"
+                with open(ppath, "w") as f:                # restore the honest bundle
+                    f.write(honest_packet)
+                assert kernel.phase(sol) == "solid", "the honest packet restored, solid again"
             finally:
                 os.environ.pop("RETICULI_SIGNERS", None)
 

@@ -140,14 +140,22 @@ Editing the `kernel_check` seed moved **only** the kernel-core root
 (`2ec592de` → `b2f5b117`); the other seven held — localization confirmed live.
 The check passes bare and jailed; the 48-test suite is green.
 
-**Not carved — these are decisions, not patches.** Finding 1 (roots are
-implementation-relative, so records don't travel) is the identity fork: making
-the root an interchange currency needs a golden-vector clause that trades away
-enormous honest width — a design call for its own sitting. Finding 4 (a draw
-calls a forged packet solid because it recomputes the packet from live state
-rather than reading the file) is the authoritative-vs-residue decision about
-what the packet file *is*; decide, then pin. Finding 6 (three-machine surface,
-zero divergence) needed nothing.
+**Finding 4 decided and carved (2026-09-05).** The packet file is
+**authoritative**, not disposable residue: solidity must verify the stored
+review bundle against the signature, so swapping the packet file demotes even
+when the live record is untouched. New `kernel_check` clause; the committed
+kernel already did this (reads and binds the file), so it is a pure pin — teeth
+confirmed against the kcval draw, whose `phase()` reconstructs the packet from
+live state and so calls a forged packet solid (it fails the new clause). The
+complementary direction (file honest, record drifted) was already pinned by the
+post-mint `g.txt` edit. Editing the seed moved only kernel-core
+(`b2f5b117` → `498e426a`); the other seven held.
+
+**Still a decision, not a patch.** Finding 1 (roots are implementation-relative,
+so records don't travel) is the identity fork: making the root an interchange
+currency needs a golden-vector clause that trades away enormous honest width —
+a design call for its own sitting. Finding 6 (three-machine surface, zero
+divergence) needed nothing.
 
 ## Live validation — the basin holds the carve, not just the committed bytes
 
