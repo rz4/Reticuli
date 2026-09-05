@@ -72,8 +72,11 @@ def _h(b: bytes) -> str:
 
 
 def _hf(path: str) -> str:
-    with open(path, "rb") as f:
-        return _h(f.read())
+    try:
+        with open(path, "rb") as f:
+            return _h(f.read())
+    except OSError as e:      # a declared seed/output that isn't there is a refusal, not a crash
+        raise ReticuliError(f"declared file missing or unreadable: {path!r} ({e})") from e
 
 
 def _out(step: dict) -> str:
@@ -162,7 +165,10 @@ def phase(d: str) -> str:
     m = os.path.join(d, STORE, "manifest.json")
     if not os.path.isfile(m):
         return "vapor"
-    read_manifest(d)     # a present-but-corrupt manifest is refused, never a silent "liquid"
+    read_manifest(d)             # a present-but-corrupt manifest is refused, never a silent "liquid"
+    claim(load_recipe(d), d)     # phase agrees with verify on validity: a record whose recipe is
+    #                              malformed, escapes confinement, or names a missing seed/pin has no
+    #                              phase to report — refuse it here rather than answer a positive "liquid"
     return "solid" if minted(d)["ok"] else "liquid"
 
 

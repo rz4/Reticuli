@@ -205,17 +205,26 @@ divergences `84 → 31`, `rdigest 28 → 1` (the lone survivor a byte-flip artif
 The regrown kernel even chose the same mint directory (`.reticuli/mint`)
 independently, so the unpinned mint *location* happened to agree here too.
 
-The residual `31` are now almost entirely **refusal-discipline SHAPE**: on an
+The residual `31` were almost entirely **refusal-discipline SHAPE**: on an
 *already-damaged* record (a deleted or path-escaping seed, a corrupt recipe)
-committed's `phase` returns `"liquid"`/`"vapor"` while the regrown kernel
-*raises* `ReticuliError`. Both agree the record is **not solid** — nothing is
-blessed — they differ only in how they voice the refusal. It exposes a small
-inconsistency in *committed* worth its own micro-carve: `phase` does not call the
-path-confinement boundary, so it answers `"liquid"` about a seed-escaping record
-that its own `verify` would refuse. Two classes remain, both low-stakes and
-neither on an honest record: this `phase`-vs-`verify` refusal consistency, and
-the earlier free-output symlink in `audit` (a free output is never hashed).
-Data: `divergences-mint.jsonl`.
+committed's `phase` returned `"liquid"` while the regrown kernel *raised*. Both
+agreed the record was not solid; they differed only in how they voiced the
+refusal — but it exposed a real inconsistency in *committed*: `phase` read only
+the manifest, so it answered `"liquid"` about a record its own `verify` refuses.
+
+**Both micro-carves done (2026-09-05).** (1) *phase agrees with verify on
+validity*: `phase` now recomputes the claim, so a record whose recipe is
+malformed, escapes confinement, or names a missing seed is refused (a directory
+with a recipe but no manifest is still `"vapor"` — unsealed, not an error); and
+`_hf` refuses a missing declared file with `ReticuliError` instead of a raw
+`OSError`. (2) *free-output symlink confinement*: `audit` refuses a free output
+symlinked out of the record (it copies every produce output through the
+confinement boundary; a free output is never hashed, but copying one that
+escapes is the same exfiltration a seed symlink would be). Both are `kernel.py`
+changes plus pins; the mint-currency draw fails the new pins (teeth). Seed edit
+moved only kernel-core (`712d4976` → `fab7a497`); the other seven held. With
+these, every fuzz finding is either carved or a decided design choice, and no
+divergence remains on an honest record. Data: `divergences-mint.jsonl`.
 
 **Finding 6** (three-machine surface, zero divergence) needed nothing.
 

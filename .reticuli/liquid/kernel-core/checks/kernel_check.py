@@ -400,6 +400,58 @@ def battery() -> None:
         except kernel.ReticuliError:
             pass
 
+        # phase AGREES WITH verify on validity: phase reports vapor/liquid/solid
+        # only for a well-formed record. A directory with a recipe but no manifest
+        # is unsealed — that is "vapor", not an error. But a record sealed clean
+        # and then given an escaping or missing seed (or a corrupt recipe) is one
+        # verify refuses, so phase must refuse it too, never answer a positive
+        # "liquid" an auditor would read as a valid seal. (A kernel whose phase
+        # reads only the manifest says "liquid" about a record its own verify
+        # raises on — the inconsistency this pins shut.)
+        ph = os.path.join(d, "phase-consistency")
+        os.makedirs(ph)
+        with open(os.path.join(ph, "reticuli.toml"), "w") as f:
+            f.write(FIXTURE)
+        with open(os.path.join(ph, "g.txt"), "w") as f:
+            f.write("hello, world\n")
+        subprocess.run("grep -qi hello g.txt && printf v > V", shell=True, cwd=ph, check=True)
+        assert kernel.phase(ph) == "vapor", "a recipe with no manifest is vapor, not an error"
+        kernel.seal(ph)
+        assert kernel.phase(ph) == "liquid", "a clean sealed record is liquid"
+        for mutate, label in (
+                ('name = "fixture"\ninputs = ["../ph-outside.txt"]', "seed escapes the root"),
+                ('name = "fixture"\ninputs = ["gone.txt"]', "seed is missing")):
+            with open(os.path.join(d, "ph-outside.txt"), "w") as f:
+                f.write("a file the record must not name\n")
+            with open(os.path.join(ph, "reticuli.toml"), "w") as f:
+                f.write(FIXTURE.replace('name = "fixture"', mutate))
+            for fn in (kernel.phase, kernel.verify):
+                try:
+                    fn(ph)
+                    raise AssertionError(f"{fn.__name__} must refuse a record whose {label}")
+                except kernel.ReticuliError:
+                    pass
+
+        # confinement covers FREE outputs too, not just seeds: a free output that
+        # is a symlink whose target leaves the record must be refused by audit,
+        # which copies every produce output through the confinement boundary. A
+        # free output is never hashed, but copying one that escapes the record is
+        # the same exfiltration a seed symlink would be — so audit resolves links.
+        fso = os.path.join(d, "free-symlink-out")
+        os.makedirs(fso)
+        with open(os.path.join(fso, "reticuli.toml"), "w") as f:
+            f.write(FIXTURE)
+        with open(os.path.join(d, "fso-target.txt"), "w") as f:
+            f.write("hello, world\n")
+        os.symlink(os.path.join(d, "fso-target.txt"), os.path.join(fso, "g.txt"))
+        subprocess.run("grep -qi hello g.txt && printf v > V", shell=True, cwd=fso, check=True)
+        kernel.seal(fso)
+        try:
+            kernel.audit(fso)
+            raise AssertionError("audit must refuse a free output symlinked out of the record")
+        except kernel.ReticuliError:
+            pass
+
         # resource bound: a gate has a wall-clock ceiling (declarable, capped by
         # the environment), so a hostile or broken gate cannot hang the verifier.
         # A `sleep` gate under a 1s ceiling is killed — a failed redo, not a hang.
