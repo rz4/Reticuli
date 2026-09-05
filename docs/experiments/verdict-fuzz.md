@@ -149,10 +149,65 @@ rather than reading the file) is the authoritative-vs-residue decision about
 what the packet file *is*; decide, then pin. Finding 6 (three-machine surface,
 zero divergence) needed nothing.
 
+## Live validation — the basin holds the carve, not just the committed bytes
+
+The run-4 lesson: a hardening clause is only real if an *independent
+regeneration* satisfies it — the committed bytes passing the check proves
+nothing about the basin. So the carve was validated by a fresh kernel-core
+rehydration of `b2f5b117`: an agentic Claude producer (sonnet-5) regrew
+`reticuli/kernel.py` from the stricter `kernel_check.py` **alone**, no reference
+implementation. Result:
+
+- **A genuinely independent draw.** 953 lines differ from committed, 25
+  top-level defs vs committed's ~35 — a full rewrite, not a copy.
+- **It passes the stricter check, jailed.** All three new clauses satisfied by
+  a draw that had never seen them — the authoritative gate, in the verdict
+  environment.
+- **It lands at `b2f5b117`.** Same claim root as committed, though its
+  `kernel.py` is byte-different and its `__init__.py` is empty where committed's
+  is 505 bytes — the implementation-is-free property, live.
+- **Cost `$2.95`** (101,991 tokens) vs the pre-carve kernel-core's `$1.69` —
+  ~75% more. The three clauses made the invariant measurably harder to regrow;
+  cost concentrates where the check narrates more contract (the run-5 lesson).
+
+Then the fuzz was re-run, committed vs this fresh same-claim draw:
+
+| | pre-carve (vs old draws) | post-carve (vs fresh draw) |
+|---|---|---|
+| total divergences | 205 | 126 |
+| ACCEPTS (draw blesses what committed refuses) | ~45 | 6 |
+| carved classes still divergent | — | **none** |
+
+The three carved classes are **quiet**: seed-edited-record (audit
+claim-integrity), seed-symlink (confinement), and corrupt manifest/recipe
+(hostile-bytes) all show zero ACCEPTS — the fresh draw refuses each, where the
+pre-carve draws blessed them. The 6 residual ACCEPTS are all `@n` random
+byte-flips on the manifest/recipe, and all are **flip-index artifacts, not
+counterexamples**: native mode flips byte *i* of each kernel's *own* manifest,
+but the two manifests differ in length (102 vs 95 bytes — finding 1 again), so
+"flip byte 8" corrupts committed's JSON while landing on a benign space in the
+draw's. The remaining 120 divergences are dominated by finding 1 (roots don't
+travel: interop records sealed by committed don't verify under a different
+canon) plus exception-shape cosmetics and two minor new unpinned edges (the
+draw is *stricter* on free-output symlinks, and differs on a zero-cost-band
+edge — both safe-direction, both future-carve candidates).
+
+**A harness artifact, noted honestly.** `realize` reported "failed" though the
+gate passed: the agent wrote a valid *empty* `__init__.py`, and the producer's
+`getsize(out) > 0` success guard rejects an intentionally-empty free output. The
+regeneration landed in the basin; the guard is a false-negative on a legitimate
+minimal realization (existence, not size, is the signal for a free file that may
+be empty). Filed as a producer fix, separate from the carve.
+
+Post-carve data (committed vs the fresh `b2f5b117` draw):
+[`vfuzz/divergences-postcarve.jsonl`](vfuzz/divergences-postcarve.jsonl).
+
 ## Status
 
 Measured 2026-09-05 against kernel-core `2ec592de`; three findings carved the
-same day (kernel-core now `b2f5b117`). The two regrown specimens are of the
+same day (kernel-core now `b2f5b117`) and the carve validated live by an
+independent rehydration (fresh draw passes the stricter gate jailed, lands at
+`b2f5b117`, `$2.95`; the three carved divergence classes went quiet). The two regrown specimens are of the
 *pre-carve* claim, so re-running the harness with the current committed kernel
 is a cross-claim comparison; the clean re-measurement is a fresh kernel-core
 rehydration of `b2f5b117` fuzzed against committed — expected to show the three
