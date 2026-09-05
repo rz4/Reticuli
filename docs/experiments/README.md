@@ -44,6 +44,13 @@ Series in the grid (`python3 scripts/sweep.py` prints the plan and estimates):
   cross-vendor fuzz found, re-run both vendors; the targets close, but a fresh
   draw exposes a third gap — convergence is asymptotic, and the fuzz (not the
   passing tests) is what catches an internally-inconsistent reconstruction.
+- `verdict-fuzz.md` — the instrument pointed at the kernel itself: committed
+  vs two regrown kernels of the same claim, judging identical records across a
+  tamper alphabet (`vfuzz/harness.py`, data in `vfuzz/divergences.jsonl`).
+  Findings: roots are implementation-relative (records don't travel), audit
+  semantics forked, symlink confinement and packet coherence live only in the
+  committed bytes — and the well-narrated three-machine surface diverged
+  nowhere. Narration is load-bearing spec; carving agenda measured, not carved.
 - `capstone-census.md` — the full divergence census of the capstone's M3
   against the committed tree: what the walls forced, what drifted, and the
   carving agenda it produced.
