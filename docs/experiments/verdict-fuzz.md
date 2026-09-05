@@ -197,7 +197,10 @@ gate passed: the agent wrote a valid *empty* `__init__.py`, and the producer's
 `getsize(out) > 0` success guard rejects an intentionally-empty free output. The
 regeneration landed in the basin; the guard is a false-negative on a legitimate
 minimal realization (existence, not size, is the signal for a free file that may
-be empty). Filed as a producer fix, separate from the carve.
+be empty). **Fixed** (commit `1ede141`): both agentic producers now key
+completion on the gate passing rather than a file's size; the oneshot producers,
+which cannot emit a 0-byte file, are unchanged. A free-code fix — all eight
+roots held.
 
 Post-carve data (committed vs the fresh `b2f5b117` draw):
 [`vfuzz/divergences-postcarve.jsonl`](vfuzz/divergences-postcarve.jsonl).
