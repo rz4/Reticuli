@@ -145,6 +145,14 @@ check — a deliberate re-mint — and leave the test as the bench copy.
   checks moved to `checks/` — every new clause rejects the capstone specimen,
   the committed tree passes all eight gates, and the re-rehearsed
   three-machine test holds at the new whole root `cc1a10e7…`.
+- **The fifth live rehydration (2026-09-05).** The capstone: the first full
+  8-rung run against the fully-hardened claims with both live-caught blockers
+  closed (#3b bare-env handshake, workshop re-jail). LANDED 8/8 at the committed
+  roots and passed its own three-machine test (satisfied/audited) for \$18.90 /
+  515k / ~93 min. Both carves confirmed live: workshop reached jail-tolerance in
+  22 calls (\$7.85, no death against a ~35% death bet), and the genesis landed
+  under bare-env. Cost predicted to within 2%. Full account in
+  [rehydration-5-census.md](rehydration-5-census.md).
 - **The fourth live rehydration (2026-09-04).** First run against the round-B
   hardened claims. FAILED at the genesis: the regenerated kernel named the #3b
   jail-token path env-var `RETICULI_JAIL_REF` while the committed bootstrapping

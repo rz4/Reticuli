@@ -52,3 +52,33 @@ sonnet (`claude-sonnet-5`), `RETICULI_AGENT_BUDGET=10`/rung, recursive.
   suite is tiny). If workshop lands, 8/8 is very likely.
 
 Actuals and the score go below after the run.
+
+## Actuals (2026-09-05)
+
+**Landed 8/8 at the committed roots; `ret prove . M2 M3` satisfied/integrity/
+reuse/equivalence/audited all true.** Total **\$18.90, ~515k tokens, 41 calls,
+~93 min**. Full account: [rehydration-5-census.md](rehydration-5-census.md).
+
+| rung | pred \$ | act \$ | note |
+|---|---|---|---|
+| kernel-core | 1.70 | 1.89 | close |
+| exchange | 4.50 | 2.26 | 2× over — round-B ceremony cheaper than feared |
+| authoring | 1.50 | 1.24 | close |
+| agents | 0.55 | 0.63 | close |
+| surface | 1.60 | 2.85 | 1.8× under — the one hot rung |
+| workshop | 7.50 | 7.85 | **nailed**; 22 calls to jail-tolerance, NO death |
+| vessel | 0.60 | 0.91 | close |
+| reticuli | 1.30 | 1.27 | nailed |
+| **total** | **19.25** | **18.90** | **within 2%** |
+
+## Score
+
+- **First 8/8 against the fully-hardened claims: correct** — the headline bet,
+  achievable for the first time (both blockers closed) and achieved.
+- **No budget death: correct**, against my own ~35% workshop-death call — and
+  workshop was *nailed* (\$7.85 vs \$7.50), the best per-rung call on the
+  riskiest rung. The re-jail made workshop harder and it still landed.
+- **Total within 2%.** Two misses cancelled: exchange half (narrated ceremony
+  regenerates cheap), surface nearly double (ran hot).
+- **Both carves confirmed live:** the workshop jail-seam (run 3) and the genesis
+  handshake (run 4) are closed in a full clean run.
