@@ -284,6 +284,49 @@ roots held.
 Post-carve data (committed vs the fresh `b2f5b117` draw):
 [`vfuzz/divergences-postcarve.jsonl`](vfuzz/divergences-postcarve.jsonl).
 
+## Capstone — one independent regrowth converges on the whole hardened kernel
+
+A final kernel-core rehydration (sonnet-5, `$2.81`, 999 lines different from
+committed) against the *fully hardened* check — every clause this arc added —
+agreed on **all seven pinned dimensions at once**: root, realization digest,
+verify-a-committed-record, mint-travel (it reads a committed mint as `solid`),
+`phase` refuses an escaping seed, `phase` returns `vapor` on a no-manifest
+record, and `audit` confines a free-output symlink. Fuzzing committed vs this
+draw: `16` divergences (from `205` at the arc's start), **zero on any honest
+record**; the residual is damaged-record refusal-discipline SHAPE plus native
+byte-flip artifacts. Data: `divergences-capstone.jsonl`.
+
+The capstone also independently reproduced a *new* hole (see below): the draw
+accepts an unknown step `kind`, because the check does not pin the vocabulary —
+the basin inherits the gap, not just committed. Exactly the point that an
+unpinned property is not a property.
+
+## A reviewer's three holes (2026-09-05)
+
+An external review of this exact version found three concrete holes the fuzz had
+not reached, all in the *authoring* machinery rather than the kernel invariant:
+
+1. **condense and pack bypass the scrubbed-bounded gate contract.** Both called
+   `_jailed(cmd, room, {**os.environ, …})` — the full environment, no
+   `_gate_timeout` — so a gate run by `pack`/`condense` could read an inherited
+   secret and seal it into the verdict (reproduced: `pack` sealed a fake
+   credential into `VERIFIED`). `realize` and `audit` scrub via `_gate_env`;
+   these two did not.
+2. **condense confines recipe paths too late.** Trace-derived seed/output paths
+   were copied with raw `os.path.join` *before* `_safe`; a traced read of
+   `../secret.txt` was copied outside the `.building` room before seal refused
+   the record. The invariant held at sealing, but the boundary was already
+   crossed on the way there.
+3. **Recipe-shape validation admits unknown step kinds.** `load_recipe` required
+   a `kind` but not that it be recognized; a `kind="weird"` step with no output
+   sealed, verified, and audited clean, then `realize` crashed with a raw
+   `KeyError('output')` — an implementation exception where the hostile-bytes
+   discipline promises `ReticuliError`.
+
+The fix (below) is one architectural correction: a single gate-execution entry
+point the whole toolchain consumes, `_safe` applied at the authoring copy, and
+the `kind` vocabulary closed — see the commit that follows this note.
+
 ## Status
 
 Measured 2026-09-05 against kernel-core `2ec592de`; three findings carved the

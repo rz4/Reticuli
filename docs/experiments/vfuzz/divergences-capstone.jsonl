@@ -1,0 +1,16 @@
+{"case": "s18-output-symlink-out@i", "class": "structural", "kernel": "kernel_capstone", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "s18-output-symlink-out@n", "class": "structural", "kernel": "kernel_capstone", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "r-flip-008-manifest.json@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "audit", "committed": "EXC:ReticuliError", "draw": true, "stakes": "ACCEPTS"}
+{"case": "r-flip-008-manifest.json@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "phase", "committed": "EXC:ReticuliError", "draw": "liquid", "stakes": "SHAPE"}
+{"case": "r-flip-008-manifest.json@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "verify", "committed": "EXC:ReticuliError", "draw": {"ok": true, "root_eq_claim": true, "move_detected": null}, "stakes": "ACCEPTS"}
+{"case": "r-flip-022-manifest.json@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "audit", "committed": "EXC:ReticuliError", "draw": true, "stakes": "ACCEPTS"}
+{"case": "r-flip-022-manifest.json@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "phase", "committed": "EXC:ReticuliError", "draw": "liquid", "stakes": "SHAPE"}
+{"case": "r-flip-022-manifest.json@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "verify", "committed": "EXC:ReticuliError", "draw": {"ok": true, "root_eq_claim": true, "move_detected": null}, "stakes": "ACCEPTS"}
+{"case": "r-flip-028-manifest.json@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "audit", "committed": true, "draw": "EXC:ReticuliError", "stakes": "REFUSES"}
+{"case": "r-flip-028-manifest.json@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "phase", "committed": "liquid", "draw": "EXC:ReticuliError", "stakes": "SHAPE"}
+{"case": "r-flip-028-manifest.json@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "verify", "committed": {"ok": true, "root_eq_claim": true, "move_detected": null}, "draw": "EXC:ReticuliError", "stakes": "REFUSES"}
+{"case": "r-flip-032-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "audit", "committed": "EXC:ReticuliError", "draw": "EXC:KeyError", "stakes": "SHAPE"}
+{"case": "r-flip-032-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "claim", "committed": "EXC:ReticuliError", "draw": "EXC:KeyError", "stakes": "SHAPE"}
+{"case": "r-flip-032-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "phase", "committed": "EXC:ReticuliError", "draw": "EXC:KeyError", "stakes": "SHAPE"}
+{"case": "r-flip-032-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "rdigest", "committed": "EXC:ReticuliError", "draw": "HEX", "stakes": "ACCEPTS"}
+{"case": "r-flip-032-reticuli.toml@n", "class": "random-flip", "kernel": "kernel_capstone", "field": "verify", "committed": "EXC:ReticuliError", "draw": "EXC:KeyError", "stakes": "SHAPE"}
