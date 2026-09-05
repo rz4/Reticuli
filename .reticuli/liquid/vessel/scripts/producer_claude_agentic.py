@@ -47,15 +47,10 @@ def main() -> int:
     out = os.environ["RETICULI_OUTPUT"]
     budget = os.environ.get("RETICULI_AGENT_BUDGET", "3")   # usd cap for the whole layer
 
-    # The agent produces ALL free files in one session; realize then calls the
-    # producer once per remaining file, each of which already exists -> skip. So the
-    # whole layer costs exactly one agentic session, accounted on the first call.
-    if os.path.isfile(out) and os.path.getsize(out) > 0:
-        return 0
-
     with open("reticuli.toml", "rb") as f:
         recipe = tomllib.load(f)
     gate = next((s for s in recipe["step"] if s["kind"] == "gate"), None)
+    gate_out = gate["output"] if gate else None
     seeds = recipe["record"].get("inputs", [])
     # own stratum = produce steps NOT supplied by a component (the recipe knows,
     # via `from`) — presence on disk does not decide ownership, so an interrupted
@@ -64,7 +59,26 @@ def main() -> int:
                 if s["kind"] == "produce" and "from" in s]
     own = [s["output"] for s in recipe["step"]
            if s["kind"] == "produce" and "from" not in s]
-    missing = [p for p in own if not (os.path.isfile(p) and os.path.getsize(p) > 0)]
+
+    # Presence is EXISTENCE, not size: a free output may be legitimately empty (a
+    # bare package __init__.py), so a size>0 test would misjudge it as absent.
+    def present(p):
+        return bool(p) and os.path.isfile(p)
+
+    # The record is complete when the GATE passes (its output is present) — the
+    # agent's own success criterion, and what realize re-runs jailed as the
+    # authority. With no gate, "all own files written" stands in.
+    def record_done():
+        return present(gate_out) if gate_out else bool(own) and all(present(p) for p in own)
+
+    # The agent produces ALL free files in ONE session; realize then calls the
+    # producer once per remaining produce step. Once the session drove the gate
+    # green, every later per-file call is a no-op — keyed on the gate, not on any
+    # single file's size (which would spuriously re-run for an empty __init__.py).
+    if present(out) and record_done():
+        return 0
+
+    missing = [p for p in own if not present(p)]
     partial = [p for p in own if p not in missing]
 
     partial_note = (f"\nThese of your files already exist from an interrupted earlier "
@@ -150,8 +164,14 @@ your own files listed above. Do not touch anything outside this directory."""
     # the agent's own output text is discarded — the realization is the files it left
     # in the room. Success is simply: the gate's target exists (realize re-checks it,
     # jailed, as the authoritative gate).
-    if not (os.path.isfile(out) and os.path.getsize(out) > 0):
-        _fail(f"agent finished but {out} was not produced (budget hit, or gate never passed)")
+    # Success is the gate passing (an empty free file the agent intended is a
+    # landing, not a failure), plus this output present; realize re-runs the gate
+    # jailed as the authoritative verdict.
+    if not record_done():
+        why = f"the gate never produced {gate_out}" if gate_out else "the record is incomplete"
+        _fail(f"agent finished but {why} (budget hit, or gate never passed)")
+    if not present(out):
+        _fail(f"agent finished but did not write {out} (budget hit, or gate never passed)")
     return 0
 
 

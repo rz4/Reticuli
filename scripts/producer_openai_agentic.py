@@ -31,10 +31,6 @@ def main() -> int:
     out = os.environ["RETICULI_OUTPUT"]
     max_turns = int(os.environ.get("RETICULI_AGENT_TURNS", "40"))
 
-    # the whole record is produced in one session; later per-file calls skip
-    if os.path.isfile(out) and os.path.getsize(out) > 0:
-        return 0
-
     with open("reticuli.toml", "rb") as f:
         recipe = tomllib.load(f)
     gate = next((s for s in recipe["step"] if s["kind"] == "gate"), None)
@@ -45,6 +41,20 @@ def main() -> int:
            if s["kind"] == "produce" and "from" not in s]
     gate_cmd = gate["run"] if gate else ""
     gate_out = gate["output"] if gate else ""
+
+    # Presence is EXISTENCE, not size: a free output may be legitimately empty (a
+    # bare __init__.py). Completion is the GATE passing — realize re-runs it
+    # jailed — with "all own files written" standing in when there is no gate.
+    def present(p):
+        return bool(p) and os.path.isfile(p)
+
+    def record_done():
+        return present(gate_out) if gate_out else bool(own) and all(present(p) for p in own)
+
+    # the whole record is produced in one session; later per-file calls skip once
+    # that session has driven the gate green
+    if present(out) and record_done():
+        return 0
 
     task = f"""You are reconstructing the source files of a content-addressed record so its \
 check passes. There is NO reference implementation — infer the required API and semantics \
@@ -124,11 +134,14 @@ test. Iterate until run_gate reports success, then stop. Never modify the check/
             messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
             if tc.function.name == "run_gate" and result.startswith("exit=0"):
                 _report(usage_tok)
-                if os.path.isfile(out) and os.path.getsize(out) > 0:
+                if present(out):        # gate green; an empty free file still counts
                     return 0
     _report(usage_tok)
-    if not (os.path.isfile(out) and os.path.getsize(out) > 0):
-        _fail(f"agent finished but {out} was not produced (turn cap or gate never passed)")
+    if not record_done():
+        why = f"the gate never produced {gate_out}" if gate_out else "the record is incomplete"
+        _fail(f"agent finished but {why} (turn cap or gate never passed)")
+    if not present(out):
+        _fail(f"agent finished but did not write {out} (turn cap or gate never passed)")
     return 0
 
 
