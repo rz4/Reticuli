@@ -102,15 +102,20 @@ def condense(session: str, accepted: list[str], into: str, name: str | None = No
     os.makedirs(build)
     with open(os.path.join(build, kernel.RECIPE), "w", encoding="utf-8") as f:
         f.write(render.dump_recipe(recipe))
+    # confinement BEFORE the copy: a trace-derived seed/output path is untrusted
+    # (a traced read of ../secret would otherwise be copied out of the room on the
+    # way to the seal that refuses it), so every path crosses _safe first — the
+    # same boundary realize and audit use.
     for seed in kernel._seeds(recipe):
-        kernel._copy(os.path.join(session, seed), os.path.join(build, seed))
+        kernel._copy(kernel._safe(session, seed), kernel._safe(build, seed))
     for step in recipe["step"]:
         if step["kind"] == "produce":
-            kernel._copy(os.path.join(session, step["output"]), os.path.join(build, step["output"]))
+            kernel._copy(kernel._safe(session, step["output"]),
+                         kernel._safe(build, step["output"]))
 
     for step in recipe["step"]:
         if step["kind"] == "gate":
-            r, _ = kernel._jailed(step["run"], build, {**os.environ, "RETICULI": "1"})
+            r, _ = kernel.run_gate(step["run"], build, recipe)   # scrubbed + bounded, via the one entry point
             if r.returncode != 0:
                 shutil.rmtree(build)
                 raise kernel.ReticuliError(

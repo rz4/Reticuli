@@ -61,7 +61,7 @@ def pack(root: str, name: str, produce: list[str], seeds: list[str],
     with open(os.path.join(root, kernel.RECIPE), "w", encoding="utf-8") as f:
         f.write(render.dump_recipe(recipe))
 
-    r, _ = kernel._jailed(gate, root, {**os.environ, "RETICULI": "1"})
+    r, _ = kernel.run_gate(gate, root, recipe)   # scrubbed + bounded, via the one gate entry point
     if r.stdout:
         print(r.stdout, end="")                       # the gate's own voice
     if r.returncode != 0 or not os.path.isfile(os.path.join(root, gate_output)):

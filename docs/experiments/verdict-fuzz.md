@@ -323,9 +323,28 @@ not reached, all in the *authoring* machinery rather than the kernel invariant:
    `KeyError('output')` — an implementation exception where the hostile-bytes
    discipline promises `ReticuliError`.
 
-The fix (below) is one architectural correction: a single gate-execution entry
-point the whole toolchain consumes, `_safe` applied at the authoring copy, and
-the `kind` vocabulary closed — see the commit that follows this note.
+**Carved (2026-09-05).** One architectural correction, as the reviewer proposed:
+
+- **A single gate-execution entry point, `kernel.run_gate`**, owns the contract —
+  scrubbed env (`_gate_env`), bounded wall-clock (`_gate_timeout`), quarantine
+  (`_jailed`). `realize`, `audit`, `condense`, and `pack` all run gates through
+  it. `kernel_check` pins that `run_gate` scrubs (a gate cannot seal an inherited
+  secret); `authoring_check` pins, *structurally* (an AST clause), that condense
+  and pack never call `_jailed` directly — so a refactor cannot quietly reopen
+  the hole, and behaviorally that `pack` cannot seal a secret.
+- **`_safe` at the authoring copy**: condense routes trace-derived seed/output
+  paths through the confinement boundary *before* copying, like realize and
+  audit. `authoring_check` pins that an escaping traced read is refused with
+  nothing copied out of the room.
+- **The `kind` vocabulary is closed**: `load_recipe` refuses any kind but
+  `produce`/`gate`; `kernel_check` pins that an unknown kind is a `ReticuliError`
+  at parse, never a raw `KeyError` in `realize`.
+
+The change entered exactly two rungs — kernel-core (`fab7a497` → `7c31e5a3`,
+finding 3 + the scrub pin) and authoring (`b7610cbb` → `e4f720ae`, findings 1
+and 2) — everything between and above held, the whole root included. All three
+holes reproduced before and are closed after; checks pass bare and jailed, 48
+tests green.
 
 ## Status
 

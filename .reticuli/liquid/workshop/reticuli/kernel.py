@@ -106,7 +106,10 @@ def load_recipe(d: str) -> dict:
     for step in recipe.get("step", []):
         if not isinstance(step, dict) or "kind" not in step:
             raise ReticuliError(f"malformed recipe step in {d} (a step needs a kind)")
-        if step["kind"] in ("produce", "gate") and "output" not in step:
+        if step["kind"] not in ("produce", "gate"):
+            raise ReticuliError(
+                f"unknown step kind in {d}: {step['kind']!r} (expected 'produce' or 'gate')")
+        if "output" not in step:
             raise ReticuliError(f"malformed {step['kind']} step in {d} (an output is required)")
         if step["kind"] == "gate" and "run" not in step:
             raise ReticuliError(f"malformed gate step in {d} (a run is required)")
@@ -321,7 +324,6 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
             _copy(produce_from[_out(step)], _safe(into, _out(step)))
     usage_path = os.path.join(into, STORE, "usage.json")
     os.makedirs(os.path.join(into, STORE), exist_ok=True)
-    timeout = _gate_timeout(recipe)
     for step in recipe.get("step", []):
         out = _out(step)
         out_path = _safe(into, out)             # refuse an output name that escapes the room
@@ -330,11 +332,12 @@ def realize(d: str, producer: str, into: str, seed_from: dict | None = None,
             continue
         t0 = time.monotonic()
         if step["kind"] == "gate":
-            # a record's gate runs with a SCRUBBED environment (a hostile gate
-            # must not read an inherited secret and exfiltrate it via its room)
-            env = _gate_env({"RETICULI_REQUEST": step.get("request", ""),
-                             "RETICULI_OUTPUT": out, "RETICULI": "1"})
-            r, jailed_as = _jailed(step["run"], into, env, timeout=timeout)
+            # a record's gate runs through the one gate entry point: scrubbed
+            # environment (a hostile gate cannot exfiltrate an inherited secret),
+            # bounded wall-clock, inside the quarantine
+            r, jailed_as = run_gate(step["run"], into, recipe,
+                                    {"RETICULI_REQUEST": step.get("request", ""),
+                                     "RETICULI_OUTPUT": out})
         else:
             # the producer is YOUR command, not the record's — it keeps your env
             env = {**os.environ, "RETICULI_REQUEST": step.get("request", ""),
@@ -418,6 +421,20 @@ def _jailed(cmd: str, room: str, env: dict,
                          if k in os.environ}}
     return _run_bounded(wrapped, shell=isinstance(wrapped, str), cwd=room,
                         env=env, timeout=timeout), status
+
+
+def run_gate(cmd: str, room: str, recipe: dict,
+             extra: dict | None = None) -> tuple[subprocess.CompletedProcess, str]:
+    """THE ONE ENTRY POINT for running a record's gate. It owns the execution
+    contract so every caller obeys it identically: a SCRUBBED environment
+    (_gate_env — a hostile gate cannot read an inherited secret and seal it into
+    a verdict), a BOUNDED wall-clock (_gate_timeout — it cannot hang the
+    verifier), inside the QUARANTINE (_jailed). realize, audit, condense, and
+    pack all run gates through here; an authoring module that reaches for _jailed
+    directly would bypass the scrub and the bound, so the authoring check forbids
+    it."""
+    env = _gate_env({"RETICULI": "1", **(extra or {})})
+    return _jailed(cmd, room, env, timeout=_gate_timeout(recipe))
 
 
 def _run_bounded(argv, *, shell: bool, cwd: str, env: dict,
@@ -526,13 +543,11 @@ def audit(d: str) -> dict:
         for step in steps:
             if step["kind"] == "produce" and os.path.isfile(_safe(d, _out(step))):
                 _copy(_safe(d, _out(step)), _safe(room, _out(step)))
-        timeout = _gate_timeout(recipe)
         for step in steps:
             if step["kind"] != "gate":
                 continue
             out = _out(step)
-            r, jailed_as = _jailed(step["run"], room, _gate_env({"RETICULI": "1"}),
-                                   timeout=timeout)
+            r, jailed_as = run_gate(step["run"], room, recipe)
             produced = _safe(room, out)
             reproduced = (r.returncode == 0 and os.path.isfile(produced)
                           and os.path.isfile(_safe(d, out))

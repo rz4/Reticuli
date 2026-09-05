@@ -452,6 +452,44 @@ def battery() -> None:
         except kernel.ReticuliError:
             pass
 
+        # a recipe's step KINDS are a closed vocabulary — produce and gate. An
+        # unknown kind is hostile bytes, refused at parse (load_recipe), never
+        # surfacing later as a raw KeyError deep in realize: hostile bytes produce
+        # a ReticuliError, not an implementation exception.
+        wk = os.path.join(d, "weird-kind")
+        os.makedirs(wk)
+        with open(os.path.join(wk, "reticuli.toml"), "w") as f:
+            f.write('[record]\nname = "w"\n\n[[step]]\nkind = "weird"\nclass = "free"\n\n'
+                    '[[step]]\nkind = "gate"\noutput = "V"\nclass = "validated"\nrun = "printf v > V"\n')
+        with open(os.path.join(wk, "V"), "w") as f:
+            f.write("v")
+        for fn in (kernel.load_recipe,
+                   lambda p: kernel.realize(p, "printf v > V", os.path.join(d, "wk-m3"))):
+            try:
+                fn(wk)
+                raise AssertionError("an unknown step kind must be refused, not raise KeyError")
+            except kernel.ReticuliError:
+                pass
+
+        # run_gate is THE gate entry point and its contract is a kernel invariant:
+        # a record's gate runs with a SCRUBBED environment, so a hostile gate
+        # cannot read an inherited secret and seal it into a verdict. realize,
+        # audit, and the authoring paths (condense, pack) all run gates through
+        # here — pinning the scrub here makes it hold wherever a gate runs.
+        os.environ["RETICULI_LEAK_PROBE"] = "s3cr3t-not-real"
+        try:
+            gp = os.path.join(d, "gate-scrub")
+            os.makedirs(gp)
+            with open(os.path.join(gp, "reticuli.toml"), "w") as f:
+                f.write(FIXTURE)
+            kernel.run_gate('printf "${RETICULI_LEAK_PROBE:-clean}" > leak.txt', gp,
+                            kernel.load_recipe(gp))
+            with open(os.path.join(gp, "leak.txt")) as f:
+                assert "s3cr3t" not in f.read(), \
+                    "run_gate must scrub the environment — a gate saw an inherited secret"
+        finally:
+            os.environ.pop("RETICULI_LEAK_PROBE", None)
+
         # resource bound: a gate has a wall-clock ceiling (declarable, capped by
         # the environment), so a hostile or broken gate cannot hang the verifier.
         # A `sleep` gate under a 1s ceiling is killed — a failed redo, not a hang.
