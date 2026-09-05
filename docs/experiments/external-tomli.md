@@ -54,3 +54,47 @@ its tests under-specify it (basin too wide) or its behavior is harder to hit tha
 its own suite implies — both real findings about real software.
 
 Actuals and the score go below after the run.
+
+## Actuals (2026-09-05)
+
+**It landed — a from-scratch parser passes tomli's full suite, proven.** The
+live model regrew the parser and sealed; the regrown implementation is
+byte-different in 3 of 4 files (`_parser.py` 743 lines vs the original 799,
+`_re.py` 107 vs 119, `__init__.py` 10 vs 8); only `_types.py` (bare type
+aliases) came back identical. Cost: **\$5.72, 85k tokens, 4 calls, ~14 min.**
+
+**A pack-hygiene bug of mine, and its correction (a finding in itself).** My
+first pack accidentally sealed 5 `.pyc` bytecode files as seeds — I ran the
+baseline gate before packing and `--seed "tests/**/*"` swept in
+`tests/__pycache__/*.pyc`. Bytecode embeds compile metadata, so it moves on
+recompile: the original pack (`a09be2e6`) and the rehydration (`6ba40e29`)
+differed **only** in those 5 files; every real seed (test code + 744 compliance
+pairs) was byte-identical, and the producer never touched a test. I re-packed
+cleanly (`--seed "tests/**/*.py" "*.toml" "*.json"`, 977 seeds, root
+`1710ef24`), byte-copied the already-regrown parser into a clean realize, and
+`ret prove` is **satisfied / integrity / reuse / equivalence / audited** — the
+regrown parser lands the clean root. Lesson, in the project's own terms: I put
+non-deterministic non-claim bytes into the claim; a claim must seal the spec,
+not build artifacts.
+
+## Score
+
+- **Lands: predicted ~55%, LANDED** — and more easily than feared: **4 calls,
+  \$5.72** vs a \$12 / 15–30-call bet. I over-taxed iteration.
+- **No Goodhart.** The 744-case compliance suite is a *tight* cage — the regrown
+  parser passes all of it, no evidence of slipping between the bars. This is the
+  good outcome: tomli's tests genuinely pin tomli.
+- **The fracture:** the parser is free water (a leaner 743-line reimplementation
+  in the basin), the type aliases are resistant core, and the 977 tests are the
+  identity. A stranger's library reproduces from its spec under an independent
+  model.
+
+## The honest caveat (epistemic independence)
+
+tomli is a widely-used, public library almost certainly in the model's training
+data — so this is "a model that knows TOML regrows a passing parser from the
+tests," not a blind reconstruction. The claim it validates is real (a
+byte-different implementation satisfies the spec and shares the root), but the
+*independence* is weaker than the three-machine test can see — exactly the limit
+the guide's honesty contract names. The sharper next specimen is an obscure or
+private codebase the model has not seen.
